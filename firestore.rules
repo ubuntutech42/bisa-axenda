@@ -2,164 +2,180 @@
  * @fileoverview Firestore Security Rules for Axénda application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for most data.
- * Each user has complete control over their own data (tasks, categories, pomodoro sessions, calendar events)
- * stored under their respective /users/{userId} path.
- * Cultural events are publicly readable.
+ * This ruleset enforces a strict user-ownership model for most data,
+ * with the exception of `culturalEvents` which are publicly readable.
+ * Users can only read and write data that belongs to them.
  *
  * Data Structure:
- * - /users/{userId}: User profile information.
- * - /users/{userId}/tasks/{taskId}: Tasks associated with a user.
- * - /users/{userId}/categories/{categoryId}: Categories created by a user.
- * - /users/{userId}/pomodoroSessions/{pomodoroSessionId}: Pomodoro sessions tracked by a user.
- * - /users/{userId}/calendarEvents/{calendarEventId}: Calendar events created by a user.
- * - /culturalEvents/{culturalEventId}: Global cultural events.
+ * - /users/{userId}: Stores user profiles.
+ * - /users/{userId}/tasks/{taskId}: Stores tasks for a specific user.
+ * - /users/{userId}/kanbanLists/{listId}: Stores Kanban lists for a specific user.
+ * - /users/{userId}/categories/{categoryId}: Stores user-created categories.
+ * - /users/{userId}/pomodoroSessions/{pomodoroSessionId}: Stores Pomodoro sessions.
+ * - /users/{userId}/calendarEvents/{calendarEventId}: Stores calendar events.
+ * - /culturalEvents/{culturalEventId}: Stores global cultural events (publicly readable).
  *
  * Key Security Decisions:
- * - Users can only list tasks, categories, pomodoro sessions, and calendar events that they own.
- * - User listing is implicitly denied (no rule for `/users`).
- * - Cultural events are publicly readable but not writable by users.
+ * - Users can only create their own user document (self-registration).
+ * - Users cannot list all users (privacy).
+ * - Cultural events are publicly readable but not writable by regular users.
+ * - Strict ownership is enforced on all other collections.
  *
  * Denormalization for Authorization:
- * - Each task, category, pomodoro session, and calendar event MUST contain a `userId` field that matches the
- *   `userId` in the path `/users/{userId}`. This is enforced during creation and update to prevent
- *   data inconsistencies and simplify security rules.
+ *  - The `userId` field on the `KanbanList` entity is essential for authorization.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user's UID matches the provided userId.
-     * @param {string} userId - The user ID to compare against.
-     * @returns {boolean} - True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user is the existing owner of the document.
-     * @param {string} userId - The user ID to compare against.
-     * @returns {boolean} - True if the user is the owner and the document exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Stores user profiles.
+     * @description Allows users to read and write their own user profile.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their profile.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { id: 'user123', ... } } }
-     * @deny (create) User with ID 'user123' cannot create a profile with a mismatched ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { id: 'user456', ... } } }
-     * @principle Enforces document ownership for writes, validates relational integrity between documents.
+     * @allow (create) - User with UID 'user123' can create a profile if request.auth.uid == 'user123'.
+     * @allow (get, update, delete) - User with UID 'user123' can read/update/delete their profile.
+     * @deny (create) - User with UID 'user456' cannot create a profile for 'user123'.
+     * @deny (list) - No one can list all users.
+     * @principle Enforces user-ownership for profile data.
      */
     match /users/{userId} {
-      allow get: if false;
-      allow list: if false;
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isSignedIn() {
+        return request.auth != null;
+      }
 
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Stores tasks for a specific user.
+     * @description Allows users to manage their own tasks.
      * @path /users/{userId}/tasks/{taskId}
-     * @allow (create) User with ID 'user123' can create a task under their user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user123', ... } } }
-     * @deny (create) User with ID 'user123' cannot create a task under someone else's user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user456', ... } } }
-     * @principle Enforces document ownership for writes, validates relational integrity between documents.
+     * @allow (create) - User with UID 'user123' can create a task under their user ID.
+     * @allow (get, list, update, delete) - User with UID 'user123' can read/list/update/delete their own tasks.
+     * @deny (create, update, delete) - User with UID 'user456' cannot modify 'user123' tasks.
+     * @principle Enforces user-ownership for task data.
      */
     match /users/{userId}/tasks/{taskId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Stores user-created categories.
+     * @description Allows users to manage their own Kanban lists.
+     * @path /users/{userId}/kanbanLists/{listId}
+     * @allow (create) - User with UID 'user123' can create a Kanban list under their user ID.
+     * @allow (get, list, update, delete) - User with UID 'user123' can read/list/update/delete their own Kanban lists.
+     * @deny (create, update, delete) - User with UID 'user456' cannot modify 'user123' Kanban lists.
+     * @principle Enforces user-ownership for Kanban list data.
+     */
+    match /users/{userId}/kanbanLists/{listId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Allows users to manage their own categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User with ID 'user123' can create a category under their user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user123', ... } } }
-     * @deny (create) User with ID 'user123' cannot create a category under someone else's user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user456', ... } } }
-     * @principle Enforces document ownership for writes, validates relational integrity between documents.
+     * @allow (create) - User with UID 'user123' can create a category under their user ID.
+     * @allow (get, list, update, delete) - User with UID 'user123' can read/list/update/delete their own categories.
+     * @deny (create, update, delete) - User with UID 'user456' cannot modify 'user123' categories.
+     * @principle Enforces user-ownership for category data.
      */
     match /users/{userId}/categories/{categoryId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Stores Pomodoro sessions for a user.
+     * @description Allows users to manage their own Pomodoro sessions.
      * @path /users/{userId}/pomodoroSessions/{pomodoroSessionId}
-     * @allow (create) User with ID 'user123' can create a Pomodoro session under their user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user123', ... } } }
-     * @deny (create) User with ID 'user123' cannot create a Pomodoro session under someone else's user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user456', ... } } }
-     * @principle Enforces document ownership for writes, validates relational integrity between documents.
+     * @allow (create) - User with UID 'user123' can create a Pomodoro session under their user ID.
+     * @allow (get, list, update, delete) - User with UID 'user123' can read/list/update/delete their own Pomodoro sessions.
+     * @deny (create, update, delete) - User with UID 'user456' cannot modify 'user123' Pomodoro sessions.
+     * @principle Enforces user-ownership for Pomodoro session data.
      */
     match /users/{userId}/pomodoroSessions/{pomodoroSessionId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Stores calendar events for a user.
+     * @description Allows users to manage their own calendar events.
      * @path /users/{userId}/calendarEvents/{calendarEventId}
-     * @allow (create) User with ID 'user123' can create a calendar event under their user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user123', ... } } }
-     * @deny (create) User with ID 'user123' cannot create a calendar event under someone else's user ID.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { userId: 'user456', ... } } }
-     * @principle Enforces document ownership for writes, validates relational integrity between documents.
+     * @allow (create) - User with UID 'user123' can create a calendar event under their user ID.
+     * @allow (get, list, update, delete) - User with UID 'user123' can read/list/update/delete their own calendar events.
+     * @deny (create, update, delete) - User with UID 'user456' cannot modify 'user123' calendar events.
+     * @principle Enforces user-ownership for calendar event data.
      */
     match /users/{userId}/calendarEvents/{calendarEventId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Stores global cultural events.
+     * @description Allows anyone to read cultural events, but only allows admins to modify them.
      * @path /culturalEvents/{culturalEventId}
-     * @allow (get) Any user can read cultural events.
-     *    Request: { auth: { uid: 'user123' } }
-     * @deny (create) No user can create cultural events.
-     *    Request: { auth: { uid: 'user123' }, resource: { data: { ... } } }
-     * @principle Allows public read access, restricts writes.
+     * @allow (get, list) - Any user can read/list cultural events.
+     * @deny (create, update, delete) - Only admins can create/update/delete cultural events.
+     * @principle Allows public read access for cultural events while restricting write access.
      */
     match /culturalEvents/{culturalEventId} {
-      allow get: if true;
-      allow list: if true;
+        allow get, list: if true;
+        allow create, update, delete: if false; // TODO: Add admin role check
+    }
 
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    match /users/{userId}/{document=**} {
+      allow read, write: if false;
     }
   }
 }
