@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { FirebaseClientProvider } from '@/firebase';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -21,15 +22,17 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <div className="flex min-h-screen w-full bg-background">
-          <Sidebar />
-          <div className="flex flex-col flex-1">
-            <main className="flex-1 p-4 sm:p-6 lg:p-8">
-              {children}
-            </main>
+        <FirebaseClientProvider>
+          <div className="flex min-h-screen w-full bg-background">
+            <Sidebar />
+            <div className="flex flex-col flex-1">
+              <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
-        <Toaster />
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

@@ -1,9 +1,31 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 import { Header } from '@/components/layout/Header';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Loader, Plus } from 'lucide-react';
 
 export default function BoardPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [isUserLoading, user, router]);
+
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       <Header title="Quadro Kanban">

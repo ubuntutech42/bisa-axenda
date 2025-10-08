@@ -305,7 +305,7 @@
       ]
     },
     "Reminder": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft_07/schema#",
       "title": "Reminder",
       "type": "object",
       "description": "Represents a reminder for a Kanban card.",
@@ -336,7 +336,7 @@
       ]
     },
     "CalendarEvent": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft_07/schema#",
       "title": "CalendarEvent",
       "type": "object",
       "description": "Represents an event in the calendar.",
@@ -378,7 +378,7 @@
       ]
     },
     "CulturalEvent": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft_07/schema#",
       "title": "CulturalEvent",
       "type": "object",
       "description": "Represents an important date for the Black community.",
@@ -411,273 +411,75 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "google.com"
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profiles.  The 'userId' parameter identifies the user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
       },
-      {
-        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}",
-        "definition": {
-          "entityName": "KanbanBoard",
-          "schema": {
-            "$ref": "#/backend/entities/KanbanBoard"
-          },
-          "description": "Stores Kanban boards owned by a specific user. The 'userId' parameter identifies the owner, and 'kanbanBoardId' identifies the board.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the board."
-            },
-            {
-              "name": "kanbanBoardId",
-              "description": "The unique identifier of the Kanban board."
-            }
-          ]
-        }
+      "description": "Stores user profiles."
+    },
+    "/users/{userId}/kanbanBoards/{kanbanBoardId}": {
+      "schema": {
+        "$ref": "#/entities/KanbanBoard"
       },
-      {
-        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}",
-        "definition": {
-          "entityName": "KanbanList",
-          "schema": {
-            "$ref": "#/backend/entities/KanbanList"
-          },
-          "description": "Stores Kanban lists within a specific board. The 'userId' and 'kanbanBoardId' parameters identify the board, and 'kanbanListId' identifies the list.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the board."
-            },
-            {
-              "name": "kanbanBoardId",
-              "description": "The unique identifier of the Kanban board."
-            },
-            {
-              "name": "kanbanListId",
-              "description": "The unique identifier of the Kanban list."
-            }
-          ]
-        }
+      "description": "Stores Kanban boards for a specific user."
+    },
+    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}": {
+      "schema": {
+        "$ref": "#/entities/KanbanList"
       },
-      {
-        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}",
-        "definition": {
-          "entityName": "KanbanCard",
-          "schema": {
-            "$ref": "#/backend/entities/KanbanCard"
-          },
-          "description": "Stores Kanban cards within a specific list. The 'userId', 'kanbanBoardId', and 'kanbanListId' parameters identify the list, and 'kanbanCardId' identifies the card.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the board."
-            },
-            {
-              "name": "kanbanBoardId",
-              "description": "The unique identifier of the Kanban board."
-            },
-            {
-              "name": "kanbanListId",
-              "description": "The unique identifier of the Kanban list."
-            },
-            {
-              "name": "kanbanCardId",
-              "description": "The unique identifier of the Kanban card."
-            }
-          ]
-        }
+      "description": "Stores lists within a Kanban board."
+    },
+    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}": {
+      "schema": {
+        "$ref": "#/entities/KanbanCard"
       },
-      {
-        "path": "/users/{userId}/categories/{categoryId}",
-        "definition": {
-          "entityName": "Category",
-          "schema": {
-            "$ref": "#/backend/entities/Category"
-          },
-          "description": "Stores categories created by a specific user. The 'userId' parameter identifies the creator, and 'categoryId' identifies the category.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who created the category."
-            },
-            {
-              "name": "categoryId",
-              "description": "The unique identifier of the category."
-            }
-          ]
-        }
+      "description": "Stores cards within a Kanban list."
+    },
+    "/users/{userId}/categories/{categoryId}": {
+      "schema": {
+        "$ref": "#/entities/Category"
       },
-      {
-        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/comments/{commentId}",
-        "definition": {
-          "entityName": "Comment",
-          "schema": {
-            "$ref": "#/backend/entities/Comment"
-          },
-          "description": "Stores comments on a specific Kanban card. The 'userId', 'kanbanBoardId', 'kanbanListId', and 'kanbanCardId' parameters identify the card, and 'commentId' identifies the comment.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the board."
-            },
-            {
-              "name": "kanbanBoardId",
-              "description": "The unique identifier of the Kanban board."
-            },
-            {
-              "name": "kanbanListId",
-              "description": "The unique identifier of the Kanban list."
-            },
-            {
-              "name": "kanbanCardId",
-              "description": "The unique identifier of the Kanban card."
-            },
-            {
-              "name": "commentId",
-              "description": "The unique identifier of the comment."
-            }
-          ]
-        }
+      "description": "Stores user-created categories."
+    },
+    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/comments/{commentId}": {
+      "schema": {
+        "$ref": "#/entities/Comment"
       },
-      {
-        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/checklistItems/{checklistItemId}",
-        "definition": {
-          "entityName": "ChecklistItem",
-          "schema": {
-            "$ref": "#/backend/entities/ChecklistItem"
-          },
-          "description": "Stores checklist items for a specific Kanban card. The 'userId', 'kanbanBoardId', 'kanbanListId', and 'kanbanCardId' parameters identify the card, and 'checklistItemId' identifies the checklist item.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the board."
-            },
-            {
-              "name": "kanbanBoardId",
-              "description": "The unique identifier of the Kanban board."
-            },
-            {
-              "name": "kanbanListId",
-              "description": "The unique identifier of the Kanban list."
-            },
-            {
-              "name": "kanbanCardId",
-              "description": "The unique identifier of the Kanban card."
-            },
-            {
-              "name": "checklistItemId",
-              "description": "The unique identifier of the checklist item."
-            }
-          ]
-        }
+      "description": "Stores comments on a Kanban card."
+    },
+    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/checklistItems/{checklistItemId}": {
+      "schema": {
+        "$ref": "#/entities/ChecklistItem"
       },
-      {
-        "path": "/users/{userId}/pomodoroSessions/{pomodoroSessionId}",
-        "definition": {
-          "entityName": "PomodoroSession",
-          "schema": {
-            "$ref": "#/backend/entities/PomodoroSession"
-          },
-          "description": "Stores Pomodoro sessions started by a specific user. The 'userId' parameter identifies the user, and 'pomodoroSessionId' identifies the session.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who started the session."
-            },
-            {
-              "name": "pomodoroSessionId",
-              "description": "The unique identifier of the Pomodoro session."
-            }
-          ]
-        }
+      "description": "Stores checklist items for a Kanban card."
+    },
+    "/users/{userId}/pomodoroSessions/{pomodoroSessionId}": {
+      "schema": {
+        "$ref": "#/entities/PomodoroSession"
       },
-      {
-        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/reminders/{reminderId}",
-        "definition": {
-          "entityName": "Reminder",
-          "schema": {
-            "$ref": "#/backend/entities/Reminder"
-          },
-          "description": "Stores reminders for a specific Kanban card. The 'userId', 'kanbanBoardId', 'kanbanListId', and 'kanbanCardId' parameters identify the card, and 'reminderId' identifies the reminder.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the board."
-            },
-            {
-              "name": "kanbanBoardId",
-              "description": "The unique identifier of the Kanban board."
-            },
-            {
-              "name": "kanbanListId",
-              "description": "The unique identifier of the Kanban list."
-            },
-            {
-              "name": "kanbanCardId",
-              "description": "The unique identifier of the Kanban card."
-            },
-            {
-              "name": "reminderId",
-              "description": "The unique identifier of the reminder."
-            }
-          ]
-        }
+      "description": "Stores Pomodoro sessions for a user."
+    },
+    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/reminders/{reminderId}": {
+      "schema": {
+        "$ref": "#/entities/Reminder"
       },
-      {
-        "path": "/users/{userId}/calendarEvents/{calendarEventId}",
-        "definition": {
-          "entityName": "CalendarEvent",
-          "schema": {
-            "$ref": "#/backend/entities/CalendarEvent"
-          },
-          "description": "Stores calendar events created by a specific user. The 'userId' parameter identifies the creator, and 'calendarEventId' identifies the event.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who created the event."
-            },
-            {
-              "name": "calendarEventId",
-              "description": "The unique identifier of the calendar event."
-            }
-          ]
-        }
+      "description": "Stores reminders for a Kanban card."
+    },
+    "/users/{userId}/calendarEvents/{calendarEventId}": {
+      "schema": {
+        "$ref": "#/entities/CalendarEvent"
       },
-      {
-        "path": "/culturalEvents/{culturalEventId}",
-        "definition": {
-          "entityName": "CulturalEvent",
-          "schema": {
-            "$ref": "#/backend/entities/CulturalEvent"
-          },
-          "description": "Stores global cultural events. The 'culturalEventId' parameter identifies the event.",
-          "params": [
-            {
-              "name": "culturalEventId",
-              "description": "The unique identifier of the cultural event."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to manage user data, Kanban boards, lists, cards, categories, comments, checklist items, Pomodoro sessions, reminders, calendar events, and cultural events for the Axénda application. The structure prioritizes authorization independence by denormalizing user IDs where necessary, particularly for entities nested under Kanban boards. This approach avoids the need for `get()` calls in security rules, enabling atomic operations and simplifying security management.  \n\nTo support secure list operations (QAPs), the design implements Structural Segregation, ensuring that each collection contains documents with homogeneous security requirements. Private user data is stored under `/users/{userId}`, while collaborative data, if any, would use membership maps.  Since all Kanban related entities are owned by a user they are all nested under `/users/{userId}`.\n\nOwnership is consistently modeled using hierarchical paths, such as `/users/{userId}/kanbanBoards/{kanbanBoardId}`, which clearly establishes the relationship between users and their Kanban boards. Nested entities like Kanban lists, cards, and comments follow a similar pattern, ensuring a clear ownership hierarchy and simplified security rules.\n\nCultural events are stored in a global collection `/culturalEvents` as these events are global and not specific to any particular user."
+      "description": "Stores calendar events for a user."
+    },
+    "/culturalEvents/{culturalEventId}": {
+      "schema": {
+        "$ref": "#/entities/CulturalEvent"
+      },
+      "description": "Stores global cultural events."
+    }
   }
 }
