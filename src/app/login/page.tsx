@@ -32,10 +32,12 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // The useEffect will handle the redirect
     } catch (error) {
       console.error('Error signing in with Google: ', error);
-      // Handle errors here (e.g., show a toast notification)
+      // Only show the popup closed error if it's not the user canceling it.
+      if ((error as any).code !== 'auth/popup-closed-by-user') {
+        // You can add a toast notification here for other errors.
+      }
     }
   };
 
