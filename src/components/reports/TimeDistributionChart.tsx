@@ -16,26 +16,26 @@ import type { ChartConfig } from "@/components/ui/chart";
 
 const chartConfig = {
   time: {
-    label: "Time (minutes)",
+    label: "Tempo (minutos)",
   },
-  Work: {
-    label: "Work",
+  Trabalho: {
+    label: "Trabalho",
     color: "hsl(var(--chart-1))",
   },
-  Study: {
-    label: "Study",
+  Estudo: {
+    label: "Estudo",
     color: "hsl(var(--chart-2))",
   },
-  Creation: {
-    label: "Creation",
+  Criação: {
+    label: "Criação",
     color: "hsl(var(--chart-3))",
   },
-  "Self-care": {
-    label: "Self-care",
+  "Autocuidado": {
+    label: "Autocuidado",
     color: "hsl(var(--chart-4))",
   },
-  Personal: {
-    label: "Personal",
+  Pessoal: {
+    label: "Pessoal",
     color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig;
@@ -60,8 +60,8 @@ export function TimeDistributionChart() {
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle>Time Distribution</CardTitle>
-        <CardDescription>How you're spending your focus time.</CardDescription>
+        <CardTitle>Distribuição de Tempo</CardTitle>
+        <CardDescription>Como você está usando seu tempo de foco.</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -90,11 +90,11 @@ export function TimeDistributionChart() {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
-          Total focus time: {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
+          Tempo total de foco: {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
           <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing time spent across all categories.
+          Mostrando o tempo gasto em todas as categorias.
         </div>
       </CardFooter>
     </Card>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { tasks as allTasks, culturalEvents } from '@/lib/data';
 import type { Task, CulturalEvent } from '@/lib/types';
 import { format, isSameDay, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -35,6 +36,7 @@ export function EventCalendar() {
             selected={date}
             onSelect={setDate}
             className="p-0"
+            locale={ptBR}
             classNames={{
               day: "h-12 w-12 text-base",
               head_cell: "text-muted-foreground rounded-md w-12 font-normal text-sm",
@@ -62,7 +64,7 @@ export function EventCalendar() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">
-              {date ? format(date, 'MMMM d, yyyy') : 'Select a date'}
+              {date ? format(date, 'd \'de\' MMMM \'de\' yyyy', { locale: ptBR }) : 'Selecione uma data'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -75,7 +77,7 @@ export function EventCalendar() {
                         <>
                           <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
-                             <Badge variant="secondary">Task</Badge>
+                             <Badge variant="secondary">Tarefa</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">{event.category}</p>
                         </>
@@ -91,7 +93,7 @@ export function EventCalendar() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-muted-foreground py-10">No events for this day.</p>
+                  <p className="text-center text-muted-foreground py-10">Nenhum evento para este dia.</p>
                 )}
               </div>
             </ScrollArea>

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Clock, MessageSquare, CheckSquare } from 'lucide-react';
 
 interface KanbanCardProps {
@@ -13,18 +14,18 @@ interface KanbanCardProps {
 }
 
 const priorityClasses: Record<Task['priority'], string> = {
-  Low: 'border-secondary',
-  Medium: 'border-accent',
-  High: 'border-primary',
-  Urgent: 'border-destructive',
+  Baixa: 'border-secondary',
+  Média: 'border-accent',
+  Alta: 'border-primary',
+  Urgente: 'border-destructive',
 };
 
 const categoryClasses: Record<Task['category'], string> = {
-    Work: "bg-chart-1/10 text-chart-1 border-chart-1/20",
-    Study: "bg-chart-2/10 text-chart-2 border-chart-2/20",
-    Creation: "bg-chart-3/10 text-chart-3 border-chart-3/20",
-    "Self-care": "bg-chart-4/10 text-chart-4 border-chart-4/20",
-    Personal: "bg-chart-5/10 text-chart-5 border-chart-5/20",
+    Trabalho: "bg-chart-1/10 text-chart-1 border-chart-1/20",
+    Estudo: "bg-chart-2/10 text-chart-2 border-chart-2/20",
+    Criação: "bg-chart-3/10 text-chart-3 border-chart-3/20",
+    "Autocuidado": "bg-chart-4/10 text-chart-4 border-chart-4/20",
+    Pessoal: "bg-chart-5/10 text-chart-5 border-chart-5/20",
 };
 
 
@@ -51,7 +52,7 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
           {task.deadline && (
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              <span>{formatDistanceToNow(new Date(task.deadline), { addSuffix: true })}</span>
+              <span>{formatDistanceToNow(new Date(task.deadline), { addSuffix: true, locale: ptBR })}</span>
             </div>
           )}
           <div className="flex items-center gap-3">

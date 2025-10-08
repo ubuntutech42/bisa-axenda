@@ -5,25 +5,26 @@ import type { Task, Priority } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const priorityVariantMap: Record<Priority, BadgeProps['variant']> = {
-  Urgent: 'destructive',
-  High: 'default',
-  Medium: 'secondary',
-  Low: 'outline',
+  Urgente: 'destructive',
+  Alta: 'default',
+  Média: 'secondary',
+  Baixa: 'outline',
 };
 
 export function TasksOverview() {
   const upcomingTasks = Object.values(allTasks)
-    .filter(task => task.status !== 'Done' && task.deadline)
+    .filter(task => task.status !== 'Concluído' && task.deadline)
     .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
     .slice(0, 5);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upcoming Tasks</CardTitle>
-        <CardDescription>Your most urgent and upcoming deadlines.</CardDescription>
+        <CardTitle>Próximas Tarefas</CardTitle>
+        <CardDescription>Seus prazos mais urgentes e próximos.</CardDescription>
       </CardHeader>
       <CardContent>
         {upcomingTasks.length > 0 ? (
@@ -33,7 +34,7 @@ export function TasksOverview() {
                 <div>
                   <p className="font-semibold">{task.title}</p>
                   <p className="text-sm text-muted-foreground">
-                    Due {formatDistanceToNow(new Date(task.deadline!), { addSuffix: true })}
+                    Vence {formatDistanceToNow(new Date(task.deadline!), { addSuffix: true, locale: ptBR })}
                   </p>
                 </div>
                 <Badge variant={priorityVariantMap[task.priority]} className="text-xs">
@@ -44,7 +45,7 @@ export function TasksOverview() {
           </ul>
         ) : (
           <p className="text-center text-muted-foreground py-4">
-            No upcoming deadlines. Time to plan ahead!
+            Nenhum prazo próximo. Hora de planejar!
           </p>
         )}
       </CardContent>

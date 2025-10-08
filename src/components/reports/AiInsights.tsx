@@ -20,7 +20,7 @@ export function AiInsights() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!goals.trim()) {
-      setError('Please define your goals to get personalized insights.');
+      setError('Por favor, defina seus objetivos para obter insights personalizados.');
       return;
     }
     setError(null);
@@ -40,7 +40,7 @@ export function AiInsights() {
     if (result.success && result.data) {
       setInsights(result.data);
     } else {
-      setError(result.error || 'An unknown error occurred.');
+      setError(result.error || 'Ocorreu um erro desconhecido.');
     }
   };
 
@@ -49,32 +49,32 @@ export function AiInsights() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Sparkles className="text-accent" />
-          AI-Powered Insights
+          Insights com IA
         </CardTitle>
         <CardDescription>
-          Let our AI analyze your progress and schedule to provide recommendations.
+          Deixe nossa IA analisar seu progresso e agenda para fornecer recomendações.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="goals">What are your main goals for this period?</Label>
+            <Label htmlFor="goals">Quais são seus principais objetivos para este período?</Label>
             <Textarea
               id="goals"
-              placeholder="e.g., 'Pass all my exams', 'Launch my side project', 'Prioritize my well-being'"
+              placeholder="Ex: 'Passar em todas as provas', 'Lançar meu projeto paralelo', 'Priorizar meu bem-estar'"
               value={goals}
               onChange={(e) => setGoals(e.target.value)}
               rows={3}
             />
           </div>
           <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Generating...' : 'Generate Insights'}
+            {isLoading ? 'Gerando...' : 'Gerar Insights'}
           </Button>
         </form>
 
         {error && (
             <Alert variant="destructive" className="mt-4">
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>Erro</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
             </Alert>
         )}
@@ -93,11 +93,11 @@ export function AiInsights() {
         {insights && (
           <div className="mt-6 space-y-6">
             <div>
-              <h3 className="font-bold text-lg text-primary mb-2">Progress Insights</h3>
+              <h3 className="font-bold text-lg text-primary mb-2">Insights de Progresso</h3>
               <p className="text-muted-foreground whitespace-pre-wrap">{insights.insights}</p>
             </div>
             <div>
-              <h3 className="font-bold text-lg text-primary mb-2">Recommendations</h3>
+              <h3 className="font-bold text-lg text-primary mb-2">Recomendações</h3>
               <p className="text-muted-foreground whitespace-pre-wrap">{insights.recommendations}</p>
             </div>
           </div>

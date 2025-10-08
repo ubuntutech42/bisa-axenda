@@ -103,14 +103,14 @@ export function PomodoroDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-card">
         <DialogHeader>
-          <DialogTitle className="font-headline text-center text-2xl text-foreground">Pomodoro Timer</DialogTitle>
+          <DialogTitle className="font-headline text-center text-2xl text-foreground">Timer Pomodoro</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <Tabs value={mode} onValueChange={(value) => setMode(value as TimerMode)} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
-              <TabsTrigger value="shortBreak">Short Break</TabsTrigger>
-              <TabsTrigger value="longBreak">Long Break</TabsTrigger>
+              <TabsTrigger value="shortBreak">Pausa Curta</TabsTrigger>
+              <TabsTrigger value="longBreak">Pausa Longa</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -144,7 +144,7 @@ export function PomodoroDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               </span>
             </div>
           </div>
-          <p className="text-center mt-4 text-muted-foreground">Pomodoros completed today: {pomodoroCount}</p>
+          <p className="text-center mt-4 text-muted-foreground">Pomodoros concluídos hoje: {pomodoroCount}</p>
         </div>
         <DialogFooter>
           <div className="flex w-full justify-center items-center gap-4">
@@ -153,7 +153,7 @@ export function PomodoroDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               size="icon"
               className="w-16 h-16 rounded-full"
               onClick={resetTimer}
-              aria-label="Reset Timer"
+              aria-label="Resetar Timer"
             >
               <RotateCcw className="w-8 h-8" />
             </Button>
@@ -161,7 +161,7 @@ export function PomodoroDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               size="icon"
               className="w-24 h-24 rounded-full text-3xl shadow-lg"
               onClick={toggleTimer}
-              aria-label={isActive ? 'Pause Timer' : 'Start Timer'}
+              aria-label={isActive ? 'Pausar Timer' : 'Iniciar Timer'}
             >
               {isActive ? <Pause className="w-12 h-12"/> : <Play className="w-12 h-12"/>}
             </Button>
@@ -169,7 +169,7 @@ export function PomodoroDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               variant="ghost"
               size="icon"
               className="w-16 h-16 rounded-full"
-              aria-label="Notifications"
+              aria-label="Notificações"
             >
               <Bell className="w-8 h-8" />
             </Button>

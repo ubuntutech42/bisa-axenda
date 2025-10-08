@@ -19,10 +19,10 @@ import { Logo } from './Logo';
 import { PomodoroDialog } from '@/components/pomodoro/PomodoroDialog';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/board', label: 'Board', icon: LayoutGrid },
-  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-  { href: '/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/', label: 'Painel', icon: Home },
+  { href: '/board', label: 'Quadro', icon: LayoutGrid },
+  { href: '/calendar', label: 'Calendário', icon: CalendarDays },
+  { href: '/reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
 function NavContent() {
@@ -54,7 +54,7 @@ function NavContent() {
           className="w-full justify-start gap-3"
         >
           <Timer className="h-5 w-5" />
-          <span>Focus Timer</span>
+          <span>Timer de Foco</span>
         </Button>
       </div>
       <PomodoroDialog open={pomodoroOpen} onOpenChange={setPomodoroOpen} />
@@ -79,7 +79,7 @@ export function Sidebar() {
           <SheetTrigger asChild>
             <Button size="icon" variant="outline">
               <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
+              <span className="sr-only">Alternar menu de navegação</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">

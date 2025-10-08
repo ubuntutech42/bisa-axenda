@@ -4,7 +4,7 @@ import { EventCalendar } from '@/components/calendar/EventCalendar';
 export default function CalendarPage() {
   return (
     <div>
-      <Header title="Ancestral Calendar" />
+      <Header title="Calendário Ancestral" />
       <EventCalendar />
     </div>
   );

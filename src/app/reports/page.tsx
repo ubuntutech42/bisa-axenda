@@ -5,7 +5,7 @@ import { TimeDistributionChart } from '@/components/reports/TimeDistributionChar
 export default function ReportsPage() {
   return (
     <div>
-      <Header title="Reports & Insights" />
+      <Header title="Relatórios & Insights" />
       <div className="space-y-8">
         <TimeDistributionChart />
         <AiInsights />

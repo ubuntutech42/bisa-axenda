@@ -31,8 +31,8 @@ interface TaskDialogProps {
   onSave: (updatedTask: Task) => void;
 }
 
-const priorities: Priority[] = ['Low', 'Medium', 'High', 'Urgent'];
-const categories: Category[] = ['Work', 'Study', 'Self-care', 'Creation', 'Personal'];
+const priorities: Priority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
+const categories: Category[] = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'];
 
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
   if (!task) return null;
@@ -51,26 +51,26 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
         <SheetHeader>
           <SheetTitle className="font-headline">{task.title}</SheetTitle>
           <SheetDescription>
-            In <span className="font-semibold text-primary">{task.category}</span> category.
-            Last updated 3 hours ago.
+            Na categoria <span className="font-semibold text-primary">{task.category}</span>.
+            Atualizado há 3 horas.
           </SheetDescription>
         </SheetHeader>
         <div className="py-4 space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">Título</Label>
             <Input id="title" defaultValue={task.title} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" defaultValue={task.description} placeholder="Add a more detailed description..."/>
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea id="description" defaultValue={task.description} placeholder="Adicione uma descrição mais detalhada..."/>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
+              <Label htmlFor="priority">Prioridade</Label>
               <Select defaultValue={task.priority}>
                 <SelectTrigger id="priority">
-                  <SelectValue placeholder="Select priority" />
+                  <SelectValue placeholder="Selecione a prioridade" />
                 </SelectTrigger>
                 <SelectContent>
                   {priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -78,10 +78,10 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">Categoria</Label>
               <Select defaultValue={task.category}>
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -109,9 +109,9 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
         </div>
         <SheetFooter>
           <SheetClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">Cancelar</Button>
           </SheetClose>
-          <Button onClick={handleSave}>Save changes</Button>
+          <Button onClick={handleSave}>Salvar alterações</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
