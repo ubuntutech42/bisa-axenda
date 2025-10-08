@@ -42,7 +42,8 @@ const timeTrackingInsightsPrompt = ai.definePrompt({
   output: {schema: TimeTrackingInsightsOutputSchema},
   prompt: `You are a productivity expert providing insights and recommendations based on the user's time tracking data and goals.
 
-  Analyze the following tasks and time spent on them, considering the user's stated goals. Provide insights into their progress and the quality of their schedule. Offer specific, actionable recommendations for improvement.
+  Analyze the following tasks, the time spent on them, and how that time is distributed across different categories. Consider the user's stated goals.
+  Provide insights into their progress, the quality of their schedule, and the balance of time across categories. Offer specific, actionable recommendations for improvement.
 
   Goals: {{{goals}}}
 
