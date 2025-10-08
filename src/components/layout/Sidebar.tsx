@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 
 const navItems = [
@@ -132,6 +132,17 @@ function NavContent() {
 }
 
 export function Sidebar() {
+  // Add a state to prevent hydration errors by only rendering on the client
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    // Render a placeholder on the server and during initial client render
+    return null;
+  }
+  
   return (
     <>
       {/* Desktop Sidebar */}
