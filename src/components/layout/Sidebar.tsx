@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -99,7 +100,7 @@ function NavContent() {
                   pathname === item.href && 'bg-accent/80 text-primary font-bold'
                 )}
               >
-                <Icon className="h-5 w-5 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary" />
+                <Icon className={cn("h-5 w-5 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary", { 'text-primary': pathname === item.href })} />
                 <span className="transform transition-transform duration-300 ease-in-out group-hover:translate-x-1">{item.label}</span>
               </Link>
             );
