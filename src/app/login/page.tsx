@@ -42,6 +42,7 @@ export default function LoginPage() {
     }
   };
 
+  // Show a loader while checking auth state or if user is logged in (and about to be redirected)
   if (isUserLoading || user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -50,6 +51,7 @@ export default function LoginPage() {
     );
   }
 
+  // Only show the login page if the user is not loading and is not logged in
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <div className="w-full max-w-sm text-center">
