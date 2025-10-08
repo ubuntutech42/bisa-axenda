@@ -1,0 +1,683 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Axénda application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user.",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Username of the user."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the user's profile image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "userName"
+      ]
+    },
+    "KanbanBoard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "KanbanBoard",
+      "type": "object",
+      "description": "Represents a Kanban board for organizing tasks.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Kanban board.",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this board. (Relationship: User 1:N KanbanBoard)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the Kanban board."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the Kanban board."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name"
+      ]
+    },
+    "KanbanList": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "KanbanList",
+      "type": "object",
+      "description": "Represents a list within a Kanban board.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Kanban list.",
+          "format": "uuid"
+        },
+        "kanbanBoardId": {
+          "type": "string",
+          "description": "Reference to the KanbanBoard this list belongs to. (Relationship: KanbanBoard 1:N KanbanList)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the Kanban list (e.g., 'To Do', 'In Progress', 'Done')."
+        },
+        "order": {
+          "type": "number",
+          "description": "The order of the list within the Kanban board. Lower values appear first."
+        }
+      },
+      "required": [
+        "id",
+        "kanbanBoardId",
+        "name",
+        "order"
+      ]
+    },
+    "KanbanCard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "KanbanCard",
+      "type": "object",
+      "description": "Represents a card within a Kanban list, representing a task.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Kanban card.",
+          "format": "uuid"
+        },
+        "kanbanListId": {
+          "type": "string",
+          "description": "Reference to the KanbanList this card belongs to. (Relationship: KanbanList 1:N KanbanCard)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the Kanban card."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the task represented by the card."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority of the task (e.g., 'High', 'Medium', 'Low')."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date of the task.",
+          "format": "date-time"
+        },
+        "estimatedTime": {
+          "type": "number",
+          "description": "Estimated time to complete the task, in hours."
+        },
+        "effectiveTime": {
+          "type": "number",
+          "description": "Effective time spent on the task, in hours."
+        },
+        "categoryIds": {
+          "type": "array",
+          "description": "References to Categories associated with this card. (Relationship: Category N:N KanbanCard)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "kanbanListId",
+        "title"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category for classifying Kanban cards.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category.",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created this category. (Relationship: User 1:N Category)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "color": {
+          "type": "string",
+          "description": "Color associated with the category (e.g., '#FF0000')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name"
+      ]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on a Kanban card.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the comment.",
+          "format": "uuid"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this comment belongs to. (Relationship: KanbanCard 1:N Comment)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who wrote the comment. (Relationship: User 1:N Comment)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text of the comment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the comment was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "kanbanCardId",
+        "userId",
+        "text",
+        "createdAt"
+      ]
+    },
+    "ChecklistItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChecklistItem",
+      "type": "object",
+      "description": "Represents an item in a checklist on a Kanban card.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the checklist item.",
+          "format": "uuid"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this checklist item belongs to. (Relationship: KanbanCard 1:N ChecklistItem)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text of the checklist item."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates whether the checklist item is completed."
+        }
+      },
+      "required": [
+        "id",
+        "kanbanCardId",
+        "text",
+        "isCompleted"
+      ]
+    },
+    "PomodoroSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PomodoroSession",
+      "type": "object",
+      "description": "Represents a Pomodoro session for time management.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Pomodoro session.",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who started this session. (Relationship: User 1:N PomodoroSession)"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this PomodoroSession is linked to. (Relationship: KanbanCard 1:N PomodoroSession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the Pomodoro session.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the Pomodoro session.",
+          "format": "date-time"
+        },
+        "focusDuration": {
+          "type": "number",
+          "description": "Duration of the focus period in minutes."
+        },
+        "breakDuration": {
+          "type": "number",
+          "description": "Duration of the break period in minutes."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of focus for the session (e.g., 'Study', 'Work', 'Self-care')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "endTime",
+        "focusDuration",
+        "breakDuration"
+      ]
+    },
+    "Reminder": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reminder",
+      "type": "object",
+      "description": "Represents a reminder for a Kanban card.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the reminder.",
+          "format": "uuid"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this reminder is associated with. (Relationship: KanbanCard 1:N Reminder)"
+        },
+        "reminderTime": {
+          "type": "string",
+          "description": "Time when the reminder should be triggered.",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Custom message for the reminder."
+        }
+      },
+      "required": [
+        "id",
+        "kanbanCardId",
+        "reminderTime"
+      ]
+    },
+    "CalendarEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CalendarEvent",
+      "type": "object",
+      "description": "Represents an event in the calendar.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the calendar event.",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created this event. (Relationship: User 1:N CalendarEvent)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the calendar event."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the calendar event."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the calendar event.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the calendar event.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "startTime",
+        "endTime"
+      ]
+    },
+    "CulturalEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CulturalEvent",
+      "type": "object",
+      "description": "Represents an important date for the Black community.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the cultural event.",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the cultural event (e.g., 'Juneteenth')."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the cultural event.",
+          "format": "date"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the cultural event."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "date"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  The 'userId' parameter identifies the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}",
+        "definition": {
+          "entityName": "KanbanBoard",
+          "schema": {
+            "$ref": "#/backend/entities/KanbanBoard"
+          },
+          "description": "Stores Kanban boards owned by a specific user. The 'userId' parameter identifies the owner, and 'kanbanBoardId' identifies the board.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the board."
+            },
+            {
+              "name": "kanbanBoardId",
+              "description": "The unique identifier of the Kanban board."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}",
+        "definition": {
+          "entityName": "KanbanList",
+          "schema": {
+            "$ref": "#/backend/entities/KanbanList"
+          },
+          "description": "Stores Kanban lists within a specific board. The 'userId' and 'kanbanBoardId' parameters identify the board, and 'kanbanListId' identifies the list.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the board."
+            },
+            {
+              "name": "kanbanBoardId",
+              "description": "The unique identifier of the Kanban board."
+            },
+            {
+              "name": "kanbanListId",
+              "description": "The unique identifier of the Kanban list."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}",
+        "definition": {
+          "entityName": "KanbanCard",
+          "schema": {
+            "$ref": "#/backend/entities/KanbanCard"
+          },
+          "description": "Stores Kanban cards within a specific list. The 'userId', 'kanbanBoardId', and 'kanbanListId' parameters identify the list, and 'kanbanCardId' identifies the card.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the board."
+            },
+            {
+              "name": "kanbanBoardId",
+              "description": "The unique identifier of the Kanban board."
+            },
+            {
+              "name": "kanbanListId",
+              "description": "The unique identifier of the Kanban list."
+            },
+            {
+              "name": "kanbanCardId",
+              "description": "The unique identifier of the Kanban card."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores categories created by a specific user. The 'userId' parameter identifies the creator, and 'categoryId' identifies the category.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who created the category."
+            },
+            {
+              "name": "categoryId",
+              "description": "The unique identifier of the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments on a specific Kanban card. The 'userId', 'kanbanBoardId', 'kanbanListId', and 'kanbanCardId' parameters identify the card, and 'commentId' identifies the comment.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the board."
+            },
+            {
+              "name": "kanbanBoardId",
+              "description": "The unique identifier of the Kanban board."
+            },
+            {
+              "name": "kanbanListId",
+              "description": "The unique identifier of the Kanban list."
+            },
+            {
+              "name": "kanbanCardId",
+              "description": "The unique identifier of the Kanban card."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique identifier of the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/checklistItems/{checklistItemId}",
+        "definition": {
+          "entityName": "ChecklistItem",
+          "schema": {
+            "$ref": "#/backend/entities/ChecklistItem"
+          },
+          "description": "Stores checklist items for a specific Kanban card. The 'userId', 'kanbanBoardId', 'kanbanListId', and 'kanbanCardId' parameters identify the card, and 'checklistItemId' identifies the checklist item.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the board."
+            },
+            {
+              "name": "kanbanBoardId",
+              "description": "The unique identifier of the Kanban board."
+            },
+            {
+              "name": "kanbanListId",
+              "description": "The unique identifier of the Kanban list."
+            },
+            {
+              "name": "kanbanCardId",
+              "description": "The unique identifier of the Kanban card."
+            },
+            {
+              "name": "checklistItemId",
+              "description": "The unique identifier of the checklist item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/pomodoroSessions/{pomodoroSessionId}",
+        "definition": {
+          "entityName": "PomodoroSession",
+          "schema": {
+            "$ref": "#/backend/entities/PomodoroSession"
+          },
+          "description": "Stores Pomodoro sessions started by a specific user. The 'userId' parameter identifies the user, and 'pomodoroSessionId' identifies the session.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who started the session."
+            },
+            {
+              "name": "pomodoroSessionId",
+              "description": "The unique identifier of the Pomodoro session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/reminders/{reminderId}",
+        "definition": {
+          "entityName": "Reminder",
+          "schema": {
+            "$ref": "#/backend/entities/Reminder"
+          },
+          "description": "Stores reminders for a specific Kanban card. The 'userId', 'kanbanBoardId', 'kanbanListId', and 'kanbanCardId' parameters identify the card, and 'reminderId' identifies the reminder.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the board."
+            },
+            {
+              "name": "kanbanBoardId",
+              "description": "The unique identifier of the Kanban board."
+            },
+            {
+              "name": "kanbanListId",
+              "description": "The unique identifier of the Kanban list."
+            },
+            {
+              "name": "kanbanCardId",
+              "description": "The unique identifier of the Kanban card."
+            },
+            {
+              "name": "reminderId",
+              "description": "The unique identifier of the reminder."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/calendarEvents/{calendarEventId}",
+        "definition": {
+          "entityName": "CalendarEvent",
+          "schema": {
+            "$ref": "#/backend/entities/CalendarEvent"
+          },
+          "description": "Stores calendar events created by a specific user. The 'userId' parameter identifies the creator, and 'calendarEventId' identifies the event.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who created the event."
+            },
+            {
+              "name": "calendarEventId",
+              "description": "The unique identifier of the calendar event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/culturalEvents/{culturalEventId}",
+        "definition": {
+          "entityName": "CulturalEvent",
+          "schema": {
+            "$ref": "#/backend/entities/CulturalEvent"
+          },
+          "description": "Stores global cultural events. The 'culturalEventId' parameter identifies the event.",
+          "params": [
+            {
+              "name": "culturalEventId",
+              "description": "The unique identifier of the cultural event."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage user data, Kanban boards, lists, cards, categories, comments, checklist items, Pomodoro sessions, reminders, calendar events, and cultural events for the Axénda application. The structure prioritizes authorization independence by denormalizing user IDs where necessary, particularly for entities nested under Kanban boards. This approach avoids the need for `get()` calls in security rules, enabling atomic operations and simplifying security management.  \n\nTo support secure list operations (QAPs), the design implements Structural Segregation, ensuring that each collection contains documents with homogeneous security requirements. Private user data is stored under `/users/{userId}`, while collaborative data, if any, would use membership maps.  Since all Kanban related entities are owned by a user they are all nested under `/users/{userId}`.\n\nOwnership is consistently modeled using hierarchical paths, such as `/users/{userId}/kanbanBoards/{kanbanBoardId}`, which clearly establishes the relationship between users and their Kanban boards. Nested entities like Kanban lists, cards, and comments follow a similar pattern, ensuring a clear ownership hierarchy and simplified security rules.\n\nCultural events are stored in a global collection `/culturalEvents` as these events are global and not specific to any particular user."
+  }
+}
