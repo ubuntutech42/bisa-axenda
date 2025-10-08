@@ -13,7 +13,7 @@ import {
   Menu,
   Timer,
 } from 'lucide-react';
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -93,12 +93,12 @@ function NavContent() {
               key={item.label}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-accent/50',
+                'group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all duration-300 ease-in-out hover:text-primary hover:bg-accent/50',
                 pathname === item.href && 'bg-accent/80 text-primary font-bold'
               )}
             >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
+              <item.icon className="h-5 w-5 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary" />
+              <span className="transform transition-transform duration-300 ease-in-out group-hover:translate-x-1">{item.label}</span>
             </Link>
           ))}
         </nav>
