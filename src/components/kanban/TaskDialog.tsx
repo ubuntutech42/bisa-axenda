@@ -1,6 +1,6 @@
 "use client";
 
-import type { Task, Priority, Category } from '@/lib/types';
+import type { Task, Priority, Category, Status } from '@/lib/types';
 import {
   Sheet,
   SheetContent,
@@ -33,6 +33,7 @@ interface TaskDialogProps {
 
 const priorities: Priority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
 const categories: Category[] = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'];
+const statuses: Status[] = ['A Fazer', 'Em Progresso', 'Concluído'];
 
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
   if (!task) return null;
@@ -88,6 +89,18 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select defaultValue={task.status}>
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           
           <Separator />

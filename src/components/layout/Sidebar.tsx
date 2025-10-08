@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -17,7 +18,7 @@ import {
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
 import { PomodoroDialog } from '@/components/pomodoro/PomodoroDialog';
@@ -144,9 +145,10 @@ export function Sidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">
-            <div className="flex h-16 items-center justify-between border-b px-6">
+            <SheetHeader className="border-b px-6 h-16 flex flex-row items-center justify-between">
               <Logo />
-            </div>
+              <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+            </SheetHeader>
             <NavContent />
           </SheetContent>
         </Sheet>
