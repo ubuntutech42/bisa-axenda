@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { playFocusStartSound, playBreakStartSound, playTickSound } from '@/lib/sounds';
 import { cn } from '@/lib/utils';
 import { Bell, Play, Pause, RotateCcw } from 'lucide-react';

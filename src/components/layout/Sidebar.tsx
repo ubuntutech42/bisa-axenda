@@ -10,14 +10,14 @@ import {
   Loader,
   LogOut,
   Menu,
+  Timer,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
-import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -27,6 +27,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useState } from 'react';
+import { PomodoroDialog } from '@/components/pomodoro/PomodoroDialog';
 
 const navItems = [
   { href: '/', label: 'Painel', icon: Home },
@@ -80,6 +82,7 @@ function UserProfile() {
 
 function NavContent() {
   const pathname = usePathname();
+  const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
 
   return (
     <>
@@ -103,9 +106,13 @@ function NavContent() {
           })}
         </nav>
       </div>
-      <div className="mt-auto p-2">
-        <PomodoroTimer />
+      <div className="mt-auto p-4">
+          <Button variant="outline" className="w-full" onClick={() => setIsPomodoroOpen(true)}>
+              <Timer className="mr-2 h-4 w-4" />
+              Timer Pomodoro
+          </Button>
       </div>
+      <PomodoroDialog open={isPomodoroOpen} onOpenChange={setIsPomodoroOpen} />
     </>
   );
 }
@@ -132,10 +139,9 @@ export function Sidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">
-            <SheetHeader className="border-b px-6 h-16 flex flex-row items-center justify-between">
-              <SheetTitle className="sr-only">Menu Principal</SheetTitle>
-              <Logo />
-            </SheetHeader>
+             <div className="flex h-16 items-center justify-between border-b px-6">
+                <Logo />
+            </div>
             <NavContent />
           </SheetContent>
         </Sheet>
