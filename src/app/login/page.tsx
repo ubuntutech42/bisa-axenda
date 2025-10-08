@@ -1,15 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/layout/Logo';
-import { Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
+import { signin, sendPasswordReset } from '@/firebase/auth/actions';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
@@ -20,80 +24,131 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
+  password: z.string().min(1, { message: 'A senha não pode estar em branco.' }),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
 export default function LoginPage() {
   const auth = useAuth();
-  const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!isUserLoading && user) {
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const handleEmailSignIn = async (data: LoginFormData) => {
+    setLoading(true);
+    try {
+      await signin(data.email, data.password);
       router.push('/');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de Autenticação',
+        description: error.message || 'Não foi possível fazer login. Verifique suas credenciais.',
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [isUserLoading, user, router]);
+  };
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const loggedInUser = result.user;
-
-      // Create or update user document in Firestore
-      const userRef = doc(firestore, 'users', loggedInUser.uid);
-      await setDoc(userRef, {
-          id: loggedInUser.uid,
-          email: loggedInUser.email,
-          userName: loggedInUser.displayName,
-          firstName: loggedInUser.displayName?.split(' ')[0] || '',
-          lastName: loggedInUser.displayName?.split(' ').slice(1).join(' ') || '',
-          profileImageUrl: loggedInUser.photoURL
-      }, { merge: true });
-
+      await signInWithPopup(auth, provider);
+      router.push('/');
     } catch (error) {
-      if ((error as any).code === 'auth/popup-closed-by-user') {
-        return; // This is a normal user action, not an error.
-      }
+      if ((error as any).code === 'auth/popup-closed-by-user') return;
       console.error('Error signing in with Google: ', error);
       toast({
         variant: 'destructive',
         title: 'Erro de Autenticação',
-        description: 'Não foi possível fazer login com o Google. Por favor, tente novamente.',
+        description: 'Não foi possível fazer login com o Google. Tente novamente.',
       });
     }
   };
 
-  if (isUserLoading || user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handlePasswordReset = async () => {
+    const email = prompt('Por favor, digite seu e-mail para redefinir a senha:');
+    if (email) {
+      try {
+        await sendPasswordReset(email);
+        toast({
+          title: 'E-mail de redefinição enviado',
+          description: 'Verifique sua caixa de entrada para redefinir sua senha.',
+        });
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao enviar e-mail',
+          description: error.message || 'Não foi possível enviar o e-mail de redefinição.',
+        });
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <div className="w-full max-w-sm text-center">
-            <div className="inline-block mb-8">
-                <Logo />
-            </div>
-            
-            <div className="bg-card p-8 rounded-lg shadow-lg">
-                <h1 className="text-2xl font-bold font-headline text-foreground mb-2">Acesse sua conta</h1>
-                <p className="text-muted-foreground mb-6">
-                    Use sua conta do Google para continuar e organizar seu axé.
-                </p>
-
-                <Button onClick={handleGoogleSignIn} className="w-full" size="lg">
-                    <GoogleIcon className="mr-2"/>
-                    Entrar com Google
-                </Button>
-            </div>
-
-            <p className="text-xs text-muted-foreground mt-6 px-4">
-            Ao continuar, você concorda com nossos Termos de Serviço e Política de Privacidade.
-            </p>
+      <div className="w-full max-w-sm text-center">
+        <div className="inline-block mb-8">
+          <Logo />
         </div>
+        
+        <div className="bg-card p-8 rounded-lg shadow-lg">
+          <h1 className="text-2xl font-bold font-headline text-foreground mb-2">Acesse sua conta</h1>
+          <p className="text-muted-foreground mb-6">
+            Use suas credenciais para organizar seu axé.
+          </p>
+
+          <form onSubmit={handleSubmit(handleEmailSignIn)} className="space-y-4">
+            <div className="text-left">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} />
+              {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+            </div>
+            <div className="text-left">
+              <Label htmlFor="password">Senha</Label>
+              <Input id="password" type="password" placeholder="********" {...register('password')} />
+              {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
+            </div>
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? 'Entrando...' : 'Entrar'}
+            </Button>
+          </form>
+
+          <div className="text-sm text-right mt-4">
+            <button onClick={handlePasswordReset} className="text-primary hover:underline">
+              Esqueceu sua senha?
+            </button>
+          </div>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Ou continue com</span>
+            </div>
+          </div>
+
+          <Button onClick={handleGoogleSignIn} className="w-full" size="lg" variant="outline">
+            <GoogleIcon className="mr-2" />
+            Google
+          </Button>
+
+          <p className="text-sm text-muted-foreground mt-6">
+            Não tem uma conta?{' '}
+            <Link href="/register" className="font-semibold text-primary hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
