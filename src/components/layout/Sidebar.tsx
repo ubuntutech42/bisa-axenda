@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
-import { PomodoroDialog } from '@/components/pomodoro/PomodoroDialog';
+import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 
 const navItems = [
   { href: '/', label: 'Painel', icon: Home },
@@ -107,12 +107,12 @@ function NavContent() {
         </div>
       </nav>
       <div className="mt-auto p-4">
-          <Button variant="outline" className="w-full" onClick={() => setIsPomodoroOpen(true)}>
+          <Button variant="outline" className="w-full" onClick={() => setIsPomodoroOpen(prev => !prev)}>
               <Timer className="mr-2 h-4 w-4" />
-              Timer Pomodoro
+              {isPomodoroOpen ? 'Ocultar Timer' : 'Mostrar Timer'}
           </Button>
       </div>
-      <PomodoroDialog open={isPomodoroOpen} onOpenChange={setIsPomodoroOpen} />
+      {isPomodoroOpen && <FloatingPomodoro onClose={() => setIsPomodoroOpen(false)} />}
     </>
   );
 }
@@ -139,9 +139,11 @@ export function Sidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">
-             <SheetHeader className="flex h-16 items-center justify-between border-b px-6">
-                <Logo />
+             <SheetHeader>
                 <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+                <div className="flex h-16 items-center justify-between border-b px-6">
+                    <Logo />
+                </div>
             </SheetHeader>
             <NavContent />
           </SheetContent>
