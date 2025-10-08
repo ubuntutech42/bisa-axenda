@@ -10,6 +10,7 @@ import {
   Loader,
   LogOut,
   Menu,
+  Settings,
   Timer,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
@@ -29,6 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useState, useEffect } from 'react';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
+import { SettingsDialog } from '@/components/layout/SettingsDialog';
 
 const navItems = [
   { href: '/', label: 'Painel', icon: Home },
@@ -85,6 +87,7 @@ function UserProfile() {
 function NavContent() {
   const pathname = usePathname();
   const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const auth = useAuth();
 
   const handleLogout = async () => {
@@ -114,10 +117,14 @@ function NavContent() {
           })}
         </div>
       </nav>
-      <div className="px-4 py-2">
+      <div className="px-4 py-2 border-t border-border">
         <Button variant="ghost" className="w-full justify-start" onClick={() => setIsPomodoroOpen(prev => !prev)}>
             <Timer className="mr-3 h-5 w-5" />
             {isPomodoroOpen ? 'Ocultar Timer' : 'Timer Flutuante'}
+        </Button>
+        <Button variant="ghost" className="w-full justify-start" onClick={() => setIsSettingsOpen(true)}>
+          <Settings className="mr-3 h-5 w-5" />
+          Configurações
         </Button>
       </div>
       <div className="mt-auto p-4 border-t border-border">
@@ -127,20 +134,31 @@ function NavContent() {
           </Button>
       </div>
       {isPomodoroOpen && <FloatingPomodoro onClose={() => setIsPomodoroOpen(false)} />}
+      <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );
 }
 
 export function Sidebar() {
-  // Add a state to prevent hydration errors by only rendering on the client
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   if (!isClient) {
-    // Render a placeholder on the server and during initial client render
-    return null;
+    return (
+      <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-card h-screen">
+         <div className="flex h-16 shrink-0 items-center justify-between border-b px-6">
+           <div className="w-24 h-8 bg-muted/50 animate-pulse rounded-md"></div>
+           <div className="w-10 h-10 bg-muted/50 animate-pulse rounded-full"></div>
+        </div>
+        <div className="flex-1 p-4 space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="w-full h-10 bg-muted/50 animate-pulse rounded-md"></div>
+            ))}
+        </div>
+      </aside>
+    );
   }
   
   return (
