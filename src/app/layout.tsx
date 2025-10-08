@@ -4,32 +4,11 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
-import { useUser } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'Axénda',
   description: 'Sua agenda com axé. Organize sua rotina, celebre sua raiz.',
 };
-
-function ClientLayout({ children }: { children: React.ReactNode }) {
-  'use client';
-  const { user } = useUser();
-
-  return (
-    <div className="flex min-h-screen w-full bg-background">
-      <div className="flex flex-col md:flex-row w-full">
-        {user && <Sidebar />}
-        <div className="flex flex-col flex-1">
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
-        </div>
-      </div>
-      <Toaster />
-    </div>
-  );
-}
-
 
 export default function RootLayout({
   children,
@@ -51,7 +30,17 @@ export default function RootLayout({
             disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <ClientLayout>{children}</ClientLayout>
+            <div className="flex min-h-screen w-full bg-background">
+              <div className="flex flex-col md:flex-row w-full">
+                <Sidebar />
+                <div className="flex flex-col flex-1">
+                  <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    {children}
+                  </main>
+                </div>
+              </div>
+              <Toaster />
+            </div>
           </FirebaseClientProvider>
         </ThemeProvider>
       </body>

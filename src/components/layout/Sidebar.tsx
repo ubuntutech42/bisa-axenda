@@ -141,6 +141,8 @@ function NavContent() {
 
 export function Sidebar() {
   const [isClient, setIsClient] = useState(false);
+  const { user } = useUser();
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -159,6 +161,10 @@ export function Sidebar() {
         </div>
       </aside>
     );
+  }
+
+  if (!user) {
+    return null; // Don't render the sidebar if there's no user
   }
   
   return (
