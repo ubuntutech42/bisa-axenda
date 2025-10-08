@@ -114,7 +114,7 @@ function NavContent() {
           })}
         </div>
       </nav>
-      <div className="px-4 pb-4">
+      <div className="px-4">
         <Button variant="ghost" className="w-full justify-start" onClick={() => setIsPomodoroOpen(prev => !prev)}>
             <Timer className="mr-3 h-5 w-5" />
             {isPomodoroOpen ? 'Ocultar Timer' : 'Timer Flutuante'}
@@ -132,6 +132,9 @@ function NavContent() {
 }
 
 export function Sidebar() {
+  const { user } = useUser();
+  if (!user) return null;
+
   return (
     <>
       {/* Desktop Sidebar */}
@@ -144,7 +147,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Sidebar */}
-      <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:hidden">
+      <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:hidden sticky top-0 z-40">
         <Sheet>
           <SheetTrigger asChild>
             <Button size="icon" variant="outline">
@@ -162,7 +165,7 @@ export function Sidebar() {
             <NavContent />
           </SheetContent>
         </Sheet>
-        <div className="flex-1">
+        <div className="flex-1 text-center">
            <Logo />
         </div>
         <UserProfile />

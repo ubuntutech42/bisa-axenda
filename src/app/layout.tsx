@@ -24,11 +24,13 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <FirebaseClientProvider>
           <div className="flex min-h-screen w-full bg-background">
-            <Sidebar />
-            <div className="flex flex-col flex-1">
-              <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                {children}
-              </main>
+            <div className="flex flex-col md:flex-row w-full">
+              <Sidebar />
+              <div className="flex flex-col flex-1">
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                  {children}
+                </main>
+              </div>
             </div>
           </div>
           <Toaster />
