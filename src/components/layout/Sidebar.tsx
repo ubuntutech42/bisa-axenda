@@ -15,7 +15,7 @@ import {
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -86,8 +86,8 @@ function NavContent() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto">
-        <nav className="flex flex-col gap-2 px-4">
+      <nav className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex flex-col gap-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -104,8 +104,8 @@ function NavContent() {
               </Link>
             );
           })}
-        </nav>
-      </div>
+        </div>
+      </nav>
       <div className="mt-auto p-4">
           <Button variant="outline" className="w-full" onClick={() => setIsPomodoroOpen(true)}>
               <Timer className="mr-2 h-4 w-4" />
@@ -121,8 +121,8 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-card">
-        <div className="flex h-16 items-center justify-between border-b px-6">
+      <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-card h-screen">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b px-6">
           <Logo />
           <UserProfile />
         </div>
@@ -139,9 +139,10 @@ export function Sidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">
-             <div className="flex h-16 items-center justify-between border-b px-6">
+             <SheetHeader className="flex h-16 items-center justify-between border-b px-6">
                 <Logo />
-            </div>
+                <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+            </SheetHeader>
             <NavContent />
           </SheetContent>
         </Sheet>
