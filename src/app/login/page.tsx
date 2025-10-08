@@ -33,11 +33,12 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error('Error signing in with Google: ', error);
-      // Only show the popup closed error if it's not the user canceling it.
-      if ((error as any).code !== 'auth/popup-closed-by-user') {
-        // You can add a toast notification here for other errors.
+      // This error occurs if the user closes the popup.
+      // We can safely ignore it.
+      if ((error as any).code === 'auth/popup-closed-by-user') {
+        return;
       }
+      console.error('Error signing in with Google: ', error);
     }
   };
 
