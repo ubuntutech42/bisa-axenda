@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -9,14 +10,12 @@ import {
   LayoutGrid,
   Loader,
   LogOut,
-  Menu,
   Settings,
   Timer,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import { SettingsDialog } from '@/components/layout/SettingsDialog';
 
@@ -43,7 +42,6 @@ const navItems = [
 function UserProfile() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-
 
   if (isUserLoading) {
     return <Loader className="h-6 w-6 animate-spin" />;
@@ -94,7 +92,6 @@ function NavContent() {
     await signOut(auth);
   };
 
-
   return (
     <>
       <nav className="flex-1 overflow-y-auto px-4 py-4">
@@ -140,68 +137,19 @@ function NavContent() {
 }
 
 export function Sidebar() {
-  const [isClient, setIsClient] = useState(false);
   const { user } = useUser();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return (
-      <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-card h-screen">
-         <div className="flex h-16 shrink-0 items-center justify-between border-b px-6">
-           <div className="w-24 h-8 bg-muted/50 animate-pulse rounded-md"></div>
-           <div className="w-10 h-10 bg-muted/50 animate-pulse rounded-full"></div>
-        </div>
-        <div className="flex-1 p-4 space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="w-full h-10 bg-muted/50 animate-pulse rounded-md"></div>
-            ))}
-        </div>
-      </aside>
-    );
-  }
-
   if (!user) {
-    return null; // Don't render the sidebar if there's no user
+    return null;
   }
   
   return (
-    <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-card h-screen">
+      <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-card h-screen sticky top-0">
         <div className="flex h-16 shrink-0 items-center justify-between border-b px-6">
           <Logo />
           <UserProfile />
         </div>
         <NavContent />
       </aside>
-
-      {/* Mobile Sidebar */}
-      <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:hidden sticky top-0 z-40">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button size="icon" variant="outline">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Alternar menu de navegação</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="flex flex-col p-0 w-64">
-            <SheetHeader>
-              <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
-              <div className="flex h-16 items-center justify-between border-b px-6">
-                  <Logo />
-              </div>
-            </SheetHeader>
-            <NavContent />
-          </SheetContent>
-        </Sheet>
-        <div className="flex-1 text-center">
-           <Logo />
-        </div>
-        <UserProfile />
-      </header>
-    </>
   );
 }
