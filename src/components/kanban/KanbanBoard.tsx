@@ -6,12 +6,16 @@ import { TaskDialog } from './TaskDialog';
 import type { Task, KanbanList } from '@/lib/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, serverTimestamp, addDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
 
-export function KanbanBoard() {
+interface KanbanBoardProps {
+  lists: KanbanList[];
+}
+
+export function KanbanBoard({ lists }: KanbanBoardProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -23,18 +27,11 @@ export function KanbanBoard() {
   );
   const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksQuery);
 
-  // Fetch Lists (Columns)
-  const listsQuery = useMemoFirebase(() =>
-    user ? collection(firestore, 'users', user.uid, 'kanbanLists') : null,
-    [firestore, user]
-  );
-  const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
-
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   // Create default lists if none exist
   useEffect(() => {
-    if (user && !areListsLoading && lists && lists.length === 0) {
+    if (user && lists && lists.length === 0) {
       const createDefaultLists = async () => {
         const batch = writeBatch(firestore);
         const defaultLists = [
@@ -54,7 +51,7 @@ export function KanbanBoard() {
       };
       createDefaultLists();
     }
-  }, [user, areListsLoading, lists, firestore, toast]);
+  }, [user, lists, firestore, toast]);
 
   const sortedLists = useMemo(() => {
     if (!lists) return [];
@@ -92,25 +89,6 @@ export function KanbanBoard() {
     }
   };
 
-  const handleAddColumn = async () => {
-    if (!user) return;
-    const newColumnName = prompt('Digite o nome da nova coluna:');
-    if (newColumnName) {
-      try {
-        const listsCollection = collection(firestore, 'users', user.uid, 'kanbanLists');
-        await addDoc(listsCollection, {
-          name: newColumnName,
-          order: lists ? lists.length : 0,
-          userId: user.uid,
-        });
-        toast({ title: 'Coluna adicionada!', description: `A coluna "${newColumnName}" foi criada.` });
-      } catch (error) {
-        console.error('Error adding column:', error);
-        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a coluna.' });
-      }
-    }
-  };
-
   const handleUpdateColumnName = async (listId: string, newName: string) => {
     if (!user) return;
     try {
@@ -136,7 +114,7 @@ export function KanbanBoard() {
     }, {} as Record<string, Task[]>);
   }, [tasks, sortedLists]);
 
-  if (areTasksLoading || areListsLoading) {
+  if (areTasksLoading) {
     return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
@@ -156,12 +134,6 @@ export function KanbanBoard() {
               />
             );
           })}
-          <div className="flex-shrink-0 w-72 md:w-80 pt-12">
-            <Button variant="outline" className="w-full" onClick={handleAddColumn}>
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar outra lista
-            </Button>
-          </div>
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>

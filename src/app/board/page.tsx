@@ -56,6 +56,25 @@ export default function BoardPage() {
     }
   };
 
+  const handleAddColumn = async () => {
+    if (!user) return;
+    const newColumnName = prompt('Digite o nome da nova coluna:');
+    if (newColumnName) {
+      try {
+        const listsCollection = collection(firestore, 'users', user.uid, 'kanbanLists');
+        await addDoc(listsCollection, {
+          name: newColumnName,
+          order: lists ? lists.length : 0,
+          userId: user.uid,
+        });
+        toast({ title: 'Coluna adicionada!', description: `A coluna "${newColumnName}" foi criada.` });
+      } catch (error) {
+        console.error('Error adding column:', error);
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a coluna.' });
+      }
+    }
+  };
+
   if (isUserLoading || areListsLoading || !user || !lists) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -67,13 +86,19 @@ export default function BoardPage() {
   return (
     <div className="flex flex-col h-full">
       <Header title="Quadro Kanban">
-        <Button onClick={() => setIsNewTaskDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Tarefa
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsNewTaskDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Tarefa
+          </Button>
+          <Button variant="outline" onClick={handleAddColumn}>
+            <Plus className="mr-2 h-4 w-4" />
+            Adicionar Lista
+          </Button>
+        </div>
       </Header>
       <div className="flex-1 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-        <KanbanBoard />
+        <KanbanBoard lists={lists} />
       </div>
       <TaskDialog
         isOpen={isNewTaskDialogOpen}
