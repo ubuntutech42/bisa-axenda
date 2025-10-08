@@ -1,7 +1,8 @@
+
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseClientProvider, useUser } from '@/firebase';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -9,11 +10,14 @@ export const metadata: Metadata = {
   description: 'Sua agenda com axé. Organize sua rotina, celebre sua raiz.',
 };
 
-export default function RootLayout({
+function AppLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  'use client';
+  const { user, isUserLoading } = useUser();
+
   return (
     <html lang="pt-BR" className="dark">
       <head>
@@ -22,20 +26,30 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
-          <div className="flex min-h-screen w-full bg-background">
-            <div className="flex flex-col md:flex-row w-full">
-              <Sidebar />
-              <div className="flex flex-col flex-1">
-                <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                  {children}
-                </main>
-              </div>
+        <div className="flex min-h-screen w-full bg-background">
+          <div className="flex flex-col md:flex-row w-full">
+            {!isUserLoading && user && <Sidebar />}
+            <div className="flex flex-col flex-1">
+              <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                {children}
+              </main>
             </div>
           </div>
-          <Toaster />
-        </FirebaseClientProvider>
+        </div>
+        <Toaster />
       </body>
     </html>
+  );
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <FirebaseClientProvider>
+      <AppLayout>{children}</AppLayout>
+    </FirebaseClientProvider>
   );
 }
