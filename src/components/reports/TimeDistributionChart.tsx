@@ -10,8 +10,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { tasks } from "@/lib/data";
-import type { Category } from "@/lib/types";
+import type { Task, Category } from "@/lib/types";
 import type { ChartConfig } from "@/components/ui/chart";
 
 const chartConfig = {
@@ -40,8 +39,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function TimeDistributionChart() {
-  const categoryTime = Object.values(tasks).reduce((acc, task) => {
+interface TimeDistributionChartProps {
+    tasks: Task[];
+}
+
+export function TimeDistributionChart({ tasks }: TimeDistributionChartProps) {
+  const categoryTime = tasks.reduce((acc, task) => {
     if (!acc[task.category]) {
       acc[task.category] = 0;
     }

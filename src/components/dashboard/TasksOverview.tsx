@@ -1,6 +1,5 @@
 "use client";
 
-import { tasks as allTasks } from '@/lib/data';
 import type { Task, Priority } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
@@ -14,8 +13,12 @@ const priorityVariantMap: Record<Priority, BadgeProps['variant']> = {
   Baixa: 'outline',
 };
 
-export function TasksOverview() {
-  const upcomingTasks = Object.values(allTasks)
+interface TasksOverviewProps {
+    tasks: Task[];
+}
+
+export function TasksOverview({ tasks }: TasksOverviewProps) {
+  const upcomingTasks = tasks
     .filter(task => task.status !== 'Concluído' && task.deadline)
     .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
     .slice(0, 5);

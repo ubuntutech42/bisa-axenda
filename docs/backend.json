@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -39,6 +40,70 @@
         "email",
         "userName"
       ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task in the Kanban board.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the task."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this task."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the task."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Estudo", "Trabalho", "Autocuidado", "Criação", "Pessoal"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["Baixa", "Média", "Alta", "Urgente"]
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "estimatedTime": {
+          "type": "number",
+          "description": "Estimated time in minutes."
+        },
+        "timeSpent": {
+          "type": "number",
+          "description": "Time spent in minutes."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["A Fazer", "Em Progresso", "Concluído"]
+        },
+        "checklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "completed": { "type": "boolean" }
+            },
+            "required": ["text", "completed"]
+          }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["id", "userId", "title", "category", "priority", "timeSpent", "status"]
     },
     "KanbanBoard": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -421,23 +486,11 @@
       },
       "description": "Stores user profiles."
     },
-    "/users/{userId}/kanbanBoards/{kanbanBoardId}": {
+    "/users/{userId}/tasks/{taskId}": {
       "schema": {
-        "$ref": "#/entities/KanbanBoard"
+        "$ref": "#/entities/Task"
       },
-      "description": "Stores Kanban boards for a specific user."
-    },
-    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}": {
-      "schema": {
-        "$ref": "#/entities/KanbanList"
-      },
-      "description": "Stores lists within a Kanban board."
-    },
-    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}": {
-      "schema": {
-        "$ref": "#/entities/KanbanCard"
-      },
-      "description": "Stores cards within a Kanban list."
+      "description": "Stores tasks for a specific user."
     },
     "/users/{userId}/categories/{categoryId}": {
       "schema": {
@@ -445,29 +498,11 @@
       },
       "description": "Stores user-created categories."
     },
-    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/comments/{commentId}": {
-      "schema": {
-        "$ref": "#/entities/Comment"
-      },
-      "description": "Stores comments on a Kanban card."
-    },
-    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/checklistItems/{checklistItemId}": {
-      "schema": {
-        "$ref": "#/entities/ChecklistItem"
-      },
-      "description": "Stores checklist items for a Kanban card."
-    },
     "/users/{userId}/pomodoroSessions/{pomodoroSessionId}": {
       "schema": {
         "$ref": "#/entities/PomodoroSession"
       },
       "description": "Stores Pomodoro sessions for a user."
-    },
-    "/users/{userId}/kanbanBoards/{kanbanBoardId}/kanbanLists/{kanbanListId}/kanbanCards/{kanbanCardId}/reminders/{reminderId}": {
-      "schema": {
-        "$ref": "#/entities/Reminder"
-      },
-      "description": "Stores reminders for a Kanban card."
     },
     "/users/{userId}/calendarEvents/{calendarEventId}": {
       "schema": {

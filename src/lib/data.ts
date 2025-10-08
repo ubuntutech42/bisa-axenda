@@ -1,87 +1,24 @@
-import type { Task, CulturalEvent, Quote, KanbanColumn } from './types';
+import type { CulturalEvent, Quote, KanbanColumn, Status } from './types';
 
-export const tasks: Record<string, Task> = {
-  'task-1': {
-    id: 'task-1',
-    title: 'Finalizar proposta do projeto',
-    description: 'Revisar e finalizar a proposta do projeto do 3º trimestre para a iniciativa de tecnologia Ubuntu.',
-    category: 'Trabalho',
-    priority: 'Alta',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    estimatedTime: 120,
-    timeSpent: 45,
-    status: 'Em Progresso',
-    checklist: [
-      { text: 'Esboçar proposta inicial', completed: true },
-      { text: 'Obter feedback da equipe', completed: true },
-      { text: 'Incorporar feedback', completed: false },
-      { text: 'Revisão final', completed: false },
-    ],
-  },
-  'task-2': {
-    id: 'task-2',
-    title: 'Estudar para a prova',
-    description: 'Preparar para a prova de História Africana.',
-    category: 'Estudo',
-    priority: 'Urgente',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString(),
-    estimatedTime: 240,
-    timeSpent: 90,
-    status: 'Em Progresso',
-  },
-  'task-3': {
-    id: 'task-3',
-    title: 'Meditação matinal',
-    category: 'Autocuidado',
-    priority: 'Média',
-    timeSpent: 15,
-    status: 'Concluído',
-  },
-  'task-4': {
-    id: 'task-4',
-    title: 'Brainstorm para nova peça de arte',
-    category: 'Criação',
-    priority: 'Baixa',
-    timeSpent: 0,
-    status: 'A Fazer',
-  },
-  'task-5': {
-    id: 'task-5',
-    title: 'Compras semanais',
-    category: 'Pessoal',
-    priority: 'Média',
-    timeSpent: 0,
-    status: 'A Fazer',
-  },
-  'task-6': {
-    id: 'task-6',
-    title: 'Ler um capítulo de "A Dança da Água"',
-    category: 'Autocuidado',
-    priority: 'Baixa',
-    timeSpent: 25,
-    status: 'Concluído',
-  },
-};
-
-export const columns: Record<string, KanbanColumn> = {
+export const columns: Record<Status, KanbanColumn> = {
   'A Fazer': {
     id: 'A Fazer',
     title: 'A Fazer',
-    taskIds: ['task-4', 'task-5'],
+    taskIds: [],
   },
   'Em Progresso': {
     id: 'Em Progresso',
     title: 'Em Progresso',
-    taskIds: ['task-1', 'task-2'],
+    taskIds: [],
   },
   'Concluído': {
     id: 'Concluído',
     title: 'Concluído',
-    taskIds: ['task-3', 'task-6'],
+    taskIds: [],
   },
 };
 
-export const columnOrder: ('A Fazer' | 'Em Progresso' | 'Concluído')[] = ['A Fazer', 'Em Progresso', 'Concluído'];
+export const columnOrder: Status[] = ['A Fazer', 'Em Progresso', 'Concluído'];
 
 export const culturalEvents: CulturalEvent[] = [
   { date: '2024-01-01', title: 'Confraternização Universal', description: 'Feriado nacional.' },

@@ -1,31 +1,52 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { tasks as allTasks, culturalEvents } from '@/lib/data';
+import { culturalEvents } from '@/lib/data';
 import type { Task, CulturalEvent } from '@/lib/types';
 import { format, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { Loader } from 'lucide-react';
+
 
 type CalendarEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' });
 
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-
-  const tasksWithDeadlines = Object.values(allTasks).filter(t => t.deadline);
   
-  const allEvents: CalendarEvent[] = [
-    ...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })),
-    ...culturalEvents.map(e => ({...e, type: 'cultural' as const, id: e.title}))
-  ];
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const tasksQuery = useMemoFirebase(() => 
+    user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
+    [firestore, user]
+  );
+  
+  const { data: tasks, isLoading } = useCollection<Task>(tasksQuery);
+
+
+  const allEvents: CalendarEvent[] = useMemo(() => {
+    const tasksWithDeadlines = (tasks || []).filter(t => t.deadline);
+    return [
+      ...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })),
+      ...culturalEvents.map(e => ({...e, type: 'cultural' as const, id: e.title, title: e.title}))
+    ];
+  }, [tasks]);
 
   const selectedDayEvents = date ? allEvents.filter(event => {
-    const eventDate = 'deadline' in event ? event.deadline : event.date;
-    return isSameDay(parseISO(eventDate!), date);
+    const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
+    if (!eventDate) return false;
+    return isSameDay(parseISO(eventDate), date);
   }) : [];
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
+  }
 
   return (
     <div className="lg:grid lg:grid-cols-3 lg:gap-8">
@@ -44,8 +65,9 @@ export function EventCalendar() {
             components={{
               DayContent: ({ date }) => {
                 const dayEvents = allEvents.filter(event => {
-                    const eventDate = 'deadline' in event ? event.deadline : event.date;
-                    return isSameDay(parseISO(eventDate!), date);
+                    const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
+                    if (!eventDate) return false;
+                    return isSameDay(parseISO(eventDate), date);
                 });
                 return (
                   <div className="relative h-full w-full flex items-center justify-center">

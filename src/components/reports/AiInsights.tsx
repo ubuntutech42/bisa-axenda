@@ -1,17 +1,21 @@
 "use client";
 
 import { useState } from 'react';
+import type { Task } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Sparkles } from 'lucide-react';
 import { generateInsightsAction } from '@/app/actions';
-import { tasks as allTasks } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-export function AiInsights() {
+interface AiInsightsProps {
+    tasks: Task[];
+}
+
+export function AiInsights({ tasks }: AiInsightsProps) {
   const [goals, setGoals] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +31,7 @@ export function AiInsights() {
     setIsLoading(true);
     setInsights(null);
 
-    const taskData = Object.values(allTasks).map(({ title, category, timeSpent, deadline }) => ({
+    const taskData = tasks.map(({ title, category, timeSpent, deadline }) => ({
         title,
         category,
         timeSpent,
@@ -67,7 +71,7 @@ export function AiInsights() {
               rows={3}
             />
           </div>
-          <Button type="submit" disabled={isLoading} className="w-full">
+          <Button type="submit" disabled={isLoading || tasks.length === 0} className="w-full">
             {isLoading ? 'Gerando...' : 'Gerar Insights'}
           </Button>
         </form>

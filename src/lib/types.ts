@@ -2,8 +2,12 @@ export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pe
 
 export type Priority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 
+export type Status = 'A Fazer' | 'Em Progresso' | 'Concluído';
+
+
 export interface Task {
   id: string;
+  userId: string;
   title: string;
   description?: string;
   category: Category;
@@ -11,13 +15,13 @@ export interface Task {
   deadline?: string;
   estimatedTime?: number; // in minutes
   timeSpent: number; // in minutes
-  status: 'A Fazer' | 'Em Progresso' | 'Concluído';
+  status: Status;
   checklist?: { text: string; completed: boolean }[];
   comments?: string[];
 }
 
 export interface KanbanColumn {
-  id: 'A Fazer' | 'Em Progresso' | 'Concluído';
+  id: Status;
   title: string;
   taskIds: string[];
 }
