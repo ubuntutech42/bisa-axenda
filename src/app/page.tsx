@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import type { Task } from '@/lib/types';
+import type { Task, KanbanList } from '@/lib/types';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { TasksOverview } from '@/components/dashboard/TasksOverview';
@@ -21,8 +21,13 @@ export default function DashboardPage() {
     user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
     [firestore, user]
   );
-
   const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksQuery);
+
+  const listsQuery = useMemoFirebase(() =>
+    user ? collection(firestore, 'users', user.uid, 'kanbanLists') : null,
+    [firestore, user]
+  );
+  const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -31,19 +36,20 @@ export default function DashboardPage() {
   }, [isUserLoading, user, router]);
 
   const stats = useMemo(() => {
-    if (!tasks) {
+    if (!tasks || !lists) {
       return { tasksCompleted: 0, totalFocusTime: 0, pomodoros: 0 };
     }
-    const tasksCompleted = tasks.filter(task => task.status === 'Concluído').length;
+    const completedList = lists.find(list => list.name === 'Concluído');
+    const tasksCompleted = completedList ? tasks.filter(task => task.listId === completedList.id).length : 0;
     const totalFocusTime = tasks.reduce((sum, task) => sum + task.timeSpent, 0);
     const pomodoros = tasks.filter(t => t.category === 'Trabalho' || t.category === 'Estudo').reduce((acc, t) => acc + Math.floor(t.timeSpent/25), 0);
     return { tasksCompleted, totalFocusTime, pomodoros };
-  }, [tasks]);
+  }, [tasks, lists]);
   
   const hours = Math.floor(stats.totalFocusTime / 60);
   const minutes = stats.totalFocusTime % 60;
   
-  if (isUserLoading || areTasksLoading || !user) {
+  if (isUserLoading || areTasksLoading || areListsLoading || !user) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="h-10 w-10 animate-spin text-primary" />
@@ -64,7 +70,7 @@ export default function DashboardPage() {
           <StatCard title="Pomodoros" value={String(stats.pomodoros)} icon={Coffee} />
         </div>
 
-        <TasksOverview tasks={tasks || []} />
+        <TasksOverview tasks={tasks || []} lists={lists || []} />
       </div>
     </div>
   );

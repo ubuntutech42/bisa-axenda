@@ -3,51 +3,63 @@
 import { useState, useEffect, useMemo } from 'react';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskDialog } from './TaskDialog';
-import { columns as initialColumns, columnOrder } from '@/lib/data';
-import type { Task, Status } from '@/lib/types';
+import type { Task, KanbanList } from '@/lib/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, updateDoc, serverTimestamp, addDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader } from 'lucide-react';
+import { Loader, Plus } from 'lucide-react';
+import { Button } from '../ui/button';
 
 export function KanbanBoard() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  // Fetch Tasks
   const tasksQuery = useMemoFirebase(() => 
     user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
     [firestore, user]
   );
-  
-  const { data: tasks, isLoading } = useCollection<Task>(tasksQuery);
+  const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksQuery);
 
-  const [columns, setColumns] = useState(initialColumns);
+  // Fetch Lists (Columns)
+  const listsQuery = useMemoFirebase(() =>
+    user ? collection(firestore, 'users', user.uid, 'kanbanLists') : null,
+    [firestore, user]
+  );
+  const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
+
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
+  // Create default lists if none exist
   useEffect(() => {
-    if (tasks) {
-      setColumns(prevColumns => {
-        const newColumns = { ...prevColumns };
-        // Reset taskIds
-        Object.keys(newColumns).forEach(key => {
-            newColumns[key as Status].taskIds = [];
+    if (user && !areListsLoading && lists && lists.length === 0) {
+      const createDefaultLists = async () => {
+        const batch = writeBatch(firestore);
+        const defaultLists = [
+          { name: 'A Fazer', order: 0 },
+          { name: 'Em Progresso', order: 1 },
+          { name: 'Concluído', order: 2 },
+        ];
+        const listsCollection = collection(firestore, 'users', user.uid, 'kanbanLists');
+        
+        defaultLists.forEach(list => {
+          const docRef = doc(listsCollection);
+          batch.set(docRef, { ...list, userId: user.uid });
         });
-        // Populate taskIds from fetched tasks
-        tasks.forEach(task => {
-          if (newColumns[task.status]) {
-            // Avoid duplicates
-            if (!newColumns[task.status].taskIds.includes(task.id)) {
-              newColumns[task.status].taskIds.push(task.id);
-            }
-          }
-        });
-        return newColumns;
-      });
+        
+        await batch.commit();
+        toast({ title: 'Quadro iniciado!', description: 'Suas colunas iniciais foram criadas.' });
+      };
+      createDefaultLists();
     }
-  }, [tasks]);
+  }, [user, areListsLoading, lists, firestore, toast]);
 
+  const sortedLists = useMemo(() => {
+    if (!lists) return [];
+    return [...lists].sort((a, b) => a.order - b.order);
+  }, [lists]);
 
   const handleCardClick = (task: Task) => {
     setActiveTask(task);
@@ -57,17 +69,17 @@ export function KanbanBoard() {
     setActiveTask(null);
   };
 
-  const handleSaveTask = async (updatedTask: Task) => {
-    if (!user) return;
+  const handleSaveTask = async (updatedTaskData: Partial<Task> & { id?: string }) => {
+    if (!user || !updatedTaskData.id) return;
     try {
-      const taskRef = doc(firestore, 'users', user.uid, 'tasks', updatedTask.id);
+      const taskRef = doc(firestore, 'users', user.uid, 'tasks', updatedTaskData.id);
       await updateDoc(taskRef, {
-        ...updatedTask,
+        ...updatedTaskData,
         updatedAt: serverTimestamp(),
       });
       toast({
         title: 'Tarefa atualizada!',
-        description: `A tarefa "${updatedTask.title}" foi salva.`,
+        description: `A tarefa "${updatedTaskData.title}" foi salva.`,
       });
       handleCloseDialog();
     } catch (error) {
@@ -80,34 +92,76 @@ export function KanbanBoard() {
     }
   };
 
-  const tasksById = useMemo(() => {
+  const handleAddColumn = async () => {
+    if (!user) return;
+    const newColumnName = prompt('Digite o nome da nova coluna:');
+    if (newColumnName) {
+      try {
+        const listsCollection = collection(firestore, 'users', user.uid, 'kanbanLists');
+        await addDoc(listsCollection, {
+          name: newColumnName,
+          order: lists ? lists.length : 0,
+          userId: user.uid,
+        });
+        toast({ title: 'Coluna adicionada!', description: `A coluna "${newColumnName}" foi criada.` });
+      } catch (error) {
+        console.error('Error adding column:', error);
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a coluna.' });
+      }
+    }
+  };
+
+  const handleUpdateColumnName = async (listId: string, newName: string) => {
+    if (!user) return;
+    try {
+      const listRef = doc(firestore, 'users', user.uid, 'kanbanLists', listId);
+      await updateDoc(listRef, { name: newName });
+      toast({ title: 'Coluna atualizada!', description: `O nome da coluna foi alterado para "${newName}".` });
+    } catch (error) {
+      console.error('Error updating column name:', error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível atualizar a coluna.' });
+    }
+  };
+
+  const tasksByListId = useMemo(() => {
     if (!tasks) return {};
     return tasks.reduce((acc, task) => {
-      acc[task.id] = task;
+      const listId = task.listId || (sortedLists.find(l => l.name === 'A Fazer')?.id);
+      if (!listId) return acc;
+      if (!acc[listId]) {
+        acc[listId] = [];
+      }
+      acc[listId].push(task);
       return acc;
-    }, {} as Record<string, Task>);
-  }, [tasks]);
+    }, {} as Record<string, Task[]>);
+  }, [tasks, sortedLists]);
 
-  if (isLoading) {
-      return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary" /></div>
+  if (areTasksLoading || areListsLoading) {
+    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
     <>
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-4 pb-4">
-          {columnOrder.map((columnId) => {
-            const column = columns[columnId];
-            const columnTasks = column.taskIds.map((taskId) => tasksById[taskId]).filter(Boolean);
+        <div className="flex gap-4 pb-4 items-start">
+          {sortedLists.map((list) => {
+            const columnTasks = tasksByListId[list.id] || [];
             return (
               <KanbanColumn
-                key={column.id}
-                column={column}
+                key={list.id}
+                list={list}
                 tasks={columnTasks}
                 onCardClick={handleCardClick}
+                onUpdateListName={handleUpdateColumnName}
               />
             );
           })}
+          <div className="flex-shrink-0 w-72 md:w-80 pt-12">
+            <Button variant="outline" className="w-full" onClick={handleAddColumn}>
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar outra lista
+            </Button>
+          </div>
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -116,6 +170,7 @@ export function KanbanBoard() {
         isOpen={!!activeTask} 
         onClose={handleCloseDialog}
         onSave={handleSaveTask}
+        lists={sortedLists}
       />
     </>
   );

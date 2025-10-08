@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp, query } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { Button } from '@/components/ui/button';
 import { Loader, Plus } from 'lucide-react';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
-import type { Task } from '@/lib/types';
+import type { Task, KanbanList } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function BoardPage() {
@@ -19,13 +19,19 @@ export default function BoardPage() {
   const { toast } = useToast();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
 
+  const listsQuery = useMemoFirebase(() => 
+    user ? query(collection(firestore, 'users', user.uid, 'kanbanLists')) : null, 
+    [firestore, user]
+  );
+  const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [isUserLoading, user, router]);
 
-  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'status'>) => {
+  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' >) => {
     if (!user) return;
     try {
       const tasksCollection = collection(firestore, 'users', user.uid, 'tasks');
@@ -33,7 +39,6 @@ export default function BoardPage() {
         ...newTaskData,
         userId: user.uid,
         timeSpent: 0,
-        status: 'A Fazer',
         createdAt: serverTimestamp(),
       });
       toast({
@@ -51,7 +56,7 @@ export default function BoardPage() {
     }
   };
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || areListsLoading || !user || !lists) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="h-10 w-10 animate-spin text-primary" />
@@ -74,6 +79,7 @@ export default function BoardPage() {
         isOpen={isNewTaskDialogOpen}
         onClose={() => setIsNewTaskDialogOpen(false)}
         onSave={handleCreateTask}
+        lists={lists}
       />
     </div>
   );

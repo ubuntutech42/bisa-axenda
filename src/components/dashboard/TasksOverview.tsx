@@ -15,11 +15,15 @@ const priorityVariantMap: Record<Priority, BadgeProps['variant']> = {
 
 interface TasksOverviewProps {
     tasks: Task[];
+    lists: { id: string, name: string }[];
 }
 
-export function TasksOverview({ tasks }: TasksOverviewProps) {
+export function TasksOverview({ tasks, lists }: TasksOverviewProps) {
+  const completedListName = 'Concluído';
+  const completedList = lists.find(list => list.name.toLowerCase() === completedListName.toLowerCase());
+
   const upcomingTasks = tasks
-    .filter(task => task.status !== 'Concluído' && task.deadline)
+    .filter(task => (!completedList || task.listId !== completedList.id) && task.deadline)
     .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
     .slice(0, 5);
 

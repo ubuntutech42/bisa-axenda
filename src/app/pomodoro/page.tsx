@@ -3,17 +3,17 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Loader, Play, Pause, RotateCcw, History } from 'lucide-react';
-import type { Task, PomodoroSession } from '@/lib/types';
+import type { Task, PomodoroSession, KanbanList } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { playFocusStartSound, playBreakStartSound, playTickSound } from '@/lib/sounds';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak';
@@ -35,8 +35,14 @@ export default function PomodoroPage() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
-  const tasksQuery = useMemoFirebase(() => 
-    user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
+  const listsQuery = useMemoFirebase(() =>
+    user ? collection(firestore, 'users', user.uid, 'kanbanLists') : null,
+    [firestore, user]
+  );
+  const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
+
+  const tasksQuery = useMemoFirebase(() =>
+    user ? collection(firestore, 'users', user.uid, 'tasks') : null,
     [firestore, user]
   );
   const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksQuery);
@@ -54,7 +60,9 @@ export default function PomodoroPage() {
   }, [isUserLoading, user, router]);
 
   const saveSession = useCallback(async (startTime: Date, focusDuration: number) => {
-    if (!user || !currentTaskId || !pomodoroQuery) return;
+    if (!user || !currentTaskId || !pomodoroQuery || !firestore) return;
+
+    // Save pomodoro session
     const associatedTask = tasks?.find(t => t.id === currentTaskId);
     await addDoc(pomodoroQuery, {
       userId: user.uid,
@@ -64,7 +72,14 @@ export default function PomodoroPage() {
       focusDuration,
       category: associatedTask?.category || 'N/A',
     });
-  }, [user, currentTaskId, pomodoroQuery, tasks]);
+
+    // Update timeSpent on task
+    const taskRef = doc(firestore, 'users', user.uid, 'tasks', currentTaskId);
+    await updateDoc(taskRef, {
+      timeSpent: increment(focusDuration)
+    });
+
+  }, [user, currentTaskId, firestore, pomodoroQuery, tasks]);
 
   const resetTimer = useCallback((newMode: TimerMode) => {
     setIsActive(false);
@@ -118,7 +133,7 @@ export default function PomodoroPage() {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  if (isUserLoading || areTasksLoading || isHistoryLoading || !user) {
+  if (isUserLoading || areTasksLoading || isHistoryLoading || areListsLoading || !user) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>;
   }
   
@@ -126,7 +141,9 @@ export default function PomodoroPage() {
   const timerTextClass = { pomodoro: 'text-primary', shortBreak: 'text-chart-4', longBreak: 'text-chart-2' };
   const progress = ((TIME_OPTIONS[mode] - time) / TIME_OPTIONS[mode]) * 100;
   
-  const incompleteTasks = tasks?.filter(t => t.status !== 'Concluído');
+  const completedListName = 'Concluído';
+  const completedList = lists?.find(list => list.name.toLowerCase() === completedListName.toLowerCase());
+  const incompleteTasks = tasks?.filter(t => !completedList || t.listId !== completedList.id);
 
   const sortedHistory = pomodoroHistory ? [...pomodoroHistory].sort((a, b) => {
     const timeA = a.endTime?.seconds || 0;

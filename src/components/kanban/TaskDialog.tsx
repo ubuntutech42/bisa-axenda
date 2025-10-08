@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import type { Task, Priority, Category, Status } from '@/lib/types';
+import { useEffect } from 'react';
+import type { Task, Priority, Category, KanbanList } from '@/lib/types';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,14 +37,13 @@ import { cn } from '@/lib/utils';
 
 const priorities: Priority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
 const categories: Category[] = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'];
-const statuses: Status[] = ['A Fazer', 'Em Progresso', 'Concluído'];
 
 const taskSchema = z.object({
   title: z.string().min(1, { message: "O título é obrigatório." }),
   description: z.string().optional(),
   category: z.enum(categories, { required_error: "A categoria é obrigatória." }),
   priority: z.enum(priorities).default('Média'),
-  status: z.enum(statuses).default('A Fazer'),
+  listId: z.string({ required_error: "A coluna é obrigatória." }),
   deadline: z.date().optional(),
 });
 
@@ -55,9 +54,10 @@ interface TaskDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: any) => void;
+  lists: KanbanList[];
 }
 
-export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
+export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDialogProps) {
   const isEditing = !!task;
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<TaskFormData>({
@@ -72,7 +72,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
           description: task.description,
           category: task.category,
           priority: task.priority,
-          status: task.status,
+          listId: task.listId,
           deadline: task.deadline ? new Date(task.deadline) : undefined,
         });
       } else {
@@ -80,12 +80,12 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
           title: '',
           description: '',
           priority: 'Média',
-          status: 'A Fazer',
+          listId: lists.find(l => l.order === 0)?.id || '',
           deadline: undefined,
         });
       }
     }
-  }, [task, isOpen, reset]);
+  }, [task, isOpen, reset, lists]);
 
 
   const handleFormSubmit = (data: TaskFormData) => {
@@ -155,17 +155,18 @@ export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
             </div>
 
             <Controller
-              name="status"
+              name="listId"
               control={control}
               render={({ field }) => (
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>Coluna</Label>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Coluna" /></SelectTrigger>
                     <SelectContent>
-                      {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      {lists.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {errors.listId && <p className="text-sm text-destructive">{errors.listId.message}</p>}
                 </div>
               )}
             />

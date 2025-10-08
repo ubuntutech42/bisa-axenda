@@ -55,6 +55,10 @@
           "type": "string",
           "description": "The ID of the user who owns this task."
         },
+        "listId": {
+          "type": "string",
+          "description": "The ID of the KanbanList this task belongs to."
+        },
         "title": {
           "type": "string",
           "description": "Title of the task."
@@ -83,10 +87,6 @@
           "type": "number",
           "description": "Time spent in minutes."
         },
-        "status": {
-          "type": "string",
-          "enum": ["A Fazer", "Em Progresso", "Concluído"]
-        },
         "checklist": {
           "type": "array",
           "items": {
@@ -103,7 +103,7 @@
           "items": { "type": "string" }
         }
       },
-      "required": ["id", "userId", "title", "category", "priority", "timeSpent", "status"]
+      "required": ["id", "userId", "listId", "title", "category", "priority", "timeSpent"]
     },
     "KanbanBoard": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -146,9 +146,9 @@
           "description": "Unique identifier for the Kanban list.",
           "format": "uuid"
         },
-        "kanbanBoardId": {
+        "userId": {
           "type": "string",
-          "description": "Reference to the KanbanBoard this list belongs to. (Relationship: KanbanBoard 1:N KanbanList)"
+          "description": "ID of the user who owns this list."
         },
         "name": {
           "type": "string",
@@ -161,7 +161,7 @@
       },
       "required": [
         "id",
-        "kanbanBoardId",
+        "userId",
         "name",
         "order"
       ]
@@ -491,6 +491,12 @@
         "$ref": "#/entities/Task"
       },
       "description": "Stores tasks for a specific user."
+    },
+    "/users/{userId}/kanbanLists/{listId}": {
+      "schema": {
+        "$ref": "#/entities/KanbanList"
+      },
+      "description": "Stores Kanban lists (columns) for a specific user."
     },
     "/users/{userId}/categories/{categoryId}": {
       "schema": {

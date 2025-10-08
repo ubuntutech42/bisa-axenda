@@ -1,24 +1,4 @@
-import type { CulturalEvent, Quote, KanbanColumn, Status } from './types';
-
-export const columns: Record<Status, KanbanColumn> = {
-  'A Fazer': {
-    id: 'A Fazer',
-    title: 'A Fazer',
-    taskIds: [],
-  },
-  'Em Progresso': {
-    id: 'Em Progresso',
-    title: 'Em Progresso',
-    taskIds: [],
-  },
-  'Concluído': {
-    id: 'Concluído',
-    title: 'Concluído',
-    taskIds: [],
-  },
-};
-
-export const columnOrder: Status[] = ['A Fazer', 'Em Progresso', 'Concluído'];
+import type { CulturalEvent, Quote } from './types';
 
 export const culturalEvents: CulturalEvent[] = [
   { date: '2024-01-01', title: 'Confraternização Universal', description: 'Feriado nacional.' },
