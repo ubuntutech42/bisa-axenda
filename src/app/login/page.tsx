@@ -2,11 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/layout/Logo';
 import { Loader } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
@@ -19,8 +22,10 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function LoginPage() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -31,18 +36,33 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const loggedInUser = result.user;
+
+      // Create or update user document in Firestore
+      const userRef = doc(firestore, 'users', loggedInUser.uid);
+      await setDoc(userRef, {
+          id: loggedInUser.uid,
+          email: loggedInUser.email,
+          userName: loggedInUser.displayName,
+          firstName: loggedInUser.displayName?.split(' ')[0] || '',
+          lastName: loggedInUser.displayName?.split(' ').slice(1).join(' ') || '',
+          profileImageUrl: loggedInUser.photoURL
+      }, { merge: true });
+
     } catch (error) {
-      // This error occurs if the user closes the popup.
-      // We can safely ignore it.
       if ((error as any).code === 'auth/popup-closed-by-user') {
-        return;
+        return; // This is a normal user action, not an error.
       }
       console.error('Error signing in with Google: ', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro de Autenticação',
+        description: 'Não foi possível fazer login com o Google. Por favor, tente novamente.',
+      });
     }
   };
 
-  // Show a loader while checking auth state or if user is logged in (and about to be redirected)
   if (isUserLoading || user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -51,7 +71,6 @@ export default function LoginPage() {
     );
   }
 
-  // Only show the login page if the user is not loading and is not logged in
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <div className="w-full max-w-sm text-center">

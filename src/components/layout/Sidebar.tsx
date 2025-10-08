@@ -1,8 +1,5 @@
-
-
 "use client";
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,7 +10,6 @@ import {
   Loader,
   LogOut,
   Menu,
-  Timer,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
@@ -21,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
-import { PomodoroDialog } from '@/components/pomodoro/PomodoroDialog';
+import { PomodoroTimer } from '@/components/pomodoro/PomodoroTimer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -84,7 +80,6 @@ function UserProfile() {
 
 function NavContent() {
   const pathname = usePathname();
-  const [pomodoroOpen, setPomodoroOpen] = useState(false);
 
   return (
     <>
@@ -108,17 +103,9 @@ function NavContent() {
           })}
         </nav>
       </div>
-      <div className="mt-auto p-4 space-y-4">
-        <Button
-          onClick={() => setPomodoroOpen(true)}
-          className="w-full justify-start gap-3"
-          variant="outline"
-        >
-          <Timer className="h-5 w-5" />
-          <span>Timer de Foco</span>
-        </Button>
+      <div className="mt-auto p-2">
+        <PomodoroTimer />
       </div>
-      <PomodoroDialog open={pomodoroOpen} onOpenChange={setPomodoroOpen} />
     </>
   );
 }
@@ -146,8 +133,8 @@ export function Sidebar() {
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">
             <SheetHeader className="border-b px-6 h-16 flex flex-row items-center justify-between">
-              <Logo />
               <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+              <Logo />
             </SheetHeader>
             <NavContent />
           </SheetContent>
