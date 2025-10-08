@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pessoal';
 
 export type Priority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
@@ -35,4 +37,14 @@ export interface CulturalEvent {
 export interface Quote {
   text: string;
   author: string;
+}
+
+export interface PomodoroSession {
+  id: string;
+  userId: string;
+  kanbanCardId: string;
+  startTime: Timestamp;
+  endTime: Timestamp;
+  focusDuration: number;
+  category: string;
 }

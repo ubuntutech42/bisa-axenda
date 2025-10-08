@@ -34,6 +34,7 @@ const navItems = [
   { href: '/', label: 'Painel', icon: Home },
   { href: '/board', label: 'Quadro', icon: LayoutGrid },
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
+  { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
@@ -109,7 +110,7 @@ function NavContent() {
       <div className="mt-auto p-4">
           <Button variant="outline" className="w-full" onClick={() => setIsPomodoroOpen(prev => !prev)}>
               <Timer className="mr-2 h-4 w-4" />
-              {isPomodoroOpen ? 'Ocultar Timer' : 'Mostrar Timer'}
+              {isPomodoroOpen ? 'Ocultar Timer' : 'Mostrar Timer Flutuante'}
           </Button>
       </div>
       {isPomodoroOpen && <FloatingPomodoro onClose={() => setIsPomodoroOpen(false)} />}
@@ -139,11 +140,11 @@ export function Sidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col p-0 w-64">
-             <SheetHeader>
-                <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
-                <div className="flex h-16 items-center justify-between border-b px-6">
-                    <Logo />
-                </div>
+            <SheetHeader>
+              <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+              <div className="flex h-16 items-center justify-between border-b px-6">
+                  <Logo />
+              </div>
             </SheetHeader>
             <NavContent />
           </SheetContent>
