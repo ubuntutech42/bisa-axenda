@@ -1,6 +1,10 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import type { Task, Priority, Category, Status } from '@/lib/types';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Sheet,
   SheetContent,
@@ -23,109 +27,207 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
-interface TaskDialogProps {
-  task: Task | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (updatedTask: Task) => void;
-}
 
 const priorities: Priority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
 const categories: Category[] = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'];
 const statuses: Status[] = ['A Fazer', 'Em Progresso', 'Concluído'];
 
+const taskSchema = z.object({
+  title: z.string().min(1, { message: "O título é obrigatório." }),
+  description: z.string().optional(),
+  category: z.enum(categories, { required_error: "A categoria é obrigatória." }),
+  priority: z.enum(priorities).default('Média'),
+  status: z.enum(statuses).default('A Fazer'),
+  deadline: z.date().optional(),
+});
+
+type TaskFormData = z.infer<typeof taskSchema>;
+
+interface TaskDialogProps {
+  task?: Task | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: any) => void;
+}
+
 export function TaskDialog({ task, isOpen, onClose, onSave }: TaskDialogProps) {
-  if (!task) return null;
+  const isEditing = !!task;
 
-  // In a real app, you'd use a form library like react-hook-form here
-  // For simplicity, we'll just handle state directly
-  const handleSave = () => {
-    // This is where you would gather form data and call onSave
-    onSave(task);
-    onClose();
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<TaskFormData>({
+    resolver: zodResolver(taskSchema),
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      if (task) {
+        reset({
+          title: task.title,
+          description: task.description,
+          category: task.category,
+          priority: task.priority,
+          status: task.status,
+          deadline: task.deadline ? new Date(task.deadline) : undefined,
+        });
+      } else {
+        reset({
+          title: '',
+          description: '',
+          priority: 'Média',
+          status: 'A Fazer',
+          deadline: undefined,
+        });
+      }
+    }
+  }, [task, isOpen, reset]);
+
+
+  const handleFormSubmit = (data: TaskFormData) => {
+    const dataToSave = {
+      ...data,
+      deadline: data.deadline?.toISOString(),
+    };
+    onSave(isEditing ? { ...task, ...dataToSave } : dataToSave);
   };
-
+  
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="font-headline">{task.title}</SheetTitle>
-          <SheetDescription>
-            Na categoria <span className="font-semibold text-primary">{task.category}</span>.
-            Atualizado há 3 horas.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="py-4 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
-            <Input id="title" defaultValue={task.title} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea id="description" defaultValue={task.description} placeholder="Adicione uma descrição mais detalhada..."/>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <SheetHeader>
+            <SheetTitle className="font-headline">{isEditing ? 'Editar Tarefa' : 'Criar Nova Tarefa'}</SheetTitle>
+            {isEditing && (
+              <SheetDescription>
+                Na categoria <span className="font-semibold text-primary">{task.category}</span>.
+              </SheetDescription>
+            )}
+          </SheetHeader>
+          <div className="py-4 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="priority">Prioridade</Label>
-              <Select defaultValue={task.priority}>
-                <SelectTrigger id="priority">
-                  <SelectValue placeholder="Selecione a prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="title">Título</Label>
+              <Input id="title" {...register('title')} />
+              {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Categoria</Label>
-              <Select defaultValue={task.category}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea id="description" placeholder="Adicione uma descrição mais detalhada..." {...register('description')} />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select defaultValue={task.status}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Separator />
-          
-          {task.checklist && task.checklist.length > 0 && (
-            <div className="space-y-2">
-                <Label>Checklist</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                  name="priority"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="space-y-2">
+                      <Label>Prioridade</Label>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger><SelectValue placeholder="Prioridade" /></SelectTrigger>
+                        <SelectContent>
+                          {priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                />
+
+                <Controller
+                  name="category"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="space-y-2">
+                      <Label>Categoria</Label>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+                        <SelectContent>
+                          {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
+                    </div>
+                  )}
+                />
+            </div>
+
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
                 <div className="space-y-2">
-                    {task.checklist.map((item, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                            <Checkbox id={`checklist-${index}`} defaultChecked={item.completed} />
-                            <Label htmlFor={`checklist-${index}`} className="flex-1 font-normal">{item.text}</Label>
-                        </div>
-                    ))}
+                  <Label>Status</Label>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-            </div>
-          )}
+              )}
+            />
 
-        </div>
-        <SheetFooter>
-          <SheetClose asChild>
-            <Button variant="outline">Cancelar</Button>
-          </SheetClose>
-          <Button onClick={handleSave}>Salvar alterações</Button>
-        </SheetFooter>
+            <Controller
+              name="deadline"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Label>Prazo</Label>
+                   <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                          locale={ptBR}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                </div>
+              )}
+            />
+            
+            {isEditing && task.checklist && task.checklist.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                    <Label>Checklist</Label>
+                    <div className="space-y-2">
+                        {task.checklist.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <Checkbox id={`checklist-${index}`} defaultChecked={item.completed} />
+                                <Label htmlFor={`checklist-${index}`} className="flex-1 font-normal">{item.text}</Label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+              </>
+            )}
+
+          </div>
+          <SheetFooter>
+            <SheetClose asChild>
+              <Button type="button" variant="outline">Cancelar</Button>
+            </SheetClose>
+            <Button type="submit">Salvar</Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
   );

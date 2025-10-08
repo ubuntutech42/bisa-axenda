@@ -7,11 +7,13 @@ import { columns as initialColumns, columnOrder } from '@/lib/data';
 import type { Task, Status } from '@/lib/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export function KanbanBoard() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const tasksQuery = useMemoFirebase(() => 
     user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
@@ -34,7 +36,10 @@ export function KanbanBoard() {
         // Populate taskIds from fetched tasks
         tasks.forEach(task => {
           if (newColumns[task.status]) {
-            newColumns[task.status].taskIds.push(task.id);
+            // Avoid duplicates
+            if (!newColumns[task.status].taskIds.includes(task.id)) {
+              newColumns[task.status].taskIds.push(task.id);
+            }
           }
         });
         return newColumns;
@@ -51,10 +56,27 @@ export function KanbanBoard() {
     setActiveTask(null);
   };
 
-  const handleSaveTask = (updatedTask: Task) => {
-    // In a real app, this would also update the backend.
-    // We will do this in the next step.
-    console.log("Saving task:", updatedTask);
+  const handleSaveTask = async (updatedTask: Task) => {
+    if (!user) return;
+    try {
+      const taskRef = doc(firestore, 'users', user.uid, 'tasks', updatedTask.id);
+      await updateDoc(taskRef, {
+        ...updatedTask,
+        updatedAt: serverTimestamp(),
+      });
+      toast({
+        title: 'Tarefa atualizada!',
+        description: `A tarefa "${updatedTask.title}" foi salva.`,
+      });
+      handleCloseDialog();
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao atualizar',
+        description: 'Não foi possível salvar as alterações. Tente novamente.',
+      });
+    }
   };
 
   const tasksById = useMemo(() => {
@@ -66,8 +88,7 @@ export function KanbanBoard() {
   }, [tasks]);
 
   if (isLoading) {
-      // You can return a loader here
-      return <div>Carregando...</div>
+      return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary" /></div>
   }
 
   return (
