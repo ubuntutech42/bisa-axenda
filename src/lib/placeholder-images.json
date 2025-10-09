@@ -1,3 +1,82 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "quote-davis-chains",
+      "description": "Image for Angela Davis quote about chains.",
+      "imageUrl": "https://picsum.photos/seed/davis/600/400?grayscale",
+      "imageHint": "Angela Davis"
+    },
+    {
+      "id": "quote-baldwin-inevitable",
+      "description": "Image for James Baldwin quote about being inevitable.",
+      "imageUrl": "https://picsum.photos/seed/baldwin/600/400?grayscale",
+      "imageHint": "James Baldwin"
+    },
+    {
+      "id": "quote-heron-revolution",
+      "description": "Image for Gil Scott-Heron quote about the revolution.",
+      "imageUrl": "https://picsum.photos/seed/heron/600/400?grayscale",
+      "imageHint": "Gil Scott-Heron"
+    },
+    {
+      "id": "quote-evaristo-identity",
+      "description": "Image for Conceição Evaristo quote about identity.",
+      "imageUrl": "https://picsum.photos/seed/evaristo/600/400?grayscale",
+      "imageHint": "Conceição Evaristo"
+    },
+    {
+      "id": "quote-davis-movement",
+      "description": "Image for Angela Davis quote about the black woman's movement.",
+      "imageUrl": "https://picsum.photos/seed/movement/600/400?grayscale",
+      "imageHint": "civil rights"
+    },
+    {
+      "id": "quote-gonzalez-color",
+      "description": "Image for Lélia Gonzalez quote about color.",
+      "imageUrl": "https://picsum.photos/seed/gonzalez/600/400?grayscale",
+      "imageHint": "Lelia Gonzalez"
+    },
+    {
+      "id": "quote-proverb-footsteps",
+      "description": "Image for the popular saying about footsteps.",
+      "imageUrl": "https://picsum.photos/seed/ancestors/600/400?grayscale",
+      "imageHint": "ancestors walking"
+    },
+    {
+      "id": "quote-davis-freedom",
+      "description": "Image for Angela Davis quote about freedom.",
+      "imageUrl": "https://picsum.photos/seed/freedom/600/400?grayscale",
+      "imageHint": "protest freedom"
+    },
+    {
+      "id": "quote-hooks-desire",
+      "description": "Image for bell hooks quote about desire and freedom.",
+      "imageUrl": "https://picsum.photos/seed/hooks/600/400?grayscale",
+      "imageHint": "bell hooks"
+    },
+    {
+      "id": "quote-evaristo-die",
+      "description": "Image for Conceição Evaristo quote about not dying.",
+      "imageUrl": "https://picsum.photos/seed/conceicao/600/400?grayscale",
+      "imageHint": "black woman writing"
+    },
+    {
+      "id": "quote-simone-liberate",
+      "description": "Image for Nina Simone quote about liberation.",
+      "imageUrl": "https://picsum.photos/seed/simone/600/400?grayscale",
+      "imageHint": "Nina Simone"
+    },
+    {
+      "id": "quote-panthers-dare",
+      "description": "Image for the Black Panthers' motto.",
+      "imageUrl": "https://picsum.photos/seed/panthers/600/400?grayscale",
+      "imageHint": "Black Panther"
+    },
+    {
+      "id": "quote-mandela-education",
+      "description": "Image for Nelson Mandela quote about education.",
+      "imageUrl": "https://picsum.photos/seed/mandela/600/400?grayscale",
+      "imageHint": "Nelson Mandela"
+    }
+  ]
 }

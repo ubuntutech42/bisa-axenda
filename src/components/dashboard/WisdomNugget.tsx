@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { quotes } from '@/lib/data';
 import type { Quote } from '@/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
 
@@ -16,7 +17,12 @@ export function WisdomNugget() {
     setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
   }, []);
 
-  if (!quote) {
+  const image = useMemo(() => {
+    if (!quote) return null;
+    return PlaceHolderImages.find(img => img.id === quote.imageId);
+  }, [quote]);
+
+  if (!quote || !image) {
     return (
         <Card>
             <CardContent className="p-6">
@@ -34,12 +40,12 @@ export function WisdomNugget() {
     <Card className="relative overflow-hidden group h-48 flex flex-col justify-end">
         <div className="absolute inset-0">
             <Image
-                src={quote.imageUrl}
+                src={image.imageUrl}
                 alt={`Imagem de ${quote.author}`}
                 fill
                 sizes="100vw"
                 className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                data-ai-hint={quote.imageHint}
+                data-ai-hint={image.imageHint}
                 unoptimized
             />
             <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition-colors" />
