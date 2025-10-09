@@ -33,10 +33,21 @@ export function EventCalendar() {
   const [areTasksLoading, setAreTasksLoading] = useState(true);
 
   useEffect(() => {
-    if (!boards || !firestore || !user) return;
+    if (!boards || !firestore || !user) {
+      if(boards === null || user === null) {
+        setAreTasksLoading(false);
+      }
+      return;
+    };
 
     const fetchTasks = async () => {
       setAreTasksLoading(true);
+      if (boards.length === 0) {
+        setAllTasks([]);
+        setAreTasksLoading(false);
+        return;
+      }
+
       const tasksPromises = boards.map(board => 
         import('firebase/firestore').then(({ getDocs, collection }) => 
           getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
