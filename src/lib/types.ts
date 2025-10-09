@@ -19,9 +19,16 @@ export interface Task {
   comments?: string[];
 }
 
-export interface KanbanList {
+export interface KanbanBoard {
   id: string;
   userId: string;
+  name: string;
+  type: 'kanban' | 'swot' | 'business_canvas';
+  createdAt: Timestamp;
+}
+
+export interface KanbanList {
+  id: string;
   name: string;
   order: number;
 }

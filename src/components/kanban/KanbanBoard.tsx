@@ -11,53 +11,22 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 
 interface KanbanBoardProps {
+  boardId: string;
   lists: KanbanList[];
 }
 
-export function KanbanBoard({ lists }: KanbanBoardProps) {
+export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  // Fetch Tasks
   const tasksQuery = useMemoFirebase(() => 
-    user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
-    [firestore, user]
+    user && boardId ? collection(firestore, 'kanbanBoards', boardId, 'tasks') : null, 
+    [firestore, user, boardId]
   );
   const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksQuery);
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-
-  // Create default lists if none exist
-  useEffect(() => {
-    if (user && lists && lists.length === 0 && !areTasksLoading) {
-      const createDefaultLists = async () => {
-        const batch = writeBatch(firestore);
-        const defaultLists = [
-          { name: 'Backlog', order: 0 },
-          { name: 'A Fazer', order: 1 },
-          { name: 'Em Progresso', order: 2 },
-          { name: 'Revisão', order: 3 },
-          { name: 'Concluído', order: 4 },
-        ];
-        const listsCollection = collection(firestore, 'users', user.uid, 'kanbanLists');
-        
-        defaultLists.forEach(list => {
-          const docRef = doc(listsCollection);
-          batch.set(docRef, { ...list, userId: user.uid });
-        });
-        
-        try {
-          await batch.commit();
-          toast({ title: 'Quadro iniciado!', description: 'Suas colunas padrão foram criadas.' });
-        } catch (error) {
-          console.error("Error creating default lists:", error);
-          toast({ variant: "destructive", title: "Erro", description: "Não foi possível criar as colunas do quadro." });
-        }
-      };
-      createDefaultLists();
-    }
-  }, [user, lists, firestore, toast, areTasksLoading]);
 
   const sortedLists = useMemo(() => {
     if (!lists) return [];
@@ -73,9 +42,9 @@ export function KanbanBoard({ lists }: KanbanBoardProps) {
   };
 
   const handleSaveTask = async (updatedTaskData: Partial<Task> & { id?: string }) => {
-    if (!user || !updatedTaskData.id) return;
+    if (!user || !updatedTaskData.id || !boardId) return;
     try {
-      const taskRef = doc(firestore, 'users', user.uid, 'tasks', updatedTaskData.id);
+      const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', updatedTaskData.id);
       await updateDoc(taskRef, {
         ...updatedTaskData,
         updatedAt: serverTimestamp(),
@@ -96,9 +65,9 @@ export function KanbanBoard({ lists }: KanbanBoardProps) {
   };
 
   const handleUpdateColumnName = async (listId: string, newName: string) => {
-    if (!user) return;
+    if (!user || !boardId) return;
     try {
-      const listRef = doc(firestore, 'users', user.uid, 'kanbanLists', listId);
+      const listRef = doc(firestore, 'kanbanBoards', boardId, 'lists', listId);
       await updateDoc(listRef, { name: newName });
       toast({ title: 'Coluna atualizada!', description: `O nome da coluna foi alterado para "${newName}".` });
     } catch (error) {
@@ -110,7 +79,6 @@ export function KanbanBoard({ lists }: KanbanBoardProps) {
   const tasksByListId = useMemo(() => {
     if (!tasks) return {};
     return tasks.reduce((acc, task) => {
-      // Default to the first column ('Backlog') if listId is missing
       const listId = task.listId || (sortedLists.find(l => l.order === 0)?.id);
       if (!listId) return acc;
       if (!acc[listId]) {

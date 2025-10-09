@@ -109,65 +109,56 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "KanbanBoard",
       "type": "object",
-      "description": "Represents a Kanban board for organizing tasks.",
+      "description": "Represents a board for organizing tasks or other items.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Kanban board.",
-          "format": "uuid"
+          "description": "Unique identifier for the board."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who owns this board. (Relationship: User 1:N KanbanBoard)"
+          "description": "ID of the user who owns this board."
         },
         "name": {
           "type": "string",
-          "description": "Name of the Kanban board."
+          "description": "Name of the board."
         },
-        "description": {
+        "type": {
           "type": "string",
-          "description": "Description of the Kanban board."
+          "description": "The type or template of the board.",
+          "enum": ["kanban", "swot", "business_canvas"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the board was created."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "name"
-      ]
+      "required": ["id", "userId", "name", "type", "createdAt"]
     },
     "KanbanList": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "KanbanList",
       "type": "object",
-      "description": "Represents a list within a Kanban board.",
+      "description": "Represents a list (column) within a Kanban board.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Kanban list.",
-          "format": "uuid"
-        },
-        "userId": {
-          "type": "string",
-          "description": "ID of the user who owns this list."
+          "description": "Unique identifier for the Kanban list."
         },
         "name": {
           "type": "string",
-          "description": "Name of the Kanban list (e.g., 'To Do', 'In Progress', 'Done')."
+          "description": "Name of the list (e.g., 'To Do', 'Strengths')."
         },
         "order": {
           "type": "number",
-          "description": "The order of the list within the Kanban board. Lower values appear first."
+          "description": "The order of the list within the board."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "name",
-        "order"
-      ]
+      "required": ["id", "name", "order"]
     },
     "KanbanCard": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
       "title": "KanbanCard",
       "type": "object",
       "description": "Represents a card within a Kanban list, representing a task.",
@@ -251,7 +242,7 @@
       ]
     },
     "Comment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
       "title": "Comment",
       "type": "object",
       "description": "Represents a comment on a Kanban card.",
@@ -288,7 +279,7 @@
       ]
     },
     "ChecklistItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
       "title": "ChecklistItem",
       "type": "object",
       "description": "Represents an item in a checklist on a Kanban card.",
@@ -370,7 +361,7 @@
       ]
     },
     "Reminder": {
-      "$schema": "http://json-schema.org/draft_07/schema#",
+      "$schema": "http://json-schema.org/draft_07/schema#_disabled",
       "title": "Reminder",
       "type": "object",
       "description": "Represents a reminder for a Kanban card.",
@@ -401,7 +392,7 @@
       ]
     },
     "CalendarEvent": {
-      "$schema": "http://json-schema.org/draft_07/schema#",
+      "$schema": "http://json-schema.org/draft_07/schema#_disabled",
       "title": "CalendarEvent",
       "type": "object",
       "description": "Represents an event in the calendar.",
@@ -486,17 +477,23 @@
       },
       "description": "Stores user profiles."
     },
-    "/users/{userId}/tasks/{taskId}": {
+    "/kanbanBoards/{boardId}": {
       "schema": {
-        "$ref": "#/entities/Task"
+        "$ref": "#/entities/KanbanBoard"
       },
-      "description": "Stores tasks for a specific user."
+      "description": "Stores all the boards for all users."
     },
-    "/users/{userId}/kanbanLists/{listId}": {
+    "/kanbanBoards/{boardId}/lists/{listId}": {
       "schema": {
         "$ref": "#/entities/KanbanList"
       },
-      "description": "Stores Kanban lists (columns) for a specific user."
+      "description": "Stores lists for a specific board."
+    },
+    "/kanbanBoards/{boardId}/tasks/{taskId}": {
+      "schema": {
+        "$ref": "#/entities/Task"
+      },
+      "description": "Stores tasks for a specific board."
     },
     "/users/{userId}/categories/{categoryId}": {
       "schema": {

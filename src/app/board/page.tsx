@@ -3,14 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { Button } from '@/components/ui/button';
 import { Loader, Plus } from 'lucide-react';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
-import type { Task, KanbanList } from '@/lib/types';
+import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import BoardSelector from '@/components/kanban/BoardSelector';
 
 export default function BoardPage() {
   const { user, isUserLoading } = useUser();
@@ -18,10 +19,17 @@ export default function BoardPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [activeBoard, setActiveBoard] = useState<KanbanBoardType | null>(null);
+
+  const boardsQuery = useMemoFirebase(() => 
+    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
+    [firestore, user]
+  );
+  const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoardType>(boardsQuery);
 
   const listsQuery = useMemoFirebase(() => 
-    user ? query(collection(firestore, 'users', user.uid, 'kanbanLists')) : null, 
-    [firestore, user]
+    user && activeBoard ? query(collection(firestore, 'kanbanBoards', activeBoard.id, 'lists')) : null, 
+    [firestore, user, activeBoard]
   );
   const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
@@ -31,10 +39,18 @@ export default function BoardPage() {
     }
   }, [isUserLoading, user, router]);
 
+  useEffect(() => {
+    if (boards && boards.length > 0 && !activeBoard) {
+      setActiveBoard(boards[0]);
+    }
+  }, [boards, activeBoard]);
+
   const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' >) => {
-    if (!user) return;
+    if (!user || !activeBoard) return;
     try {
-      const tasksCollection = collection(firestore, 'users', user.uid, 'tasks');
+      const tasksCollection = collection(firestore, 'kanbanBoards', activeBoard.id, 'tasks');
+      // Temporarily importing addDoc from firebase/firestore
+      const { addDoc, serverTimestamp } = await import('firebase/firestore');
       await addDoc(tasksCollection, {
         ...newTaskData,
         userId: user.uid,
@@ -56,26 +72,9 @@ export default function BoardPage() {
     }
   };
 
-  const handleAddColumn = async () => {
-    if (!user) return;
-    const newColumnName = prompt('Digite o nome da nova coluna:');
-    if (newColumnName) {
-      try {
-        const listsCollection = collection(firestore, 'users', user.uid, 'kanbanLists');
-        await addDoc(listsCollection, {
-          name: newColumnName,
-          order: lists ? lists.length : 0,
-          userId: user.uid,
-        });
-        toast({ title: 'Coluna adicionada!', description: `A coluna "${newColumnName}" foi criada.` });
-      } catch (error) {
-        console.error('Error adding column:', error);
-        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a coluna.' });
-      }
-    }
-  };
+  const currentBoardName = activeBoard ? activeBoard.name : "Quadro Kanban";
 
-  if (isUserLoading || areListsLoading || !user || !lists) {
+  if (isUserLoading || areBoardsLoading || !user) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="h-10 w-10 animate-spin text-primary" />
@@ -85,27 +84,40 @@ export default function BoardPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Quadro Kanban">
+      <Header title={currentBoardName}>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsNewTaskDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Tarefa
-          </Button>
-          <Button variant="outline" onClick={handleAddColumn}>
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar Lista
-          </Button>
+          {activeBoard && (
+            <Button onClick={() => setIsNewTaskDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Tarefa
+            </Button>
+          )}
+          <BoardSelector 
+            boards={boards || []} 
+            activeBoard={activeBoard} 
+            setActiveBoard={setActiveBoard} 
+          />
         </div>
       </Header>
       <div className="flex-1 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-        <KanbanBoard lists={lists} />
+        {areListsLoading && <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin text-primary" /></div>}
+        {!areListsLoading && activeBoard && lists ? (
+          <KanbanBoard boardId={activeBoard.id} lists={lists} />
+        ) : (
+          !areBoardsLoading && !activeBoard && (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <h2 className="text-2xl font-semibold mb-2">Bem-vindo(a) ao seu espaço!</h2>
+              <p className="text-muted-foreground mb-4">Parece que você ainda não tem nenhum quadro. Que tal criar um?</p>
+            </div>
+          )
+        )}
       </div>
-      <TaskDialog
+      {lists && <TaskDialog
         isOpen={isNewTaskDialogOpen}
         onClose={() => setIsNewTaskDialogOpen(false)}
         onSave={handleCreateTask}
         lists={lists}
-      />
+      />}
     </div>
   );
 }
