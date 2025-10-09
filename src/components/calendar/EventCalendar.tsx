@@ -12,17 +12,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import type { CheckedState } from '@radix-ui/react-checkbox';
 
 
 type CalendarEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' });
 
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [activeCategories, setActiveCategories] = useState({
+    task: true,
+    cultural: true,
+  });
   
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Fetch all boards to get all tasks
   const boardsQuery = useMemoFirebase(() => 
     user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
     [firestore, user]
@@ -71,17 +76,28 @@ export function EventCalendar() {
 
   const allEvents: CalendarEvent[] = useMemo(() => {
     const tasksWithDeadlines = allTasks.filter(t => t.deadline);
-    return [
-      ...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })),
-      ...culturalEvents.map(e => ({...e, type: 'cultural' as const, id: e.title, title: e.title}))
-    ];
-  }, [allTasks]);
+    const eventList: CalendarEvent[] = [];
+    if (activeCategories.task) {
+        eventList.push(...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })));
+    }
+    if (activeCategories.cultural) {
+        eventList.push(...culturalEvents.map(e => ({...e, type: 'cultural' as const, id: e.title, title: e.title})));
+    }
+    return eventList;
+  }, [allTasks, activeCategories]);
 
   const selectedDayEvents = date ? allEvents.filter(event => {
     const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
     if (!eventDate) return false;
     return isSameDay(parseISO(eventDate), date);
   }) : [];
+
+  const handleCategoryChange = (category: 'task' | 'cultural', checked: CheckedState) => {
+    setActiveCategories(prev => ({
+      ...prev,
+      [category]: !!checked,
+    }));
+  };
 
   if (areBoardsLoading || areTasksLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
@@ -121,19 +137,33 @@ export function EventCalendar() {
           />
         </Card>
       </div>
-      <div className="mt-8 lg:mt-0">
+      <div>
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">
               {date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
             </CardTitle>
+            <div className="flex items-center space-x-4 pt-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="task-filter" checked={activeCategories.task} onCheckedChange={(checked) => handleCategoryChange('task', checked)} />
+                <label htmlFor="task-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Tarefas
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="cultural-filter" checked={activeCategories.cultural} onCheckedChange={(checked) => handleCategoryChange('cultural', checked)} />
+                <label htmlFor="cultural-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Cultural
+                </label>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-96">
+            <ScrollArea className="h-80">
               <div className="space-y-4">
                 {selectedDayEvents.length > 0 ? (
                   selectedDayEvents.map((event) => (
-                    <div key={event.id} className="p-3 rounded-lg bg-muted/50">
+                    <div key={`${event.type}-${event.id}`} className="p-3 rounded-lg bg-muted/50">
                       {event.type === 'task' ? (
                         <>
                           <div className="flex justify-between items-start">
