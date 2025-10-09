@@ -125,12 +125,12 @@ export function EventCalendar() {
                     return isSameDay(parseISO(eventDate), date);
                 });
                 return (
-                  <div className="relative h-full w-full flex items-center justify-center">
-                    <span>{format(date, 'd')}</span>
+                  <>
+                    {format(date, 'd')}
                     {dayEvents.length > 0 && (
                       <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary"></div>
                     )}
-                  </div>
+                  </>
                 );
               }
             }}
