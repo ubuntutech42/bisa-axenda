@@ -86,8 +86,8 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
                     <SelectValue placeholder="Selecione um tema" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="light">Claro</SelectItem>
-                    <SelectItem value="dark">Escuro</SelectItem>
+                    <SelectItem value="light">Diurno</SelectItem>
+                    <SelectItem value="dark">Noturno</SelectItem>
                     <SelectItem value="system">Sistema</SelectItem>
                   </SelectContent>
                 </Select>
