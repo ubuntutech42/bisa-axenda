@@ -1,182 +1,222 @@
+/**
+ * @fileoverview Firestore Security Rules for Axénda application.
+ *
+ * Core Philosophy:
+ * This ruleset employs a strict user-ownership model for most data, ensuring that only the owning user can create, read, update, or delete their own data.
+ * Public read access is granted to a few top-level collections like `culturalEvents`.
+ *
+ * Data Structure:
+ * - `/users/{userId}`: User profiles, accessible only by the user themselves.
+ * - `/kanbanBoards/{boardId}`: Kanban boards, owned by a user, open to all users.
+ * - `/kanbanBoards/{boardId}/lists/{listId}`: Lists within Kanban boards, accessible only by the owner of the board.
+ * - `/kanbanBoards/{boardId}/tasks/{taskId}`: Tasks within Kanban boards, accessible only by the owner of the board.
+ * - `/users/{userId}/categories/{categoryId}`: Categories created by a user, accessible only by the user.
+ * - `/users/{userId}/pomodoroSessions/{pomodoroSessionId}`: Pomodoro sessions for a user, accessible only by the user.
+ * - `/users/{userId}/calendarEvents/{calendarEventId}`: Calendar events for a user, accessible only by the user.
+ * - `/culturalEvents/{culturalEventId}`: Publicly accessible cultural event data.
+ *
+ * Key Security Decisions:
+ * - Users can only list Kanban Boards, but all users can access the boards.
+ * - User listing is disallowed.
+ * - Default security posture for ambiguous relationships is strict owner-only access.
+ *
+ * Denormalization for Authorization:
+ * The rules rely on the `userId` field within documents to enforce ownership.
+ * The `kanbanBoards` are open for `get` and `list`, but secured for `create, update, delete` using the `userId` field.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants access to user profiles.
+     * @description Checks if the request is authenticated.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Authentication is required for most operations.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the resource.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the resource, and the resource exists.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership and document existence.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rule for user profiles.
      * @path /users/{userId}
-     * @allow (create) Authenticated user can create their own profile if the userId matches their auth UID.
-     * @allow (get, update, delete) Authenticated user can access their own profile.
-     * @deny (create) If the userId does not match the authenticated user's UID.
-     * @deny (list) User listing is not allowed.
-     * @deny (update,delete) If the user doesn't exist.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User with ID 'user123' creates their own profile.
+     * @allow (get) User with ID 'user123' reads their own profile.
+     * @allow (update) User with ID 'user123' updates their own profile.
+     * @allow (delete) User with ID 'user123' deletes their own profile.
+     * @deny (create) User with ID 'user123' tries to create a profile for 'user456'.
+     * @deny (get) User with ID 'user123' tries to read the profile of 'user456'.
+     * @deny (update) User with ID 'user123' tries to update the profile of 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete the profile of 'user456'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId));
-      }
-
       allow get: if isOwner(userId);
       allow list: if false;
-
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants access to tasks for a specific user.
-     * @path /users/{userId}/tasks/{taskId}
-     * @allow (create) Authenticated user can create a task under their userId.
-     * @allow (get, list, update, delete) Authenticated user can access their own tasks.
-     * @deny (create) If the userId does not match the authenticated user's UID.
-     * @deny (update,delete) If the user doesn't exist.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @description Rule for Kanban boards. All users can view the list.
+     * @path /kanbanBoards/{boardId}
+     * @allow (get) Any user can read a Kanban board.
+     * @allow (list) Any user can list Kanban boards.
+     * @allow (create) User with ID 'user123' creates a new Kanban board with userId set to 'user123'.
+     * @allow (update) User with ID 'user123' updates a Kanban board they own.
+     * @allow (delete) User with ID 'user123' deletes a Kanban board they own.
+     * @deny (create) User with ID 'user123' creates a Kanban board with userId set to 'user456'.
+     * @deny (update) User with ID 'user123' tries to update a Kanban board owned by 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete a Kanban board owned by 'user456'.
+     * @principle Allows public read access but restricts write access to the owner.
      */
-    match /users/{userId}/tasks/{taskId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-       function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId)/tasks/$(taskId));
-      }
-
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+    match /kanbanBoards/{boardId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && resource != null;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && resource != null;
     }
 
     /**
-     * @description Grants access to Kanban lists for a specific user.
-     * @path /users/{userId}/kanbanLists/{listId}
-     * @allow (create) Authenticated user can create a Kanban list under their userId.
-     * @allow (get, list, update, delete) Authenticated user can access their own Kanban lists.
-     * @deny (create) If the userId does not match the authenticated user's UID.
-     * @deny (update,delete) If the user doesn't exist.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @description Rule for Kanban lists within a board.
+     * @path /kanbanBoards/{boardId}/lists/{listId}
+     * @allow (create) User who owns the board creates a list.
+     * @allow (get) User who owns the board gets a list.
+     * @allow (update) User who owns the board updates a list.
+     * @allow (delete) User who owns the board deletes a list.
+     * @deny (create) User who does not own the board tries to create a list.
+     * @deny (get) User who does not own the board tries to get a list.
+     * @deny (update) User who does not own the board tries to update a list.
+     * @deny (delete) User who does not own the board tries to delete a list.
+     * @principle Restricts access to lists based on board ownership.
      */
-    match /users/{userId}/kanbanLists/{listId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-       function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId)/kanbanLists/$(listId));
-      }
-
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+    match /kanbanBoards/{boardId}/lists/{listId} {
+      allow get: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
+      allow list: if false;
+      allow create: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
+      allow update: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid && resource != null;
+      allow delete: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid && resource != null;
     }
 
     /**
-     * @description Grants access to user-created categories.
+     * @description Rule for tasks within a Kanban board.
+     * @path /kanbanBoards/{boardId}/tasks/{taskId}
+     * @allow (create) User who owns the board creates a task.
+     * @allow (get) User who owns the board gets a task.
+     * @allow (update) User who owns the board updates a task.
+     * @allow (delete) User who owns the board deletes a task.
+     * @deny (create) User who does not own the board tries to create a task.
+     * @deny (get) User who does not own the board tries to get a task.
+     * @deny (update) User who does not own the board tries to update a task.
+     * @deny (delete) User who does not own the board tries to delete a task.
+     * @principle Restricts access to tasks based on board ownership.
+     */
+    match /kanbanBoards/{boardId}/tasks/{taskId} {
+      allow get: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
+      allow list: if false;
+      allow create: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
+      allow update: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid && resource != null;
+      allow delete: if isSignedIn() && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid && resource != null;
+    }
+
+    /**
+     * @description Rule for user-created categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) Authenticated user can create a category under their userId.
-     * @allow (get, list, update, delete) Authenticated user can access their own categories.
-     * @deny (create) If the userId does not match the authenticated user's UID.
-     * @deny (update,delete) If the user doesn't exist.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User with ID 'user123' creates a category for themselves.
+     * @allow (get) User with ID 'user123' reads their own category.
+     * @allow (update) User with ID 'user123' updates their own category.
+     * @allow (delete) User with ID 'user123' deletes their own category.
+     * @deny (create) User with ID 'user123' tries to create a category for 'user456'.
+     * @deny (get) User with ID 'user123' tries to read a category of 'user456'.
+     * @deny (update) User with ID 'user123' tries to update a category of 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete a category of 'user456'.
+     * @principle Enforces document ownership.
      */
     match /users/{userId}/categories/{categoryId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-       function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId)/categories/$(categoryId));
-      }
-
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-     /**
-      * @description Grants access to pomodoro sessions for a user.
-      * @path /users/{userId}/pomodoroSessions/{pomodoroSessionId}
-      * @allow (create) Authenticated user can create a pomodoro session under their userId.
-      * @allow (get, list, update, delete) Authenticated user can access their own pomodoro sessions.
-      * @deny (create) If the userId does not match the authenticated user's UID.
-      * @deny (update,delete) If the user doesn't exist.
-      * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
-      */
-    match /users/{userId}/pomodoroSessions/{pomodoroSessionId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-       function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId)/pomodoroSessions/$(pomodoroSessionId));
-      }
-
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants access to calendar events for a user.
+     * @description Rule for Pomodoro sessions for a user.
+     * @path /users/{userId}/pomodoroSessions/{pomodoroSessionId}
+     * @allow (create) User with ID 'user123' creates a Pomodoro session for themselves.
+     * @allow (get) User with ID 'user123' reads their own Pomodoro session.
+     * @allow (update) User with ID 'user123' updates their own Pomodoro session.
+     * @allow (delete) User with ID 'user123' deletes their own Pomodoro session.
+     * @deny (create) User with ID 'user123' tries to create a Pomodoro session for 'user456'.
+     * @deny (get) User with ID 'user123' tries to read a Pomodoro session of 'user456'.
+     * @deny (update) User with ID 'user123' tries to update a Pomodoro session of 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete a Pomodoro session of 'user456'.
+     * @principle Enforces document ownership.
+     */
+    match /users/{userId}/pomodoroSessions/{pomodoroSessionId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rule for calendar events for a user.
      * @path /users/{userId}/calendarEvents/{calendarEventId}
-     * @allow (create) Authenticated user can create a calendar event under their userId.
-     * @allow (get, list, update, delete) Authenticated user can access their own calendar events.
-     * @deny (create) If the userId does not match the authenticated user's UID.
-     * @deny (update,delete) If the user doesn't exist.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User with ID 'user123' creates a calendar event for themselves.
+     * @allow (get) User with ID 'user123' reads their own calendar event.
+     * @allow (update) User with ID 'user123' updates their own calendar event.
+     * @allow (delete) User with ID 'user123' deletes their own calendar event.
+     * @deny (create) User with ID 'user123' tries to create a calendar event for 'user456'.
+     * @deny (get) User with ID 'user123' tries to read a calendar event of 'user456'.
+     * @deny (update) User with ID 'user123' tries to update a calendar event of 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete a calendar event of 'user456'.
+     * @principle Enforces document ownership.
      */
     match /users/{userId}/calendarEvents/{calendarEventId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-       function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId)/calendarEvents/$(calendarEventId));
-      }
-
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants public read access to global cultural events. Writes are disallowed.
+     * @description Rule for cultural events.
      * @path /culturalEvents/{culturalEventId}
-     * @allow (get, list) Any user can read cultural events.
-     * @deny (create, update, delete) No user can create, update, or delete cultural events.
-     * @principle Grants public read access to shared data.
+     * @allow (get) Any user can read a cultural event.
+     * @allow (list) Any user can list cultural events.
+     * @deny (create) No one can create a cultural event now.
+     * @deny (update) No one can update a cultural event now.
+     * @deny (delete) No one can delete a cultural event now.
+     * @principle Allows public read access but restricts write access.
      */
     match /culturalEvents/{culturalEventId} {
       allow get: if true;
