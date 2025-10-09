@@ -22,7 +22,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // Don't show app layout on landing page
-  if (pathname === '/landing') {
+  if (pathname.startsWith('/landing')) {
     return <>{children}</>;
   }
 
