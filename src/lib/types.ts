@@ -23,7 +23,7 @@ export interface KanbanBoard {
   id: string;
   userId: string;
   name: string;
-  type: 'kanban' | 'swot' | 'business_canvas';
+  type: 'kanban' | 'swot' | 'business_canvas' | 'custom';
   createdAt: Timestamp;
 }
 

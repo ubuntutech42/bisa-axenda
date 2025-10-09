@@ -24,7 +24,7 @@ interface BoardSelectorProps {
   setActiveBoard: (board: KanbanBoard) => void;
 }
 
-const boardTemplates = {
+const boardTemplates: Record<KanbanBoard['type'], { name: string; order: number }[]> = {
   kanban: [
     { name: 'Backlog', order: 0 },
     { name: 'A Fazer', order: 1 },
@@ -49,6 +49,7 @@ const boardTemplates = {
       { name: 'Estrutura de Custos', order: 7 },
       { name: 'Fontes de Receita', order: 8 },
   ],
+  custom: [],
 };
 
 
@@ -58,7 +59,7 @@ export default function BoardSelector({ boards, activeBoard, setActiveBoard }: B
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const handleCreateBoard = async (name: string, type: 'kanban' | 'swot' | 'business_canvas') => {
+  const handleCreateBoard = async (name: string, type: KanbanBoard['type']) => {
     if (!user) return;
   
     try {

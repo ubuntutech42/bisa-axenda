@@ -19,16 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import type { KanbanBoard } from '@/lib/types';
 
+type BoardType = KanbanBoard['type'];
 interface CreateBoardDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, type: 'kanban' | 'swot' | 'business_canvas') => void;
+  onCreate: (name: string, type: BoardType) => void;
 }
 
 export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDialogProps) {
   const [name, setName] = useState('');
-  const [type, setType] = useState<'kanban' | 'swot' | 'business_canvas'>('kanban');
+  const [type, setType] = useState<BoardType>('kanban');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +64,7 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
             </div>
             <div className="space-y-2">
               <Label htmlFor="board-type">Modelo do Quadro</Label>
-              <Select onValueChange={(value) => setType(value as any)} defaultValue={type}>
+              <Select onValueChange={(value) => setType(value as BoardType)} defaultValue={type}>
                 <SelectTrigger id="board-type">
                   <SelectValue placeholder="Selecione um modelo" />
                 </SelectTrigger>
@@ -70,6 +72,7 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
                   <SelectItem value="kanban">Kanban Padrão</SelectItem>
                   <SelectItem value="swot">Análise SWOT (FOFA)</SelectItem>
                   <SelectItem value="business_canvas">Canvas de Negócio</SelectItem>
+                  <SelectItem value="custom">Personalizado (Comece do Zero)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
