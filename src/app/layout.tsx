@@ -23,9 +23,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
   const { user, isUserLoading } = useUser();
 
-  const isLandingPage = pathname === '/';
+  const isHomePage = pathname === '/';
 
-  if (!user && !isUserLoading && isLandingPage) {
+  // If user is not logged in and on the homepage, show the landing page layout.
+  if (!user && !isUserLoading && isHomePage) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
         <LandingHeader />
@@ -35,16 +36,16 @@ function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If user is loading and we are on a protected route, show a loader
-  if (isUserLoading && !isLandingPage) {
+  // While checking user auth on protected routes, show a loader.
+  if (isUserLoading && !isHomePage) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
-        {/* You can replace this with a more sophisticated loader */}
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
-
+  
+  // For authenticated users, show the full app layout.
   if (user) {
     return (
       <div className="flex min-h-screen w-full bg-background">
@@ -61,7 +62,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // For unauthenticated users on non-landing pages (like /login), render children without full layout
+  // For unauthenticated users on non-home, public pages (like /login), render children without any layout.
   return <>{children}</>;
 }
 
