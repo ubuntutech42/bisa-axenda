@@ -104,8 +104,8 @@ function NavContent() {
                 key={item.label}
                 href={item.href}
                 className={cn(
-                  'group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all duration-300 ease-in-out hover:text-primary hover:bg-accent/50',
-                  pathname === item.href && 'bg-accent/80 text-primary font-bold'
+                  'group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all duration-300 ease-in-out hover:text-primary hover:bg-primary/10',
+                  pathname === item.href && 'bg-primary/20 text-primary font-bold'
                 )}
               >
                 <Icon className={cn("h-5 w-5 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary", { 'text-primary': pathname === item.href })} />
