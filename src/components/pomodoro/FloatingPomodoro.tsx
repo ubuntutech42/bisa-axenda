@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Play, Pause, RotateCcw, X, Timer } from 'lucide-react';
+import { Play, Pause, RotateCcw, X, Timer, Square } from 'lucide-react';
 import { usePomodoro } from '@/context/PomodoroContext';
 
 interface FloatingPomodoroProps {
@@ -19,6 +19,7 @@ export function FloatingPomodoro({ onClose }: FloatingPomodoroProps) {
     toggleTimer,
     resetTimer,
     pomodoroCount,
+    endSessionAndReset,
    } = usePomodoro();
 
   const [position, setPosition] = useState({ x: 30, y: window.innerHeight - 250 });
@@ -142,8 +143,16 @@ export function FloatingPomodoro({ onClose }: FloatingPomodoroProps) {
               {isActive ? <Pause className="w-6 h-6"/> : <Play className="w-6 h-6 ml-1"/>}
             </Button>
             <div className="flex flex-col items-center">
-                <span className="font-bold text-lg">{pomodoroCount}</span>
-                <span className="text-xs text-muted-foreground">Sessões</span>
+                {isActive && mode === 'pomodoro' ? (
+                    <Button variant="ghost" size="icon" onClick={endSessionAndReset} aria-label="Encerrar Sessão">
+                        <Square className="w-5 h-5 text-destructive" />
+                    </Button>
+                ) : (
+                    <div className='w-10 h-10 flex flex-col items-center justify-center'>
+                      <span className="font-bold text-lg">{pomodoroCount}</span>
+                      <span className="text-xs text-muted-foreground -mt-1">Sessões</span>
+                    </div>
+                )}
             </div>
           </div>
         </CardContent>

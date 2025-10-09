@@ -22,6 +22,7 @@ interface PomodoroContextType {
   isActive: boolean;
   toggleTimer: () => void;
   resetTimer: () => void;
+  endSessionAndReset: () => void;
   currentTaskId: string | null;
   setCurrentTaskId: (id: string | null) => void;
   currentBoardId: string | null;
@@ -46,13 +47,13 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [isFloatingPomodoroOpen, setIsFloatingPomodoroOpen] = useState(false);
 
-  const saveSession = useCallback(async (startTime: Date, focusDuration: number) => {
-    if (!user || !currentTaskId || !firestore || !currentBoardId) return;
+  const saveSession = useCallback(async (startTime: Date, focusDurationInSeconds: number) => {
+    if (!user || !currentTaskId || !firestore || !currentBoardId || focusDurationInSeconds <= 0) return;
 
     try {
         const pomodoroSessionsCollection = collection(firestore, 'users', user.uid, 'pomodoroSessions');
+        const focusDurationInMinutes = Math.ceil(focusDurationInSeconds / 60);
         
-        // This is a bit indirect, but we need to fetch the task to get its category
         const taskRef = doc(firestore, 'kanbanBoards', currentBoardId, 'tasks', currentTaskId);
         const { getDoc } = await import('firebase/firestore');
         const taskSnap = await getDoc(taskRef);
@@ -63,12 +64,12 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
             kanbanCardId: currentTaskId,
             startTime: startTime,
             endTime: serverTimestamp(),
-            focusDuration: focusDuration,
+            focusDuration: focusDurationInMinutes,
             category: taskData?.category || 'N/A',
         });
 
         await updateDoc(taskRef, {
-            timeSpent: increment(focusDuration)
+            timeSpent: increment(focusDurationInMinutes)
         });
         
     } catch(error) {
@@ -100,7 +101,7 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
         const newPomodoroCount = pomodoroCount + 1;
         setPomodoroCount(newPomodoroCount);
         if (sessionStartTime) {
-            saveSession(sessionStartTime, TIME_OPTIONS.pomodoro / 60);
+            saveSession(sessionStartTime, TIME_OPTIONS.pomodoro);
         }
         playBreakStartSound();
         setMode(newPomodoroCount % 4 === 0 ? 'longBreak' : 'shortBreak');
@@ -130,10 +131,22 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     setIsActive(!isActive);
   };
   
+  const endSessionAndReset = () => {
+    if (!isActive || mode !== 'pomodoro' || !sessionStartTime) return;
+    
+    setIsActive(false);
+    
+    const elapsedTime = TIME_OPTIONS.pomodoro - time;
+    saveSession(sessionStartTime, elapsedTime);
+    
+    // Reset to start a new pomodoro cycle
+    setMode('pomodoro');
+    setSessionStartTime(null);
+  };
 
   return (
     <PomodoroContext.Provider value={{ 
-        mode, setMode, time, isActive, toggleTimer, resetTimer, 
+        mode, setMode, time, isActive, toggleTimer, resetTimer, endSessionAndReset,
         currentTaskId, setCurrentTaskId, currentBoardId, setCurrentBoardId,
         pomodoroCount, isFloatingPomodoroOpen, setIsFloatingPomodoroOpen
     }}>
