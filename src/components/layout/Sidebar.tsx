@@ -30,6 +30,7 @@ import {
 import { useState } from 'react';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import { SettingsDialog } from '@/components/layout/SettingsDialog';
+import { usePomodoro } from '@/context/PomodoroContext';
 
 const navItems = [
   { href: '/', label: 'Painel', icon: Home },
@@ -84,7 +85,7 @@ function UserProfile() {
 
 function NavContent() {
   const pathname = usePathname();
-  const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
+  const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const auth = useAuth();
 
@@ -115,9 +116,9 @@ function NavContent() {
         </div>
       </nav>
       <div className="px-4 py-2 border-t border-border">
-        <Button variant="ghost" className="w-full justify-start" onClick={() => setIsPomodoroOpen(prev => !prev)}>
+        <Button variant="ghost" className="w-full justify-start" onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
             <Timer className="mr-3 h-5 w-5" />
-            {isPomodoroOpen ? 'Ocultar Timer' : 'Timer Flutuante'}
+            {isFloatingPomodoroOpen ? 'Ocultar Timer' : 'Timer Flutuante'}
         </Button>
         <Button variant="ghost" className="w-full justify-start" onClick={() => setIsSettingsOpen(true)}>
           <Settings className="mr-3 h-5 w-5" />
@@ -130,7 +131,7 @@ function NavContent() {
               Sair
           </Button>
       </div>
-      {isPomodoroOpen && <FloatingPomodoro onClose={() => setIsPomodoroOpen(false)} />}
+      {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
       <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );

@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { PomodoroProvider } from '@/context/PomodoroContext';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <FirebaseClientProvider>
+              <PomodoroProvider>
                 <div className="flex min-h-screen w-full bg-background">
                   <Sidebar />
                   <div className="flex flex-col flex-1 pb-16 md:pb-0">
@@ -42,6 +44,7 @@ export default function RootLayout({
                   <BottomNav />
                   <Toaster />
                 </div>
+              </PomodoroProvider>
             </FirebaseClientProvider>
         </ThemeProvider>
       </body>
