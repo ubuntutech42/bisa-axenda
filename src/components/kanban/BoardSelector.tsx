@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, Plus } from 'lucide-react';
 import { CreateBoardDialog } from './CreateBoardDialog';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 interface BoardSelectorProps {
@@ -77,7 +78,7 @@ export default function BoardSelector({ boards, activeBoard, setActiveBoard }: B
       
       template.forEach(list => {
         // We don't need to generate an ID, Firestore does that
-        const listRef = collection(firestore, 'kanbanBoards', newBoardRef.id, 'lists').doc();
+        const listRef = doc(listsCollection);
         batch.set(listRef, list);
       });
       
