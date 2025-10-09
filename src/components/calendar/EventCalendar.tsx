@@ -105,7 +105,7 @@ export function EventCalendar() {
 
   return (
     <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 mb-8 lg:mb-0">
         <Card>
           <Calendar
             mode="single"
