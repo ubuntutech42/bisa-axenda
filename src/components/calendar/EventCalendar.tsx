@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
-import type { Task, CulturalEvent, KanbanBoard } from '@/lib/types';
+import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType } from '@/lib/types';
 import { format, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +16,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
 
 
-type CalendarEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' });
+type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural'; id: string; title: string; }) | (CalendarEventType & { type: 'userEvent' });
 
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeCategories, setActiveCategories] = useState({
     task: true,
     cultural: true,
+    userEvent: true,
   });
   
   const { user } = useUser();
@@ -36,6 +37,12 @@ export function EventCalendar() {
 
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
+
+  const userEventsQuery = useMemoFirebase(() =>
+    user ? query(collection(firestore, 'users', user.uid, 'calendarEvents')) : null,
+    [firestore, user]
+  );
+  const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
 
   useEffect(() => {
     if (!boards || !firestore || !user) {
@@ -74,17 +81,20 @@ export function EventCalendar() {
   }, [boards, firestore, user]);
 
 
-  const allEvents: CalendarEvent[] = useMemo(() => {
-    const tasksWithDeadlines = allTasks.filter(t => t.deadline);
-    const eventList: CalendarEvent[] = [];
+  const allEvents: CombinedEvent[] = useMemo(() => {
+    const eventList: CombinedEvent[] = [];
     if (activeCategories.task) {
+        const tasksWithDeadlines = allTasks.filter(t => t.deadline);
         eventList.push(...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })));
     }
     if (activeCategories.cultural) {
         eventList.push(...culturalEvents.map(e => ({...e, type: 'cultural' as const, id: e.title, title: e.title})));
     }
+    if (activeCategories.userEvent && userEvents) {
+      eventList.push(...userEvents.map(e => ({...e, type: 'userEvent' as const })));
+    }
     return eventList;
-  }, [allTasks, activeCategories]);
+  }, [allTasks, userEvents, activeCategories]);
 
   const selectedDayEvents = date ? allEvents.filter(event => {
     const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
@@ -92,14 +102,19 @@ export function EventCalendar() {
     return isSameDay(parseISO(eventDate), date);
   }) : [];
 
-  const handleCategoryChange = (category: 'task' | 'cultural', checked: CheckedState) => {
+  const handleCategoryChange = (category: 'task' | 'cultural' | 'userEvent', checked: CheckedState) => {
     setActiveCategories(prev => ({
       ...prev,
       [category]: !!checked,
     }));
   };
 
-  if (areBoardsLoading || areTasksLoading) {
+  const getEventDate = (event: CombinedEvent): string | undefined => {
+    if (event.type === 'task') return event.deadline;
+    return event.date;
+  }
+
+  if (areBoardsLoading || areTasksLoading || areUserEventsLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
   }
 
@@ -107,6 +122,7 @@ export function EventCalendar() {
     <div className="lg:grid lg:grid-cols-3 lg:gap-8">
       <div className="lg:col-span-2 mb-8 lg:mb-0">
         <Card>
+          <div className="flex justify-center">
           <Calendar
             mode="single"
             selected={date}
@@ -114,13 +130,14 @@ export function EventCalendar() {
             className="p-0"
             locale={ptBR}
             classNames={{
-              day_cell: "h-12 w-12 text-base",
+              day_cell: "h-12 w-12 text-base text-center",
               head_cell: "text-muted-foreground rounded-md w-12 font-normal text-sm",
+              row: "flex w-full mt-2 gap-4",
             }}
             components={{
               DayContent: ({ date }) => {
                 const dayEvents = allEvents.filter(event => {
-                    const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
+                    const eventDate = getEventDate(event);
                     if (!eventDate) return false;
                     return isSameDay(parseISO(eventDate), date);
                 });
@@ -128,13 +145,20 @@ export function EventCalendar() {
                   <div className="relative flex items-center justify-center h-full w-full">
                     {format(date, 'd')}
                     {dayEvents.length > 0 && (
-                      <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary"></div>
+                      <div className="absolute bottom-1 flex justify-center gap-1">
+                        {dayEvents.slice(0,3).map(event => (
+                            <div key={`${event.type}-${event.id}`} className="w-1.5 h-1.5 rounded-full" style={{
+                              backgroundColor: event.type === 'cultural' ? 'hsl(var(--accent))' : event.type === 'task' ? 'hsl(var(--primary))' : event.color || 'hsl(var(--secondary))'
+                            }}></div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 );
               }
             }}
           />
+          </div>
         </Card>
       </div>
       <div>
@@ -143,7 +167,7 @@ export function EventCalendar() {
             <CardTitle className="font-headline">
               {date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
             </CardTitle>
-            <div className="flex items-center space-x-4 pt-2">
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 pt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox id="task-filter" checked={activeCategories.task} onCheckedChange={(checked) => handleCategoryChange('task', checked)} />
                 <label htmlFor="task-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -154,6 +178,12 @@ export function EventCalendar() {
                 <Checkbox id="cultural-filter" checked={activeCategories.cultural} onCheckedChange={(checked) => handleCategoryChange('cultural', checked)} />
                 <label htmlFor="cultural-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Cultural
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="userEvent-filter" checked={activeCategories.userEvent} onCheckedChange={(checked) => handleCategoryChange('userEvent', checked)} />
+                <label htmlFor="userEvent-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Eventos
                 </label>
               </div>
             </div>
@@ -172,13 +202,21 @@ export function EventCalendar() {
                           </div>
                           <p className="text-sm text-muted-foreground">{event.category}</p>
                         </>
-                      ) : (
+                      ) : event.type === 'cultural' ? (
                         <>
                            <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
                              <Badge className="bg-accent text-accent-foreground">Cultural</Badge>
                            </div>
                            <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-start">
+                             <p className="font-semibold">{event.title}</p>
+                             <Badge style={{ backgroundColor: event.color, color: 'white' }}>{event.category}</Badge>
+                           </div>
+                           {event.description && <p className="text-sm text-muted-foreground mt-1">{event.description}</p>}
                         </>
                       )}
                     </div>

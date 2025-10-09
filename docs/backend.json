@@ -392,19 +392,18 @@
       ]
     },
     "CalendarEvent": {
-      "$schema": "http://json-schema.org/draft_07/schema#_disabled",
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "CalendarEvent",
       "type": "object",
       "description": "Represents an event in the calendar.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the calendar event.",
-          "format": "uuid"
+          "description": "Unique identifier for the calendar event."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who created this event. (Relationship: User 1:N CalendarEvent)"
+          "description": "Reference to the User who created this event."
         },
         "title": {
           "type": "string",
@@ -414,14 +413,21 @@
           "type": "string",
           "description": "Description of the calendar event."
         },
-        "startTime": {
+        "date": {
           "type": "string",
-          "description": "Start time of the calendar event.",
-          "format": "date-time"
+          "description": "Date of the calendar event in YYYY-MM-DD format.",
+          "format": "date"
         },
-        "endTime": {
+        "category": {
+            "type": "string",
+            "description": "A user-defined category for the event."
+        },
+        "color": {
+            "type": "string",
+            "description": "A hex color code for the event category."
+        },
+        "createdAt": {
           "type": "string",
-          "description": "End time of the calendar event.",
           "format": "date-time"
         }
       },
@@ -429,8 +435,10 @@
         "id",
         "userId",
         "title",
-        "startTime",
-        "endTime"
+        "date",
+        "category",
+        "color",
+        "createdAt"
       ]
     },
     "CulturalEvent": {
