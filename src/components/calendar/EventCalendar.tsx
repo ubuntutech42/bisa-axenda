@@ -114,7 +114,7 @@ export function EventCalendar() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">
-              {date ? format(date, 'd \'de\' MMMM \'de\' yyyy', { locale: ptBR }) : 'Selecione uma data'}
+              {date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
             </CardTitle>
           </CardHeader>
           <CardContent>
