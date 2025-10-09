@@ -1,18 +1,19 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+  SheetClose
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,29 +62,30 @@ export function CreateEventDialog({ isOpen, onClose, onCreate }: CreateEventDial
     }
   });
 
+  useEffect(() => {
+    if (!isOpen) {
+      reset();
+    }
+  }, [isOpen, reset]);
+
   const onSubmit = (data: EventFormData) => {
     onCreate({
       ...data,
       date: format(data.date, 'yyyy-MM-dd'),
     });
-    reset();
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        if(!open) {
-            reset();
-            onClose();
-        }
-    }}>
-      <DialogContent>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>Criar Novo Evento</DialogTitle>
-            <DialogDescription>
+          <SheetHeader>
+            <SheetTitle>Criar Novo Evento</SheetTitle>
+            <SheetDescription>
               Adicione um novo evento personalizado ao seu calendário.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
           <div className="py-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Título do Evento</Label>
@@ -157,14 +159,16 @@ export function CreateEventDialog({ isOpen, onClose, onCreate }: CreateEventDial
                 )}
              />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => { reset(); onClose(); }}>
-              Cancelar
-            </Button>
+          <SheetFooter>
+            <SheetClose asChild>
+                <Button type="button" variant="outline">
+                Cancelar
+                </Button>
+            </SheetClose>
             <Button type="submit">Criar Evento</Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
