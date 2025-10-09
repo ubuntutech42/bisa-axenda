@@ -77,7 +77,6 @@ export default function BoardSelector({ boards, activeBoard, setActiveBoard }: B
       const template = boardTemplates[type];
       
       template.forEach(list => {
-        // We don't need to generate an ID, Firestore does that
         const listRef = doc(listsCollection);
         batch.set(listRef, list);
       });
