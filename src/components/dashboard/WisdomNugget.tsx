@@ -20,7 +20,7 @@ export function WisdomNugget() {
     return (
         <Card>
             <CardContent className="p-6">
-                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Frase do dia</h3>
+                <h3 className="mb-2 text-sm font-semibold text-primary">Frase do dia</h3>
                 <div className="h-32 animate-pulse rounded-md bg-muted"></div>
             </CardContent>
         </Card>
