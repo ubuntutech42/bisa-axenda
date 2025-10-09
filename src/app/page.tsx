@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import type { Task, KanbanList } from '@/lib/types';
+import { collection, query, where } from 'firebase/firestore';
+import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { TasksOverview } from '@/components/dashboard/TasksOverview';
@@ -16,16 +16,32 @@ export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const [activeBoard, setActiveBoard] = useState<KanbanBoardType | null>(null);
+
+  // Fetch all boards for the user
+  const boardsQuery = useMemoFirebase(() => 
+    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
+    [firestore, user]
+  );
+  const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoardType>(boardsQuery);
+
+  // Set the first board as active by default
+  useEffect(() => {
+    if (boards && boards.length > 0 && !activeBoard) {
+      setActiveBoard(boards[0]);
+    }
+  }, [boards, activeBoard]);
+
 
   const tasksQuery = useMemoFirebase(() => 
-    user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
-    [firestore, user]
+    user && activeBoard ? collection(firestore, 'kanbanBoards', activeBoard.id, 'tasks') : null, 
+    [firestore, user, activeBoard]
   );
   const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksQuery);
 
   const listsQuery = useMemoFirebase(() =>
-    user ? collection(firestore, 'users', user.uid, 'kanbanLists') : null,
-    [firestore, user]
+    user && activeBoard ? collection(firestore, 'kanbanBoards', activeBoard.id, 'lists') : null,
+    [firestore, user, activeBoard]
   );
   const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
@@ -49,7 +65,7 @@ export default function DashboardPage() {
   const hours = Math.floor(stats.totalFocusTime / 60);
   const minutes = stats.totalFocusTime % 60;
   
-  if (isUserLoading || areTasksLoading || areListsLoading || !user) {
+  if (isUserLoading || areTasksLoading || areListsLoading || areBoardsLoading || !user) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="h-10 w-10 animate-spin text-primary" />

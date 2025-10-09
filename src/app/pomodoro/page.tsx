@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, query, where } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Loader, Play, Pause, RotateCcw, History } from 'lucide-react';
-import type { Task, PomodoroSession, KanbanList } from '@/lib/types';
+import type { Task, PomodoroSession, KanbanList, KanbanBoard } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,19 +33,32 @@ export default function PomodoroPage() {
   const [time, setTime] = useState(TIME_OPTIONS.pomodoro);
   const [isActive, setIsActive] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+  const [currentBoardId, setCurrentBoardId] = useState<string | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
-  const listsQuery = useMemoFirebase(() =>
-    user ? collection(firestore, 'users', user.uid, 'kanbanLists') : null,
+  const boardsQuery = useMemoFirebase(() => 
+    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
     [firestore, user]
+  );
+  const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoard>(boardsQuery);
+
+  const listsQuery = useMemoFirebase(() =>
+    user && currentBoardId ? collection(firestore, 'kanbanBoards', currentBoardId, 'lists') : null,
+    [firestore, user, currentBoardId]
   );
   const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
   const tasksQuery = useMemoFirebase(() =>
-    user ? collection(firestore, 'users', user.uid, 'tasks') : null,
-    [firestore, user]
+    user && currentBoardId ? collection(firestore, 'kanbanBoards', currentBoardId, 'tasks') : null,
+    [firestore, user, currentBoardId]
   );
   const { data: tasks, isLoading: areTasksLoading } = useCollection<Task>(tasksQuery);
+  
+  useEffect(() => {
+    if (boards && boards.length > 0 && !currentBoardId) {
+      setCurrentBoardId(boards[0].id);
+    }
+  }, [boards, currentBoardId]);
 
   const pomodoroQuery = useMemoFirebase(() =>
     user ? collection(firestore, 'users', user.uid, 'pomodoroSessions') : null,
@@ -60,7 +73,7 @@ export default function PomodoroPage() {
   }, [isUserLoading, user, router]);
 
   const saveSession = useCallback(async (startTime: Date, focusDuration: number) => {
-    if (!user || !currentTaskId || !pomodoroQuery || !firestore) return;
+    if (!user || !currentTaskId || !pomodoroQuery || !firestore || !currentBoardId) return;
 
     // Save pomodoro session
     const associatedTask = tasks?.find(t => t.id === currentTaskId);
@@ -74,12 +87,12 @@ export default function PomodoroPage() {
     });
 
     // Update timeSpent on task
-    const taskRef = doc(firestore, 'users', user.uid, 'tasks', currentTaskId);
+    const taskRef = doc(firestore, 'kanbanBoards', currentBoardId, 'tasks', currentTaskId);
     await updateDoc(taskRef, {
       timeSpent: increment(focusDuration)
     });
 
-  }, [user, currentTaskId, firestore, pomodoroQuery, tasks]);
+  }, [user, currentTaskId, currentBoardId, firestore, pomodoroQuery, tasks]);
 
   const resetTimer = useCallback((newMode: TimerMode) => {
     setIsActive(false);
@@ -133,7 +146,7 @@ export default function PomodoroPage() {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  if (isUserLoading || areTasksLoading || isHistoryLoading || areListsLoading || !user) {
+  if (isUserLoading || areTasksLoading || isHistoryLoading || areListsLoading || areBoardsLoading || !user) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>;
   }
   
@@ -182,8 +195,17 @@ export default function PomodoroPage() {
                          </div>
                     </div>
                     
-                    <div className='w-full max-w-sm'>
-                        <Select onValueChange={setCurrentTaskId} value={currentTaskId || ''} disabled={isActive}>
+                    <div className='w-full max-w-sm space-y-2'>
+                        <Select onValueChange={setCurrentBoardId} value={currentBoardId || ''} disabled={isActive}>
+                            <SelectTrigger id="board-select">
+                                <SelectValue placeholder="Selecione um quadro" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {boards && boards.map(board => <SelectItem key={board.id} value={board.id}>{board.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+
+                        <Select onValueChange={setCurrentTaskId} value={currentTaskId || ''} disabled={isActive || !currentBoardId}>
                             <SelectTrigger id="task-select">
                                 <SelectValue placeholder="Selecione uma tarefa para focar" />
                             </SelectTrigger>

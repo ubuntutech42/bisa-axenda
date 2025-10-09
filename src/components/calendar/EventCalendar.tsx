@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
-import type { Task, CulturalEvent } from '@/lib/types';
+import type { Task, CulturalEvent, KanbanBoard } from '@/lib/types';
 import { format, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 
 
@@ -22,21 +22,49 @@ export function EventCalendar() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const tasksQuery = useMemoFirebase(() => 
-    user ? collection(firestore, 'users', user.uid, 'tasks') : null, 
+  // Fetch all boards to get all tasks
+  const boardsQuery = useMemoFirebase(() => 
+    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
     [firestore, user]
   );
-  
-  const { data: tasks, isLoading } = useCollection<Task>(tasksQuery);
+  const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoard>(boardsQuery);
+
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [areTasksLoading, setAreTasksLoading] = useState(true);
+
+  useEffect(() => {
+    if (!boards || !firestore || !user) return;
+
+    const fetchTasks = async () => {
+      setAreTasksLoading(true);
+      const tasksPromises = boards.map(board => 
+        import('firebase/firestore').then(({ getDocs, collection }) => 
+          getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
+        )
+      );
+      
+      const snapshots = await Promise.all(tasksPromises);
+      const tasks: Task[] = [];
+      snapshots.forEach(snapshot => {
+        snapshot.forEach(doc => {
+          tasks.push({ id: doc.id, ...doc.data() } as Task);
+        });
+      });
+      setAllTasks(tasks);
+      setAreTasksLoading(false);
+    };
+
+    fetchTasks();
+  }, [boards, firestore, user]);
 
 
   const allEvents: CalendarEvent[] = useMemo(() => {
-    const tasksWithDeadlines = (tasks || []).filter(t => t.deadline);
+    const tasksWithDeadlines = allTasks.filter(t => t.deadline);
     return [
       ...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })),
       ...culturalEvents.map(e => ({...e, type: 'cultural' as const, id: e.title, title: e.title}))
     ];
-  }, [tasks]);
+  }, [allTasks]);
 
   const selectedDayEvents = date ? allEvents.filter(event => {
     const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
@@ -44,7 +72,7 @@ export function EventCalendar() {
     return isSameDay(parseISO(eventDate), date);
   }) : [];
 
-  if (isLoading) {
+  if (areBoardsLoading || areTasksLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
   }
 
