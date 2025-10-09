@@ -1,82 +1,92 @@
 {
-  "placeholderImages": [
+  "authors": {
+    "Angela Davis": [
+      {
+        "id": "davis-1",
+        "description": "Angela Davis speaking.",
+        "imageUrl": "https://picsum.photos/seed/davis1/600/400?grayscale",
+        "imageHint": "Angela Davis"
+      },
+      {
+        "id": "davis-2",
+        "description": "Portrait of Angela Davis.",
+        "imageUrl": "https://picsum.photos/seed/davis2/600/400?grayscale",
+        "imageHint": "Angela Davis portrait"
+      }
+    ],
+    "James Baldwin": [
+      {
+        "id": "baldwin-1",
+        "description": "James Baldwin portrait.",
+        "imageUrl": "https://picsum.photos/seed/baldwin1/600/400?grayscale",
+        "imageHint": "James Baldwin"
+      }
+    ],
+    "Conceição Evaristo": [
+      {
+        "id": "evaristo-1",
+        "description": "Conceição Evaristo smiling.",
+        "imageUrl": "https://picsum.photos/seed/evaristo1/600/400?grayscale",
+        "imageHint": "Conceição Evaristo"
+      }
+    ],
+    "Lélia Gonzalez": [
+      {
+        "id": "gonzalez-1",
+        "description": "Lélia Gonzalez portrait.",
+        "imageUrl": "https://picsum.photos/seed/gonzalez1/600/400?grayscale",
+        "imageHint": "Lelia Gonzalez"
+      }
+    ],
+    "bell hooks": [
+      {
+        "id": "hooks-1",
+        "description": "bell hooks portrait.",
+        "imageUrl": "https://picsum.photos/seed/hooks1/600/400?grayscale",
+        "imageHint": "bell hooks"
+      }
+    ],
+    "Nina Simone": [
+      {
+        "id": "simone-1",
+        "description": "Nina Simone performing.",
+        "imageUrl": "https://picsum.photos/seed/simone1/600/400?grayscale",
+        "imageHint": "Nina Simone"
+      }
+    ],
+    "Nelson Mandela": [
+      {
+        "id": "mandela-1",
+        "description": "Nelson Mandela smiling.",
+        "imageUrl": "https://picsum.photos/seed/mandela1/600/400?grayscale",
+        "imageHint": "Nelson Mandela"
+      }
+    ]
+  },
+  "inspirational": [
     {
-      "id": "quote-davis-chains",
-      "description": "Image for Angela Davis quote about chains.",
-      "imageUrl": "https://picsum.photos/seed/davis/600/400?grayscale",
-      "imageHint": "Angela Davis"
+      "id": "insp-1",
+      "description": "Inspiring image of people marching for civil rights.",
+      "imageUrl": "https://picsum.photos/seed/march/600/400?grayscale",
+      "imageHint": "civil rights march"
     },
     {
-      "id": "quote-baldwin-inevitable",
-      "description": "Image for James Baldwin quote about being inevitable.",
-      "imageUrl": "https://picsum.photos/seed/baldwin/600/400?grayscale",
-      "imageHint": "James Baldwin"
+      "id": "insp-2",
+      "description": "Black Power fist.",
+      "imageUrl": "https://picsum.photos/seed/fist/600/400?grayscale",
+      "imageHint": "black power fist"
     },
     {
-      "id": "quote-heron-revolution",
-      "description": "Image for Gil Scott-Heron quote about the revolution.",
-      "imageUrl": "https://picsum.photos/seed/heron/600/400?grayscale",
-      "imageHint": "Gil Scott-Heron"
-    },
-    {
-      "id": "quote-evaristo-identity",
-      "description": "Image for Conceição Evaristo quote about identity.",
-      "imageUrl": "https://picsum.photos/seed/evaristo/600/400?grayscale",
-      "imageHint": "Conceição Evaristo"
-    },
-    {
-      "id": "quote-davis-movement",
-      "description": "Image for Angela Davis quote about the black woman's movement.",
-      "imageUrl": "https://picsum.photos/seed/movement/600/400?grayscale",
-      "imageHint": "civil rights"
-    },
-    {
-      "id": "quote-gonzalez-color",
-      "description": "Image for Lélia Gonzalez quote about color.",
-      "imageUrl": "https://picsum.photos/seed/gonzalez/600/400?grayscale",
-      "imageHint": "Lelia Gonzalez"
-    },
-    {
-      "id": "quote-proverb-footsteps",
-      "description": "Image for the popular saying about footsteps.",
-      "imageUrl": "https://picsum.photos/seed/ancestors/600/400?grayscale",
-      "imageHint": "ancestors walking"
-    },
-    {
-      "id": "quote-davis-freedom",
-      "description": "Image for Angela Davis quote about freedom.",
-      "imageUrl": "https://picsum.photos/seed/freedom/600/400?grayscale",
-      "imageHint": "protest freedom"
-    },
-    {
-      "id": "quote-hooks-desire",
-      "description": "Image for bell hooks quote about desire and freedom.",
-      "imageUrl": "https://picsum.photos/seed/hooks/600/400?grayscale",
-      "imageHint": "bell hooks"
-    },
-    {
-      "id": "quote-evaristo-die",
-      "description": "Image for Conceição Evaristo quote about not dying.",
-      "imageUrl": "https://picsum.photos/seed/conceicao/600/400?grayscale",
-      "imageHint": "black woman writing"
-    },
-    {
-      "id": "quote-simone-liberate",
-      "description": "Image for Nina Simone quote about liberation.",
-      "imageUrl": "https://picsum.photos/seed/simone/600/400?grayscale",
-      "imageHint": "Nina Simone"
-    },
-    {
-      "id": "quote-panthers-dare",
+      "id": "insp-3",
       "description": "Image for the Black Panthers' motto.",
       "imageUrl": "https://picsum.photos/seed/panthers/600/400?grayscale",
       "imageHint": "Black Panther"
     },
     {
-      "id": "quote-mandela-education",
-      "description": "Image for Nelson Mandela quote about education.",
-      "imageUrl": "https://picsum.photos/seed/mandela/600/400?grayscale",
-      "imageHint": "Nelson Mandela"
+      "id": "insp-4",
+      "description": "Gil Scott-Heron.",
+      "imageUrl": "https://picsum.photos/seed/heron/600/400?grayscale",
+      "imageHint": "Gil Scott-Heron"
     }
   ]
 }

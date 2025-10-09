@@ -3,24 +3,33 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { quotes } from '@/lib/data';
-import type { Quote } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { Quote, ImagePlaceholder } from '@/lib/types';
+import { imageCatalog } from '@/lib/placeholder-images';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
 
+const selectImageForQuote = (quote: Quote): ImagePlaceholder => {
+  const authorImages = imageCatalog.authors[quote.author];
+  if (authorImages && authorImages.length > 0) {
+    // Return a random image for that author
+    return authorImages[Math.floor(Math.random() * authorImages.length)];
+  }
+  
+  // Return a random image from the inspirational fallbacks
+  return imageCatalog.inspirational[Math.floor(Math.random() * imageCatalog.inspirational.length)];
+}
+
 export function WisdomNugget() {
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [image, setImage] = useState<ImagePlaceholder | null>(null);
 
   useEffect(() => {
-    // Moved the random quote selection inside useEffect to prevent hydration errors.
-    // This ensures it only runs on the client-side.
-    setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+    // This logic runs only on the client to prevent hydration mismatch
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    const selectedImage = selectImageForQuote(randomQuote);
+    setQuote(randomQuote);
+    setImage(selectedImage);
   }, []);
-
-  const image = useMemo(() => {
-    if (!quote) return null;
-    return PlaceHolderImages.find(img => img.id === quote.imageId);
-  }, [quote]);
 
   if (!quote || !image) {
     return (

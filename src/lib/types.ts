@@ -35,8 +35,24 @@ export interface CulturalEvent {
 export interface Quote {
   text: string;
   author: string;
-  imageId: string;
 }
+
+export interface ImagePlaceholder {
+  id: string;
+  description: string;
+  imageUrl: string;
+  imageHint: string;
+}
+
+export interface AuthorImages {
+  [author: string]: ImagePlaceholder[];
+}
+
+export interface ImageCatalog {
+  authors: AuthorImages;
+  inspirational: ImagePlaceholder[];
+}
+
 
 export interface PomodoroSession {
   id: string;
