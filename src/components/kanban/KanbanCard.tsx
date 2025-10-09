@@ -33,9 +33,19 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
   const checklistProgress = task.checklist ? task.checklist.filter(item => item.completed).length : 0;
   const checklistTotal = task.checklist ? task.checklist.length : 0;
 
-  const timeText = task.deadline 
-    ? `Vence ${formatDistanceToNow(new Date(task.deadline), { addSuffix: true, locale: ptBR })}`
-    : `Criada ${formatDistanceToNow(task.createdAt.toDate(), { addSuffix: true, locale: ptBR })}`;
+  const getTimeText = () => {
+    if (task.deadline) {
+      const deadlineDate = new Date(task.deadline);
+      const now = new Date();
+      const distanceText = formatDistanceToNow(deadlineDate, { addSuffix: true, locale: ptBR });
+      if (deadlineDate < now) {
+        return `Venceu ${distanceText.replace('há', 'a')}`; // "Venceu a cerca de 2 horas"
+      }
+      return `Vence ${distanceText}`; // "Vence em 2 dias"
+    }
+    return `Criada ${formatDistanceToNow(task.createdAt.toDate(), { addSuffix: true, locale: ptBR })}`;
+  };
+  const timeText = getTimeText();
 
   return (
     <Card
