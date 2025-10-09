@@ -10,6 +10,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { PomodoroProvider, usePomodoro } from '@/context/PomodoroContext';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import './globals.css';
+import { usePathname } from 'next/navigation';
 
 // export const metadata: Metadata = {
 //   title: 'Axénda',
@@ -18,6 +19,13 @@ import './globals.css';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
+  const pathname = usePathname();
+
+  // Don't show app layout on landing page
+  if (pathname === '/landing') {
+    return <>{children}</>;
+  }
+
 
   return (
     <>

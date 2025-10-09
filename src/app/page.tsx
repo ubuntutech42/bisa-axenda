@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/login');
+      router.push('/landing');
     }
   }, [isUserLoading, user, router]);
 
