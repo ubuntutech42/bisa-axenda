@@ -1,3 +1,4 @@
+
 import type { CulturalEvent, Quote } from './types';
 
 export const culturalEvents: CulturalEvent[] = [
@@ -40,5 +41,7 @@ export const quotes: Quote[] = [
     { text: "Se eles não te dão um lugar na mesa, traga uma cadeira dobrável.", author: "Shirley Chisholm" },
     { text: "Eu tive que fazer minha própria vida e minha própria oportunidade. Mas eu as fiz! Não sente e espere pelas oportunidades virem. Levante-se e as faça!", author: "Madam C.J. Walker" },
     { text: "O lugar mais comum onde o poder é renunciado é pensar que não temos nenhum.", author: "Alice Walker" },
-    { text: "Cada vez que uma mulher se levanta por si mesma, ela se levanta por todas as mulheres.", author: "Maya Angelou" }
+    { text: "Cada vez que uma mulher se levanta por si mesma, ela se levanta por todas as mulheres.", author: "Maya Angelou" },
+    { text: "Cada geração deve, dentro de uma relativa opacidade, descobrir sua missão, cumpri-la ou traí-la.", author: "Frantz Fanon" },
+    { text: "O que importa não é conhecer o mundo, mas transformá-lo.", author: "Frantz Fanon" }
 ];

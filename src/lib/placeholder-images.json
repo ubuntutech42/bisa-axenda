@@ -61,6 +61,14 @@
         "imageUrl": "https://picsum.photos/seed/mandela1/600/400?grayscale",
         "imageHint": "Nelson Mandela"
       }
+    ],
+    "Frantz Fanon": [
+      {
+        "id": "fanon-1",
+        "description": "Frantz Fanon portrait.",
+        "imageUrl": "https://picsum.photos/seed/fanon1/600/400?grayscale",
+        "imageHint": "Frantz Fanon"
+      }
     ]
   },
   "inspirational": [
