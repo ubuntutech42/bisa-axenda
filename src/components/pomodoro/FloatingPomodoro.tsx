@@ -94,7 +94,7 @@ export function FloatingPomodoro({ onClose }: FloatingPomodoroProps) {
   return (
     <div
         ref={nodeRef}
-        className="fixed z-50"
+        className="fixed z-[101]"
         style={{ left: `${position.x}px`, top: `${position.y}px` }}
     >
       <Card className="w-64 rounded-xl shadow-2xl">
