@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
-import { Loader, History, Square, Plus } from 'lucide-react';
+import { Loader, History, FastForward, Plus } from 'lucide-react';
 import type { Task, PomodoroSession, KanbanList, KanbanBoard } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ export default function PomodoroPage() {
     isActive,
     toggleTimer,
     resetTimer,
-    endSessionAndReset,
+    skipSession,
   } = usePomodoro();
 
   const boardsQuery = useMemoFirebase(() => 
@@ -178,9 +178,9 @@ export default function PomodoroPage() {
                         <Button size="lg" className="w-32 h-16 rounded-full text-2xl shadow-lg" onClick={toggleTimer} aria-label={isActive ? 'Pausar' : 'Iniciar'}>
                             {isActive ? <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pause w-8 h-8"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg> : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-play w-8 h-8 ml-1"><polygon points="6 3 20 12 6 21 6 3"/></svg>}
                         </Button>
-                        {isActive && mode === 'pomodoro' ? (
-                          <Button variant="ghost" size="icon" onClick={endSessionAndReset} aria-label="Encerrar Sessão">
-                            <Square className="w-6 h-6 text-destructive" />
+                        {isActive ? (
+                          <Button variant="ghost" size="icon" onClick={skipSession} aria-label="Avançar Sessão">
+                            <FastForward className="w-6 h-6 text-muted-foreground" />
                           </Button>
                         ) : (
                           <div className='w-10 h-10'></div> // Placeholder

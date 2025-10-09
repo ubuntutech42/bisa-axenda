@@ -22,7 +22,7 @@ interface PomodoroContextType {
   isActive: boolean;
   toggleTimer: () => void;
   resetTimer: () => void;
-  endSessionAndReset: () => void;
+  skipSession: () => void;
   currentTaskId: string | null;
   setCurrentTaskId: (id: string | null) => void;
   currentBoardId: string | null;
@@ -88,6 +88,20 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     setTime(TIME_OPTIONS[mode]);
   }, [mode]);
 
+  const advanceToNextMode = useCallback(() => {
+      setIsActive(false);
+      if (mode === 'pomodoro') {
+        const newPomodoroCount = pomodoroCount + 1;
+        setPomodoroCount(newPomodoroCount);
+        playBreakStartSound();
+        setMode(newPomodoroCount % 4 === 0 ? 'longBreak' : 'shortBreak');
+      } else {
+        playFocusStartSound();
+        setMode('pomodoro');
+      }
+  }, [mode, pomodoroCount]);
+
+
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isActive && time > 0) {
@@ -96,24 +110,15 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
         if (time > 1 && time % 60 === 1) playTickSound();
       }, 1000);
     } else if (isActive && time === 0) {
-      setIsActive(false);
-      if (mode === 'pomodoro') {
-        const newPomodoroCount = pomodoroCount + 1;
-        setPomodoroCount(newPomodoroCount);
-        if (sessionStartTime) {
+        if (mode === 'pomodoro' && sessionStartTime) {
             saveSession(sessionStartTime, TIME_OPTIONS.pomodoro);
         }
-        playBreakStartSound();
-        setMode(newPomodoroCount % 4 === 0 ? 'longBreak' : 'shortBreak');
-      } else {
-        playFocusStartSound();
-        setMode('pomodoro');
-      }
+        advanceToNextMode();
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, time, mode, sessionStartTime, pomodoroCount, saveSession]);
+  }, [isActive, time, mode, sessionStartTime, saveSession, advanceToNextMode]);
 
   const toggleTimer = () => {
     if (mode === 'pomodoro' && !currentTaskId) {
@@ -131,22 +136,21 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     setIsActive(!isActive);
   };
   
-  const endSessionAndReset = () => {
-    if (!isActive || mode !== 'pomodoro' || !sessionStartTime) return;
+  const skipSession = () => {
+    if (!isActive) return;
     
-    setIsActive(false);
-    
-    const elapsedTime = TIME_OPTIONS.pomodoro - time;
-    saveSession(sessionStartTime, elapsedTime);
-    
-    // Reset to start a new pomodoro cycle
-    setMode('pomodoro');
-    setSessionStartTime(null);
+    // If it's a focus session, save it as a completed session
+    if (mode === 'pomodoro' && sessionStartTime) {
+        saveSession(sessionStartTime, TIME_OPTIONS.pomodoro);
+    }
+
+    // Advance to the next mode immediately
+    advanceToNextMode();
   };
 
   return (
     <PomodoroContext.Provider value={{ 
-        mode, setMode, time, isActive, toggleTimer, resetTimer, endSessionAndReset,
+        mode, setMode, time, isActive, toggleTimer, resetTimer, skipSession,
         currentTaskId, setCurrentTaskId, currentBoardId, setCurrentBoardId,
         pomodoroCount, isFloatingPomodoroOpen, setIsFloatingPomodoroOpen
     }}>
