@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { Button } from '@/components/ui/button';
@@ -45,12 +45,10 @@ export default function BoardPage() {
     }
   }, [boards, activeBoard]);
 
-  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' >) => {
+  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt' >) => {
     if (!user || !activeBoard) return;
     try {
       const tasksCollection = collection(firestore, 'kanbanBoards', activeBoard.id, 'tasks');
-      // Temporarily importing addDoc from firebase/firestore
-      const { addDoc, serverTimestamp } = await import('firebase/firestore');
       await addDoc(tasksCollection, {
         ...newTaskData,
         userId: user.uid,

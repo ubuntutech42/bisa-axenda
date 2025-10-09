@@ -79,6 +79,10 @@
           "type": "string",
           "format": "date-time"
         },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
         "estimatedTime": {
           "type": "number",
           "description": "Estimated time in minutes."
@@ -103,7 +107,7 @@
           "items": { "type": "string" }
         }
       },
-      "required": ["id", "userId", "listId", "title", "category", "priority", "timeSpent"]
+      "required": ["id", "userId", "listId", "title", "category", "priority", "timeSpent", "createdAt"]
     },
     "KanbanBoard": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -126,7 +130,7 @@
         "type": {
           "type": "string",
           "description": "The type or template of the board.",
-          "enum": ["kanban", "swot", "business_canvas"]
+          "enum": ["kanban", "swot", "business_canvas", "custom"]
         },
         "createdAt": {
           "type": "string",
@@ -341,10 +345,6 @@
         "focusDuration": {
           "type": "number",
           "description": "Duration of the focus period in minutes."
-        },
-        "breakDuration": {
-          "type": "number",
-          "description": "Duration of the break period in minutes."
         },
         "category": {
           "type": "string",

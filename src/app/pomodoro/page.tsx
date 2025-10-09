@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
-import { Loader, History, FastForward, Plus } from 'lucide-react';
+import { Loader, History, FastForward, Plus, Square } from 'lucide-react';
 import type { Task, PomodoroSession, KanbanList, KanbanBoard } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,7 @@ export default function PomodoroPage() {
     }
   }, [isUserLoading, user, router]);
   
-  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' >) => {
+  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt'>) => {
     if (!user || !currentBoardId) return;
     try {
       const tasksCollection = collection(firestore, 'kanbanBoards', currentBoardId, 'tasks');

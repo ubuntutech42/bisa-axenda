@@ -17,6 +17,7 @@ export interface Task {
   timeSpent: number; // in minutes
   checklist?: { text: string; completed: boolean }[];
   comments?: string[];
+  createdAt: Timestamp;
 }
 
 export interface KanbanBoard {

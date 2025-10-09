@@ -33,6 +33,10 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
   const checklistProgress = task.checklist ? task.checklist.filter(item => item.completed).length : 0;
   const checklistTotal = task.checklist ? task.checklist.length : 0;
 
+  const timeText = task.deadline 
+    ? `Vence ${formatDistanceToNow(new Date(task.deadline), { addSuffix: true, locale: ptBR })}`
+    : `Criada ${formatDistanceToNow(task.createdAt.toDate(), { addSuffix: true, locale: ptBR })}`;
+
   return (
     <Card
       onClick={onClick}
@@ -49,12 +53,10 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
           </Badge>
         </div>
         <div className="flex justify-between items-center text-xs text-muted-foreground">
-          {task.deadline && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{formatDistanceToNow(new Date(task.deadline), { addSuffix: true, locale: ptBR })}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            <span>{timeText}</span>
+          </div>
           <div className="flex items-center gap-3">
             {task.comments && task.comments.length > 0 && (
               <div className="flex items-center gap-1">
