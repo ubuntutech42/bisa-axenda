@@ -1,27 +1,31 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
-import { Loader, History, Square } from 'lucide-react';
+import { Loader, History, Square, Plus } from 'lucide-react';
 import type { Task, PomodoroSession, KanbanList, KanbanBoard } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { usePomodoro } from '@/context/PomodoroContext';
 import PomodoroTimerDisplay from '@/components/pomodoro/PomodoroTimerDisplay';
+import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function PomodoroPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+
 
   const {
     currentBoardId,
@@ -71,6 +75,35 @@ export default function PomodoroPage() {
       router.push('/login');
     }
   }, [isUserLoading, user, router]);
+  
+  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' >) => {
+    if (!user || !currentBoardId) return;
+    try {
+      const tasksCollection = collection(firestore, 'kanbanBoards', currentBoardId, 'tasks');
+      const newDocRef = await addDoc(tasksCollection, {
+        ...newTaskData,
+        userId: user.uid,
+        timeSpent: 0,
+        createdAt: serverTimestamp(),
+      });
+      
+      // Automatically select the new task for focus
+      setCurrentTaskId(newDocRef.id);
+
+      toast({
+        title: 'Tarefa criada!',
+        description: `A tarefa "${newTaskData.title}" foi adicionada e selecionada para foco.`,
+      });
+      setIsNewTaskDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar tarefa',
+        description: 'Não foi possível salvar a nova tarefa. Tente novamente.',
+      });
+    }
+  };
 
 
   if (isUserLoading || areTasksLoading || isHistoryLoading || areListsLoading || areBoardsLoading || !user) {
@@ -112,19 +145,30 @@ export default function PomodoroPage() {
                                 {boards && boards.map(board => <SelectItem key={board.id} value={board.id}>{board.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
-
-                        <Select onValueChange={(id) => setCurrentTaskId(id)} value={currentTaskId || ''} disabled={isActive || !currentBoardId}>
-                            <SelectTrigger id="task-select">
-                                <SelectValue placeholder="Selecione uma tarefa para focar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {incompleteTasks && incompleteTasks.length > 0 ? (
-                                    incompleteTasks.map(task => <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>)
-                                ) : (
-                                    <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma tarefa a fazer.</div>
-                                )}
-                            </SelectContent>
-                        </Select>
+                        
+                        <div className="flex items-center gap-2">
+                            <Select onValueChange={(id) => setCurrentTaskId(id)} value={currentTaskId || ''} disabled={isActive || !currentBoardId}>
+                                <SelectTrigger id="task-select">
+                                    <SelectValue placeholder="Selecione uma tarefa para focar" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {incompleteTasks && incompleteTasks.length > 0 ? (
+                                        incompleteTasks.map(task => <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>)
+                                    ) : (
+                                        <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma tarefa a fazer.</div>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setIsNewTaskDialogOpen(true)}
+                                disabled={!currentBoardId || isActive}
+                                aria-label="Criar nova tarefa"
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
                     
                     <div className="flex items-center gap-4">
@@ -178,6 +222,12 @@ export default function PomodoroPage() {
             </Card>
         </div>
       </div>
+      {lists && <TaskDialog
+        isOpen={isNewTaskDialogOpen}
+        onClose={() => setIsNewTaskDialogOpen(false)}
+        onSave={handleCreateTask}
+        lists={lists}
+      />}
     </div>
   );
 }
