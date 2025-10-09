@@ -17,21 +17,23 @@ export function WisdomNugget() {
   if (!quote) {
     // Render a placeholder or nothing while waiting for the client-side quote
     return (
-        <Card className="bg-gradient-to-br from-primary/80 to-accent/80 text-primary-foreground border-none">
+        <Card>
             <CardContent className="p-6">
-                <div className="h-12 animate-pulse rounded-md bg-white/20"></div>
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Frase do dia</h3>
+                <div className="h-16 animate-pulse rounded-md bg-muted"></div>
             </CardContent>
         </Card>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-primary/80 to-accent/80 text-primary-foreground border-none">
+    <Card>
       <CardContent className="p-6">
-        <blockquote className="text-lg font-semibold">
+        <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Frase do dia</h3>
+        <blockquote className="text-lg font-semibold text-foreground italic border-l-4 border-primary pl-4">
           "{quote.text}"
         </blockquote>
-        <p className="text-right mt-2 text-sm opacity-80">- {quote.author}</p>
+        <p className="text-right mt-2 text-sm text-muted-foreground">- {quote.author}</p>
       </CardContent>
     </Card>
   );

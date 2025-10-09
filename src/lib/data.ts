@@ -27,4 +27,11 @@ export const quotes: Quote[] = [
   { text: 'A minha identidade não começa nem termina na ponta dos meus dedos.', author: 'Conceição Evaristo' },
   { text: 'Quando a mulher negra se movimenta, toda a estrutura da sociedade se movimenta com ela.', author: 'Angela Davis' },
   { text: 'Para nós, a questão da cor é uma questão política, não uma questão de preferência pessoal.', author: 'Lélia Gonzalez' },
+  { text: 'Nossos passos vêm de longe.', author: 'Ditado popular' },
+  { text: 'A liberdade é uma luta constante.', author: 'Angela Davis' },
+  { text: 'Quem se move na direção do seu desejo, se move na direção da sua liberdade.', author: 'bell hooks' },
+  { text: 'A gente combinamos de não morrer.', author: 'Conceição Evaristo' },
+  { text: 'Quando eu me liberto, eu liberto os outros, porque eles me veem e sentem que também podem ser livres.', author: 'Nina Simone' },
+  { text: 'Ouse lutar, ouse vencer.', author: 'Lema do Partido dos Panteras Negras' },
+  { text: 'A educação é a arma mais poderosa que você pode usar para mudar o mundo.', author: 'Nelson Mandela' },
 ];
