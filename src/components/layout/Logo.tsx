@@ -6,7 +6,7 @@ export const Logo: FC = () => {
       <h1 className="font-headline text-2xl font-bold text-primary">
         Axénda
       </h1>
-      <p className="text-xs text-muted-foreground">Sua agenda com axé</p>
+      <p className="text-xs text-muted-foreground">Sua agenda afrocentrada!</p>
     </div>
   );
 };
