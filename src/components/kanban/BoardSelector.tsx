@@ -89,10 +89,15 @@ export default function BoardSelector({ boards, activeBoard, setActiveBoard }: B
         description: `O quadro "${name}" foi criado com sucesso.`,
       });
       
-      // Fetch the newly created board to set it as active
-      // This is a bit tricky as we don't have the full object.
-      // A simple approach is to set a partial object, but it's better to refetch or pass the new object.
-      // For now, let's just close the dialog. The user can select it from the list.
+      // Set the new board as active
+      setActiveBoard({
+        id: newBoardRef.id,
+        name,
+        type,
+        userId: user.uid,
+        createdAt: new Date() as any, // This is a temporary client-side timestamp
+      });
+
       setIsCreateDialogOpen(false);
   
     } catch (error) {

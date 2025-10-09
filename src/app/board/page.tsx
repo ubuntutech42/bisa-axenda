@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -12,6 +12,8 @@ import { TaskDialog } from '@/components/kanban/TaskDialog';
 import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import BoardSelector from '@/components/kanban/BoardSelector';
+
+const LAST_BOARD_ID_KEY = 'axenda-last-board-id';
 
 export default function BoardPage() {
   const { user, isUserLoading } = useUser();
@@ -33,6 +35,15 @@ export default function BoardPage() {
   );
   const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
+  // Custom setter for activeBoard that also saves to localStorage
+  const handleSetActiveBoard = useCallback((board: KanbanBoardType | null) => {
+    setActiveBoard(board);
+    if (board) {
+      localStorage.setItem(LAST_BOARD_ID_KEY, board.id);
+    }
+  }, []);
+
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
@@ -41,9 +52,16 @@ export default function BoardPage() {
 
   useEffect(() => {
     if (boards && boards.length > 0 && !activeBoard) {
-      setActiveBoard(boards[0]);
+      const lastBoardId = localStorage.getItem(LAST_BOARD_ID_KEY);
+      const lastBoard = boards.find(b => b.id === lastBoardId);
+      if (lastBoard) {
+        handleSetActiveBoard(lastBoard);
+      } else {
+        // Fallback to the first board if last accessed is not found
+        handleSetActiveBoard(boards[0]);
+      }
     }
-  }, [boards, activeBoard]);
+  }, [boards, activeBoard, handleSetActiveBoard]);
 
   const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt' >) => {
     if (!user || !activeBoard) return;
@@ -93,7 +111,7 @@ export default function BoardPage() {
           <BoardSelector 
             boards={boards || []} 
             activeBoard={activeBoard} 
-            setActiveBoard={setActiveBoard} 
+            setActiveBoard={handleSetActiveBoard} 
           />
         </div>
       </Header>
