@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 
 const PomodoroTimerDisplay = () => {
-  const { time, mode, isActive, toggleTimer, resetTimer } = usePomodoro();
+  const { time, mode, settings } = usePomodoro();
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -14,15 +14,15 @@ const PomodoroTimerDisplay = () => {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const TIME_OPTIONS = {
-    pomodoro: 25 * 60,
-    shortBreak: 5 * 60,
-    longBreak: 15 * 60,
+  const timeOptions = {
+    pomodoro: settings.pomodoro * 60,
+    shortBreak: settings.shortBreak * 60,
+    longBreak: settings.longBreak * 60,
   };
 
   const timerRingClass = { pomodoro: 'stroke-primary', shortBreak: 'stroke-chart-4', longBreak: 'stroke-chart-2' };
   const timerTextClass = { pomodoro: 'text-primary', shortBreak: 'text-chart-4', longBreak: 'text-chart-2' };
-  const progress = ((TIME_OPTIONS[mode] - time) / TIME_OPTIONS[mode]) * 100;
+  const progress = ((timeOptions[mode] - time) / timeOptions[mode]) * 100;
 
   return (
     <div className="relative w-64 h-64">

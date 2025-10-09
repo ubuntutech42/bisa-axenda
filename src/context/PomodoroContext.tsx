@@ -9,10 +9,18 @@ import type { Task } from '@/lib/types';
 
 type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak';
 
-const TIME_OPTIONS: Record<TimerMode, number> = {
-  pomodoro: 25 * 60,
-  shortBreak: 5 * 60,
-  longBreak: 15 * 60,
+interface PomodoroSettings {
+  pomodoro: number;
+  shortBreak: number;
+  longBreak: number;
+  longBreakInterval: number;
+}
+
+const DEFAULT_SETTINGS: PomodoroSettings = {
+  pomodoro: 25,
+  shortBreak: 5,
+  longBreak: 15,
+  longBreakInterval: 4,
 };
 
 interface PomodoroContextType {
@@ -30,6 +38,8 @@ interface PomodoroContextType {
   pomodoroCount: number;
   isFloatingPomodoroOpen: boolean;
   setIsFloatingPomodoroOpen: (isOpen: boolean) => void;
+  settings: PomodoroSettings;
+  updateSettings: (newSettings: Partial<PomodoroSettings>) => void;
 }
 
 const PomodoroContext = createContext<PomodoroContextType | undefined>(undefined);
@@ -37,15 +47,50 @@ const PomodoroContext = createContext<PomodoroContextType | undefined>(undefined
 export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const firestore = useFirestore();
-  
+
+  const [settings, setSettings] = useState<PomodoroSettings>(DEFAULT_SETTINGS);
   const [mode, setModeState] = useState<TimerMode>('pomodoro');
-  const [time, setTime] = useState(TIME_OPTIONS.pomodoro);
+  const [time, setTime] = useState(settings.pomodoro * 60);
   const [isActive, setIsActive] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [currentBoardId, setCurrentBoardId] = useState<string | null>(null);
   const [pomodoroCount, setPomodoroCount] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [isFloatingPomodoroOpen, setIsFloatingPomodoroOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('pomodoroSettings');
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings);
+        // Basic validation
+        if (parsedSettings.pomodoro && parsedSettings.shortBreak && parsedSettings.longBreak && parsedSettings.longBreakInterval) {
+            setSettings(parsedSettings);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load pomodoro settings from localStorage", error);
+      // Fallback to default settings
+      setSettings(DEFAULT_SETTINGS);
+    }
+  }, []);
+
+  const updateSettings = (newSettings: Partial<PomodoroSettings>) => {
+    const updated = { ...settings, ...newSettings };
+    setSettings(updated);
+    try {
+      localStorage.setItem('pomodoroSettings', JSON.stringify(updated));
+      resetTimer(); // Reset timer to apply new settings
+    } catch (error) {
+      console.error("Failed to save pomodoro settings to localStorage", error);
+    }
+  };
+  
+  const timeOptions: Record<TimerMode, number> = {
+    pomodoro: settings.pomodoro * 60,
+    shortBreak: settings.shortBreak * 60,
+    longBreak: settings.longBreak * 60,
+  };
 
   const saveSession = useCallback(async (startTime: Date, focusDurationInSeconds: number) => {
     if (!user || !currentTaskId || !firestore || !currentBoardId || focusDurationInSeconds <= 0) return;
@@ -80,13 +125,13 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const setMode = (newMode: TimerMode) => {
     setIsActive(false);
     setModeState(newMode);
-    setTime(TIME_OPTIONS[newMode]);
+    setTime(timeOptions[newMode]);
   }
   
   const resetTimer = useCallback(() => {
     setIsActive(false);
-    setTime(TIME_OPTIONS[mode]);
-  }, [mode]);
+    setTime(timeOptions[mode]);
+  }, [mode, timeOptions]);
 
   const advanceToNextMode = useCallback(() => {
       setIsActive(false);
@@ -94,12 +139,12 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
         const newPomodoroCount = pomodoroCount + 1;
         setPomodoroCount(newPomodoroCount);
         playBreakStartSound();
-        setMode(newPomodoroCount % 4 === 0 ? 'longBreak' : 'shortBreak');
+        setMode(newPomodoroCount % settings.longBreakInterval === 0 ? 'longBreak' : 'shortBreak');
       } else {
         playFocusStartSound();
         setMode('pomodoro');
       }
-  }, [mode, pomodoroCount]);
+  }, [mode, pomodoroCount, settings.longBreakInterval]);
 
 
   useEffect(() => {
@@ -111,21 +156,22 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
       }, 1000);
     } else if (isActive && time === 0) {
         if (mode === 'pomodoro' && sessionStartTime) {
-            saveSession(sessionStartTime, TIME_OPTIONS.pomodoro);
+            const focusDuration = timeOptions.pomodoro - time;
+            saveSession(sessionStartTime, focusDuration);
         }
         advanceToNextMode();
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, time, mode, sessionStartTime, saveSession, advanceToNextMode]);
+  }, [isActive, time, mode, sessionStartTime, saveSession, advanceToNextMode, timeOptions.pomodoro]);
 
   const toggleTimer = () => {
     if (mode === 'pomodoro' && !currentTaskId) {
       alert("Por favor, selecione uma tarefa para iniciar o foco.");
       return;
     }
-    if (!isActive && time === TIME_OPTIONS[mode]) {
+    if (!isActive && time === timeOptions[mode]) {
         if (mode === 'pomodoro') {
             playFocusStartSound();
             setSessionStartTime(new Date());
@@ -139,20 +185,28 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const skipSession = () => {
     if (!isActive) return;
     
-    // If it's a focus session, save it as a completed session
     if (mode === 'pomodoro' && sessionStartTime) {
-        saveSession(sessionStartTime, TIME_OPTIONS.pomodoro);
+        const elapsedTime = timeOptions.pomodoro - time;
+        if(elapsedTime > 0) {
+            saveSession(sessionStartTime, elapsedTime);
+        }
     }
 
-    // Advance to the next mode immediately
     advanceToNextMode();
   };
+  
+  // Reset time when settings change
+  useEffect(() => {
+    setTime(timeOptions[mode]);
+    setIsActive(false);
+  }, [settings, mode]);
 
   return (
     <PomodoroContext.Provider value={{ 
         mode, setMode, time, isActive, toggleTimer, resetTimer, skipSession,
         currentTaskId, setCurrentTaskId, currentBoardId, setCurrentBoardId,
-        pomodoroCount, isFloatingPomodoroOpen, setIsFloatingPomodoroOpen
+        pomodoroCount, isFloatingPomodoroOpen, setIsFloatingPomodoroOpen,
+        settings, updateSettings
     }}>
       {children}
     </PomodoroContext.Provider>

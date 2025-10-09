@@ -20,6 +20,7 @@ export function FloatingPomodoro({ onClose }: FloatingPomodoroProps) {
     resetTimer,
     pomodoroCount,
     skipSession,
+    settings,
    } = usePomodoro();
 
   const [position, setPosition] = useState({ x: 30, y: window.innerHeight - 250 });
@@ -71,12 +72,12 @@ export function FloatingPomodoro({ onClose }: FloatingPomodoroProps) {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const TIME_OPTIONS = {
-    pomodoro: 25 * 60,
-    shortBreak: 5 * 60,
-    longBreak: 15 * 60,
+  const timeOptions = {
+    pomodoro: settings.pomodoro * 60,
+    shortBreak: settings.shortBreak * 60,
+    longBreak: settings.longBreak * 60,
   };
-  const progress = ((TIME_OPTIONS[mode] - time) / TIME_OPTIONS[mode]) * 360;
+  const progress = ((timeOptions[mode] - time) / timeOptions[mode]) * 360;
 
   const timerTextClass = {
       pomodoro: 'text-primary',
