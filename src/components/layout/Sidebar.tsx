@@ -28,7 +28,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
-import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import { SettingsDialog } from '@/components/layout/SettingsDialog';
 import { usePomodoro } from '@/context/PomodoroContext';
 
@@ -131,7 +130,6 @@ function NavContent() {
               Sair
           </Button>
       </div>
-      {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
       <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );
