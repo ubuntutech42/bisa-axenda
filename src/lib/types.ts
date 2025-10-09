@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pessoal';
@@ -81,4 +82,21 @@ export interface CalendarEvent {
   category: string;
   color: string;
   createdAt: Timestamp;
+}
+
+export type LunarPhaseName = 
+  | "Lua Nova" 
+  | "Lua Crescente Côncava" 
+  | "Quarto Crescente" 
+  | "Lua Crescente Gibosa" 
+  | "Lua Cheia" 
+  | "Lua Minguante Gibosa" 
+  | "Quarto Minguante" 
+  | "Lua Minguante Côncava";
+
+export interface LunarPhase {
+    id: string;
+    date: string;
+    phaseName: LunarPhaseName;
+    description: string;
 }

@@ -1,29 +1,34 @@
+
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
-import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType } from '@/lib/types';
-import { format, isSameDay, parseISO } from 'date-fns';
+import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName } from '@/lib/types';
+import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { Loader } from 'lucide-react';
+import { Loader, Moon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
+import { getLunarPhaseAction } from '@/app/actions';
+import { LunarIcon } from './LunarIcon';
 
-
-type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural'; id: string; title: string; }) | (CalendarEventType & { type: 'userEvent' });
+type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural'; id: string; title: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
   const [activeCategories, setActiveCategories] = useState({
     task: true,
     cultural: true,
     userEvent: true,
+    lunar: true,
   });
   
   const { user } = useUser();
@@ -37,12 +42,46 @@ export function EventCalendar() {
 
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
+  const [lunarData, setLunarData] = useState<Record<string, LunarPhase>>({});
+  const [isLunarDataLoading, setIsLunarDataLoading] = useState(false);
 
   const userEventsQuery = useMemoFirebase(() =>
     user ? query(collection(firestore, 'users', user.uid, 'calendarEvents')) : null,
     [firestore, user]
   );
   const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
+
+  const fetchLunarDataForMonth = useCallback(async (month: Date) => {
+    setIsLunarDataLoading(true);
+    const start = startOfMonth(month);
+    const end = endOfMonth(month);
+    const days = eachDayOfInterval({ start, end });
+    const promises = days.map(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      return getLunarPhaseAction({ date: dateStr }).then(result => ({ date: dateStr, result }));
+    });
+  
+    const results = await Promise.all(promises);
+    const newLunarData: Record<string, LunarPhase> = {};
+    results.forEach(({ date, result }) => {
+      if (result.success && result.data) {
+        newLunarData[date] = {
+          id: `lunar-${date}`,
+          date: date,
+          phaseName: result.data.phaseName as LunarPhaseName,
+          description: result.data.description,
+        };
+      }
+    });
+  
+    setLunarData(prevData => ({ ...prevData, ...newLunarData }));
+    setIsLunarDataLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchLunarDataForMonth(currentMonth);
+  }, [currentMonth, fetchLunarDataForMonth]);
+
 
   useEffect(() => {
     if (!boards || !firestore || !user) {
@@ -93,8 +132,12 @@ export function EventCalendar() {
     if (activeCategories.userEvent && userEvents) {
       eventList.push(...userEvents.map(e => ({...e, type: 'userEvent' as const })));
     }
+    if (activeCategories.lunar && lunarData) {
+        const lunarEvents: CombinedEvent[] = Object.values(lunarData).map(phase => ({ ...phase, type: 'lunar' as const }));
+        eventList.push(...lunarEvents);
+    }
     return eventList;
-  }, [allTasks, userEvents, activeCategories]);
+  }, [allTasks, userEvents, activeCategories, lunarData]);
 
   const selectedDayEvents = date ? allEvents.filter(event => {
     const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
@@ -102,7 +145,7 @@ export function EventCalendar() {
     return isSameDay(parseISO(eventDate), date);
   }) : [];
 
-  const handleCategoryChange = (category: 'task' | 'cultural' | 'userEvent', checked: CheckedState) => {
+  const handleCategoryChange = (category: 'task' | 'cultural' | 'userEvent' | 'lunar', checked: CheckedState) => {
     setActiveCategories(prev => ({
       ...prev,
       [category]: !!checked,
@@ -127,6 +170,8 @@ export function EventCalendar() {
             mode="single"
             selected={date}
             onSelect={setDate}
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
             className="p-0"
             locale={ptBR}
             classNames={{
@@ -138,17 +183,24 @@ export function EventCalendar() {
               DayContent: ({ date }) => {
                 const dayEvents = allEvents.filter(event => {
                     const eventDate = getEventDate(event);
-                    if (!eventDate) return false;
+if (!eventDate) return false;
                     return isSameDay(parseISO(eventDate), date);
                 });
+                const dayLunarData = activeCategories.lunar ? lunarData[format(date, 'yyyy-MM-dd')] : null;
+
                 return (
-                  <div className="relative flex items-center justify-center h-full w-full">
+                  <div className="relative flex flex-col items-center justify-center h-full w-full">
+                    {dayLunarData && (
+                      <div className="absolute top-0 right-0">
+                         <LunarIcon phase={dayLunarData.phaseName} className="w-3.5 h-3.5" />
+                      </div>
+                    )}
                     {format(date, 'd')}
                     {dayEvents.length > 0 && (
                       <div className="absolute bottom-1 flex justify-center gap-1">
-                        {dayEvents.slice(0,3).map(event => (
+                        {dayEvents.filter(e => e.type !== 'lunar').slice(0,3).map(event => (
                             <div key={`${event.type}-${event.id}`} className="w-1.5 h-1.5 rounded-full" style={{
-                              backgroundColor: event.type === 'cultural' ? 'hsl(var(--accent))' : event.type === 'task' ? 'hsl(var(--primary))' : event.color || 'hsl(var(--secondary))'
+                              backgroundColor: event.type === 'cultural' ? 'hsl(var(--accent))' : event.type === 'task' ? 'hsl(var(--primary))' : event.type === 'userEvent' ? event.color || 'hsl(var(--secondary))' : 'transparent'
                             }}></div>
                         ))}
                       </div>
@@ -186,6 +238,12 @@ export function EventCalendar() {
                   Eventos
                 </label>
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="lunar-filter" checked={activeCategories.lunar} onCheckedChange={(checked) => handleCategoryChange('lunar', checked)} />
+                <label htmlFor="lunar-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Fases da Lua
+                </label>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -210,7 +268,7 @@ export function EventCalendar() {
                            </div>
                            <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
                         </>
-                      ) : (
+                      ) : event.type === 'userEvent' ? (
                         <>
                           <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
@@ -218,7 +276,18 @@ export function EventCalendar() {
                            </div>
                            {event.description && <p className="text-sm text-muted-foreground mt-1">{event.description}</p>}
                         </>
-                      )}
+                      ) : event.type === 'lunar' ? (
+                        <>
+                          <div className="flex justify-between items-start">
+                             <div className='flex items-center gap-2'>
+                                <LunarIcon phase={event.phaseName} />
+                                <p className="font-semibold">{event.phaseName}</p>
+                             </div>
+                             <Badge variant="outline">Lua</Badge>
+                           </div>
+                           <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                        </>
+                      ) : null }
                     </div>
                   ))
                 ) : (
