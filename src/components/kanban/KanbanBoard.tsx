@@ -8,8 +8,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Plus } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Loader } from 'lucide-react';
 
 interface KanbanBoardProps {
   lists: KanbanList[];
@@ -31,13 +30,15 @@ export function KanbanBoard({ lists }: KanbanBoardProps) {
 
   // Create default lists if none exist
   useEffect(() => {
-    if (user && lists && lists.length === 0) {
+    if (user && lists && lists.length === 0 && !areTasksLoading) {
       const createDefaultLists = async () => {
         const batch = writeBatch(firestore);
         const defaultLists = [
-          { name: 'A Fazer', order: 0 },
-          { name: 'Em Progresso', order: 1 },
-          { name: 'Concluído', order: 2 },
+          { name: 'Backlog', order: 0 },
+          { name: 'A Fazer', order: 1 },
+          { name: 'Em Progresso', order: 2 },
+          { name: 'Revisão', order: 3 },
+          { name: 'Concluído', order: 4 },
         ];
         const listsCollection = collection(firestore, 'users', user.uid, 'kanbanLists');
         
@@ -46,12 +47,17 @@ export function KanbanBoard({ lists }: KanbanBoardProps) {
           batch.set(docRef, { ...list, userId: user.uid });
         });
         
-        await batch.commit();
-        toast({ title: 'Quadro iniciado!', description: 'Suas colunas iniciais foram criadas.' });
+        try {
+          await batch.commit();
+          toast({ title: 'Quadro iniciado!', description: 'Suas colunas padrão foram criadas.' });
+        } catch (error) {
+          console.error("Error creating default lists:", error);
+          toast({ variant: "destructive", title: "Erro", description: "Não foi possível criar as colunas do quadro." });
+        }
       };
       createDefaultLists();
     }
-  }, [user, lists, firestore, toast]);
+  }, [user, lists, firestore, toast, areTasksLoading]);
 
   const sortedLists = useMemo(() => {
     if (!lists) return [];
@@ -104,7 +110,8 @@ export function KanbanBoard({ lists }: KanbanBoardProps) {
   const tasksByListId = useMemo(() => {
     if (!tasks) return {};
     return tasks.reduce((acc, task) => {
-      const listId = task.listId || (sortedLists.find(l => l.name === 'A Fazer')?.id);
+      // Default to the first column ('Backlog') if listId is missing
+      const listId = task.listId || (sortedLists.find(l => l.order === 0)?.id);
       if (!listId) return acc;
       if (!acc[listId]) {
         acc[listId] = [];

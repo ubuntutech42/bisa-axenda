@@ -66,6 +66,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDi
 
   useEffect(() => {
     if (isOpen) {
+      const sortedLists = [...lists].sort((a,b) => a.order - b.order);
       if (task) {
         reset({
           title: task.title,
@@ -80,7 +81,8 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDi
           title: '',
           description: '',
           priority: 'Média',
-          listId: lists.find(l => l.order === 0)?.id || '',
+          // Default to the first list in order (e.g., Backlog or A Fazer)
+          listId: sortedLists[0]?.id || '',
           deadline: undefined,
         });
       }
@@ -102,7 +104,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDi
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Tarefa' : 'Criar Nova Tarefa'}</SheetTitle>
-            {isEditing && (
+            {isEditing && task?.category && (
               <SheetDescription>
                 Na categoria <span className="font-semibold text-primary">{task.category}</span>.
               </SheetDescription>
@@ -204,7 +206,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDi
               )}
             />
             
-            {isEditing && task.checklist && task.checklist.length > 0 && (
+            {isEditing && task?.checklist && task.checklist.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-2">
