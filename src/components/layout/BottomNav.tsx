@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -14,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 
 const navItems = [
-  { href: '/', label: 'Painel', icon: Home },
+  { href: '/dashboard', label: 'Painel', icon: Home },
   { href: '/board', label: 'Quadro', icon: LayoutGrid },
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },

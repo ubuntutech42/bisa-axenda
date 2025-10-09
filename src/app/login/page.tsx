@@ -45,7 +45,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signin(data.email, data.password);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -61,7 +61,7 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error) {
       if ((error as any).code === 'auth/popup-closed-by-user') return;
       console.error('Error signing in with Google: ', error);

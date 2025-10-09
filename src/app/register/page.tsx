@@ -34,7 +34,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await signup(data.name, data.email, data.password);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',

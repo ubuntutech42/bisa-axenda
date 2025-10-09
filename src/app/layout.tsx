@@ -1,34 +1,52 @@
-
 'use client';
 
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { FirebaseClientProvider, useUser } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { PomodoroProvider, usePomodoro } from '@/context/PomodoroContext';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import './globals.css';
 import { usePathname } from 'next/navigation';
+import { LandingHeader } from '@/components/landing/LandingHeader';
+import { Footer } from '@/components/landing/Footer';
 
 // export const metadata: Metadata = {
 //   title: 'Axénda',
 //   description: 'Sua agenda com axé. Organize sua rotina, celebre sua raiz.',
 // };
 
-function AppLayout({ children }: { children: React.ReactNode }) {
-  const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
+function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
+  const { user, isUserLoading } = useUser();
 
-  // Don't show app layout on landing page
-  if (pathname.startsWith('/landing')) {
-    return <>{children}</>;
+  const isLandingPage = pathname === '/';
+
+  if (!user && !isUserLoading && isLandingPage) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background">
+        <LandingHeader />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    );
   }
 
+  // If user is loading and we are on a protected route, show a loader
+  if (isUserLoading && !isLandingPage) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        {/* You can replace this with a more sophisticated loader */}
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
-  return (
-    <>
+  if (user) {
+    return (
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar />
         <div className="flex flex-col flex-1 pb-16 md:pb-0">
@@ -40,8 +58,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <Toaster />
         {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
       </div>
-    </>
-  );
+    );
+  }
+  
+  // For unauthenticated users on non-landing pages (like /login), render children without full layout
+  return <>{children}</>;
 }
 
 
@@ -68,9 +89,9 @@ export default function RootLayout({
         >
             <FirebaseClientProvider>
               <PomodoroProvider>
-                <AppLayout>
+                <AppContent>
                   {children}
-                </AppLayout>
+                </AppContent>
               </PomodoroProvider>
             </FirebaseClientProvider>
         </ThemeProvider>

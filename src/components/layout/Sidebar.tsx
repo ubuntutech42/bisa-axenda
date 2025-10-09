@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -32,7 +31,7 @@ import { SettingsDialog } from '@/components/layout/SettingsDialog';
 import { usePomodoro } from '@/context/PomodoroContext';
 
 const navItems = [
-  { href: '/', label: 'Painel', icon: Home },
+  { href: '/dashboard', label: 'Painel', icon: Home },
   { href: '/board', label: 'Quadro', icon: LayoutGrid },
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
