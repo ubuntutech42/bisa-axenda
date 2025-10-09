@@ -114,7 +114,7 @@ export function EventCalendar() {
             className="p-0"
             locale={ptBR}
             classNames={{
-              day: "h-12 w-12 text-base",
+              day_cell: "h-12 w-12 text-base",
               head_cell: "text-muted-foreground rounded-md w-12 font-normal text-sm",
             }}
             components={{
@@ -125,12 +125,12 @@ export function EventCalendar() {
                     return isSameDay(parseISO(eventDate), date);
                 });
                 return (
-                  <>
+                  <div className="relative flex items-center justify-center h-full w-full">
                     {format(date, 'd')}
                     {dayEvents.length > 0 && (
                       <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary"></div>
                     )}
-                  </>
+                  </div>
                 );
               }
             }}
