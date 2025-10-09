@@ -1,10 +1,11 @@
+
 "use client";
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, MessageSquare, CheckSquare } from 'lucide-react';
 
@@ -37,13 +38,17 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
     if (task.deadline) {
       const deadlineDate = new Date(task.deadline);
       const now = new Date();
-      const distanceText = formatDistanceToNow(deadlineDate, { addSuffix: true, locale: ptBR });
+      const distanceText = formatDistanceToNowStrict(deadlineDate, { locale: ptBR });
       if (deadlineDate < now) {
-        return `Venceu ${distanceText.replace('há', 'a')}`; // "Venceu a cerca de 2 horas"
+        return `Venceu há ${distanceText}`;
       }
-      return `Vence ${distanceText}`; // "Vence em 2 dias"
+      return `Vence em ${distanceText}`;
     }
-    return `Criada ${formatDistanceToNow(task.createdAt.toDate(), { addSuffix: true, locale: ptBR })}`;
+    const createdAtDate = task.createdAt?.toDate();
+    if(createdAtDate) {
+      return `Criada há ${formatDistanceToNowStrict(createdAtDate, { locale: ptBR })}`;
+    }
+    return '';
   };
   const timeText = getTimeText();
 
