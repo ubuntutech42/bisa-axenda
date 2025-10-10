@@ -114,10 +114,10 @@ export default function ReportsPage() {
       </Header>
       <div className="space-y-8">
         {tasks.length > 0 ? (
-          <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             <TimeDistributionChart tasks={tasks} />
             <AiInsights tasks={tasks} />
-          </>
+          </div>
         ) : (
           <div className="text-center py-10">
               <h3 className="text-xl font-semibold">Sem dados para exibir</h3>
