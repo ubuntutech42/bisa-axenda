@@ -30,7 +30,7 @@ const features = [
   },
   {
     icon: <Sparkles className="w-8 h-8 text-primary" />,
-    title: 'Nuggets de Sabedoria',
+    title: 'Relíquias de Sabedoria',
     description: 'Comece seu dia com citações inspiradoras de grandes pensadores e figuras proeminentes da história negra.',
   },
 ];
