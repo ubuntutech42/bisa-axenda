@@ -19,6 +19,8 @@ import { getLunarPhaseAction } from '@/app/actions';
 import { LunarIcon } from './LunarIcon';
 import { LunarMonthSummary } from './LunarMonthSummary';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
 
 type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural'; id: string; title: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
@@ -337,5 +339,3 @@ export function EventCalendar() {
     </div>
   );
 }
-
-    
