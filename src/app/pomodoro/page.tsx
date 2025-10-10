@@ -137,7 +137,7 @@ export default function PomodoroPage() {
 
                     <PomodoroTimerDisplay />
                     
-                    <div className='w-full max-w-sm space-y-2'>
+                    <div className="w-full max-w-md space-y-2">
                         <Select onValueChange={(id) => setCurrentBoardId(id)} value={currentBoardId || ''} disabled={isActive}>
                             <SelectTrigger id="board-select" className="w-full">
                                 <SelectValue placeholder="Selecione um quadro" />
@@ -149,7 +149,7 @@ export default function PomodoroPage() {
                         
                         <div className="flex items-center gap-2">
                             <Select onValueChange={(id) => setCurrentTaskId(id)} value={currentTaskId || ''} disabled={isActive || !currentBoardId}>
-                                <SelectTrigger id="task-select">
+                                <SelectTrigger id="task-select" className="w-full">
                                     <SelectValue placeholder="Selecione uma tarefa para focar" />
                                 </SelectTrigger>
                                 <SelectContent>
