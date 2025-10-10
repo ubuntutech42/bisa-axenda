@@ -12,11 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { Loader, Moon } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
 import { getLunarPhaseAction } from '@/app/actions';
 import { LunarIcon } from './LunarIcon';
+import { LunarMonthSummary } from './LunarMonthSummary';
+import { Separator } from '@/components/ui/separator';
 
 type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural'; id: string; title: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
@@ -58,6 +60,10 @@ export function EventCalendar() {
     const days = eachDayOfInterval({ start, end });
     const promises = days.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
+      // Avoid refetching if data already exists
+      if (lunarData[dateStr]) {
+        return Promise.resolve({ date: dateStr, result: { success: true, data: lunarData[dateStr] } });
+      }
       return getLunarPhaseAction({ date: dateStr }).then(result => ({ date: dateStr, result }));
     });
   
@@ -76,7 +82,7 @@ export function EventCalendar() {
   
     setLunarData(prevData => ({ ...prevData, ...newLunarData }));
     setIsLunarDataLoading(false);
-  }, []);
+  }, [lunarData]); // Dependency on lunarData to avoid refetching
 
   useEffect(() => {
     fetchLunarDataForMonth(currentMonth);
@@ -172,15 +178,44 @@ export function EventCalendar() {
             className="p-0"
             locale={ptBR}
             classNames={{
-              day_cell: "h-12 w-12 text-base text-center",
-              head_cell: "text-muted-foreground rounded-md w-12 font-normal text-sm",
-              row: "flex w-full mt-2 justify-between",
-            }}
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                month: "space-y-4",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-medium",
+                nav: "space-x-1 flex items-center",
+                nav_button: cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                ),
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex justify-between",
+                head_cell:
+                  "text-muted-foreground rounded-md w-12 font-normal text-sm",
+                row: "flex w-full mt-2 justify-between",
+                cell: "h-12 w-12 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                day: cn(
+                  buttonVariants({ variant: "ghost" }),
+                  "h-12 w-12 p-0 font-normal aria-selected:opacity-100"
+                ),
+                day_range_end: "day-range-end",
+                day_selected:
+                  "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day_outside:
+                  "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                day_disabled: "text-muted-foreground opacity-50",
+                day_range_middle:
+                  "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                day_hidden: "invisible",
+                day_cell: "h-12 w-12 text-base text-center",
+              }}
             components={{
               DayContent: ({ date }) => {
                 const dayEvents = allEvents.filter(event => {
                     const eventDate = getEventDate(event);
-if (!eventDate) return false;
+                    if (!eventDate) return false;
                     return isSameDay(parseISO(eventDate), date);
                 });
                 const dayLunarData = activeCategories.lunar ? lunarData[format(date, 'yyyy-MM-dd')] : null;
@@ -188,7 +223,7 @@ if (!eventDate) return false;
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <div className="absolute top-0 right-0">
+                      <div className="absolute top-0 right-0 pt-1 pr-1">
                          <LunarIcon phase={dayLunarData.phaseName} className="w-3.5 h-3.5" />
                       </div>
                     )}
@@ -211,11 +246,18 @@ if (!eventDate) return false;
       </div>
       <div>
         <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">
-              {date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Selecione uma data'}
+          <CardHeader className='pb-4'>
+            <CardTitle className="font-headline text-lg">
+                Fases da Lua em {format(currentMonth, "MMMM", { locale: ptBR })}
             </CardTitle>
-            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 pt-2">
+            <LunarMonthSummary lunarData={lunarData} isLoading={isLunarDataLoading} />
+          </CardHeader>
+          <Separator />
+          <CardContent className='pt-4'>
+            <p className="font-semibold text-foreground mb-2">
+                {date ? format(date, "d 'de' MMMM", { locale: ptBR }) : 'Selecione uma data'}
+            </p>
+             <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-4">
               <div className="flex items-center space-x-2">
                 <Checkbox id="task-filter" checked={activeCategories.task} onCheckedChange={(checked) => handleCategoryChange('task', checked)} />
                 <label htmlFor="task-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -237,24 +279,22 @@ if (!eventDate) return false;
               <div className="flex items-center space-x-2">
                 <Checkbox id="lunar-filter" checked={activeCategories.lunar} onCheckedChange={(checked) => handleCategoryChange('lunar', checked)} />
                 <label htmlFor="lunar-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Fases da Lua
+                  Lua
                 </label>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-80">
+            <ScrollArea className="h-64">
               <div className="space-y-4">
                 {selectedDayEvents.length > 0 ? (
                   selectedDayEvents.map((event) => (
-                    <div key={`${event.type}-${event.id}`} className="p-3 rounded-lg bg-muted/50">
+                    <div key={`${event.type}-${event.id}`} className="p-3 rounded-lg bg-muted/50 text-sm">
                       {event.type === 'task' ? (
                         <>
                           <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
                              <Badge variant="secondary">Tarefa</Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{event.category}</p>
+                          <p className="text-muted-foreground">{event.category}</p>
                         </>
                       ) : event.type === 'cultural' ? (
                         <>
@@ -262,7 +302,7 @@ if (!eventDate) return false;
                              <p className="font-semibold">{event.title}</p>
                              <Badge className="bg-accent text-accent-foreground">Cultural</Badge>
                            </div>
-                           <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                           <p className="text-muted-foreground mt-1">{event.description}</p>
                         </>
                       ) : event.type === 'userEvent' ? (
                         <>
@@ -270,7 +310,7 @@ if (!eventDate) return false;
                              <p className="font-semibold">{event.title}</p>
                              <Badge style={{ backgroundColor: event.color, color: 'white' }}>{event.category}</Badge>
                            </div>
-                           {event.description && <p className="text-sm text-muted-foreground mt-1">{event.description}</p>}
+                           {event.description && <p className="text-muted-foreground mt-1">{event.description}</p>}
                         </>
                       ) : event.type === 'lunar' ? (
                         <>
@@ -281,7 +321,7 @@ if (!eventDate) return false;
                              </div>
                              <Badge variant="outline">Lua</Badge>
                            </div>
-                           <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                           <p className="text-muted-foreground mt-1">{event.description}</p>
                         </>
                       ) : null }
                     </div>
@@ -297,3 +337,5 @@ if (!eventDate) return false;
     </div>
   );
 }
+
+    
