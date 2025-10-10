@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/layout/Logo';
 import { useToast } from '@/hooks/use-toast';
-import { signin, sendPasswordReset } from '@/firebase/auth/actions';
+import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
@@ -44,7 +44,7 @@ export default function LoginPage() {
   const handleEmailSignIn = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      await signin(data.email, data.password);
+      initiateEmailSignIn(auth, data.email, data.password);
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -52,7 +52,6 @@ export default function LoginPage() {
         title: 'Erro de Autenticação',
         description: error.message || 'Não foi possível fazer login. Verifique suas credenciais.',
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -77,6 +76,7 @@ export default function LoginPage() {
     const email = prompt('Por favor, digite seu e-mail para redefinir a senha:');
     if (email) {
       try {
+        const { sendPasswordReset } = await import('@/firebase/auth/actions');
         await sendPasswordReset(email);
         toast({
           title: 'E-mail de redefinição enviado',

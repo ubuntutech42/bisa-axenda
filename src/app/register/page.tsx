@@ -11,7 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/layout/Logo';
 import { useToast } from '@/hooks/use-toast';
-import { signup } from '@/firebase/auth/actions';
+import { useAuth } from '@/firebase';
+import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
+
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
@@ -22,6 +24,7 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -33,7 +36,8 @@ export default function RegisterPage() {
   const handleSignUp = async (data: RegisterFormData) => {
     setLoading(true);
     try {
-      await signup(data.name, data.email, data.password);
+      // We don't await this. We redirect immediately.
+      initiateEmailSignUp(auth, data.email, data.password, data.name);
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -41,7 +45,6 @@ export default function RegisterPage() {
         title: 'Erro ao criar conta',
         description: error.message || 'Não foi possível criar a conta. Tente novamente.',
       });
-    } finally {
       setLoading(false);
     }
   };
