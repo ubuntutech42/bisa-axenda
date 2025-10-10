@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -59,14 +60,16 @@ export default function CalendarPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <Header title="Calendário Ancestral">
         <Button onClick={() => setIsCreateEventDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Criar Evento
         </Button>
       </Header>
-      <EventCalendar />
+      <div className="flex-1">
+        <EventCalendar />
+      </div>
       <CreateEventDialog
         isOpen={isCreateEventDialogOpen}
         onClose={() => setIsCreateEventDialogOpen(false)}
