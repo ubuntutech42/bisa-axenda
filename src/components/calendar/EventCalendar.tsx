@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -165,7 +164,6 @@ export function EventCalendar() {
     <div className="lg:grid lg:grid-cols-3 lg:gap-8">
       <div className="lg:col-span-2 mb-8 lg:mb-0">
         <Card>
-          <div className="flex justify-center">
           <Calendar
             mode="single"
             selected={date}
@@ -177,7 +175,7 @@ export function EventCalendar() {
             classNames={{
               day_cell: "h-12 w-12 text-base text-center",
               head_cell: "text-muted-foreground rounded-md w-12 font-normal text-sm",
-              row: "flex w-full mt-2 gap-4",
+              row: "flex w-full mt-2 justify-between",
             }}
             components={{
               DayContent: ({ date }) => {
@@ -210,7 +208,6 @@ if (!eventDate) return false;
               }
             }}
           />
-          </div>
         </Card>
       </div>
       <div>
