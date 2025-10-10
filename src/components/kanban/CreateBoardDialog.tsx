@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { KanbanBoard } from '@/lib/types';
+import { boardTemplatesInfo } from './board-templates';
 
 type BoardType = KanbanBoard['type'];
 interface CreateBoardDialogProps {
@@ -36,6 +37,7 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
     e.preventDefault();
     if (name.trim()) {
       onCreate(name, type);
+      // Reset state after creation
       setName('');
       setType('kanban');
     }
@@ -69,12 +71,16 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
                   <SelectValue placeholder="Selecione um modelo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="kanban">Kanban Padrão</SelectItem>
-                  <SelectItem value="swot">Análise SWOT (FOFA)</SelectItem>
-                  <SelectItem value="business_canvas">Canvas de Negócio</SelectItem>
-                  <SelectItem value="custom">Personalizado (Comece do Zero)</SelectItem>
+                  {boardTemplatesInfo.map(template => (
+                    <SelectItem key={template.type} value={template.type}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+               <p className="text-xs text-muted-foreground px-1">
+                {boardTemplatesInfo.find(t => t.type === type)?.description}
+               </p>
             </div>
           </div>
           <DialogFooter>

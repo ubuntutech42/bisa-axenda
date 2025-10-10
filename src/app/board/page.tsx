@@ -3,15 +3,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus } from 'lucide-react';
+import { Loader, Plus, LayoutDashboard } from 'lucide-react';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import BoardSelector from '@/components/kanban/BoardSelector';
+import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
+import { boardTemplates } from '@/components/kanban/board-templates';
 
 const LAST_BOARD_ID_KEY = 'axenda-last-board-id';
 
@@ -21,6 +23,7 @@ export default function BoardPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
   const [activeBoard, setActiveBoard] = useState<KanbanBoardType | null>(null);
 
   const boardsQuery = useMemoFirebase(() => 
@@ -35,14 +38,12 @@ export default function BoardPage() {
   );
   const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
-  // Custom setter for activeBoard that also saves to localStorage
   const handleSetActiveBoard = useCallback((board: KanbanBoardType | null) => {
     setActiveBoard(board);
     if (board) {
       localStorage.setItem(LAST_BOARD_ID_KEY, board.id);
     }
   }, []);
-
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -57,11 +58,65 @@ export default function BoardPage() {
       if (lastBoard) {
         handleSetActiveBoard(lastBoard);
       } else {
-        // Fallback to the first board if last accessed is not found
         handleSetActiveBoard(boards[0]);
       }
     }
+    // If there are no boards, make sure activeBoard is null
+    if (boards && boards.length === 0) {
+        handleSetActiveBoard(null);
+    }
   }, [boards, activeBoard, handleSetActiveBoard]);
+
+  const handleCreateBoard = async (name: string, type: KanbanBoardType['type']) => {
+    if (!user) return;
+  
+    try {
+      const boardsCollection = collection(firestore, 'kanbanBoards');
+      const newBoardRef = await addDoc(boardsCollection, {
+        name,
+        type,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+  
+      const listsCollection = collection(firestore, 'kanbanBoards', newBoardRef.id, 'lists');
+      const batch = writeBatch(firestore);
+      const template = boardTemplates[type];
+      
+      template.forEach(list => {
+        const listRef = doc(listsCollection);
+        batch.set(listRef, list);
+      });
+      
+      await batch.commit();
+  
+      toast({
+        title: 'Quadro criado!',
+        description: `O quadro "${name}" foi criado com sucesso.`,
+      });
+      
+      const newBoard = {
+        id: newBoardRef.id,
+        name,
+        type,
+        userId: user.uid,
+        createdAt: new Date() as any, // This is a temporary client-side timestamp
+      };
+
+      // Set the new board as active
+      handleSetActiveBoard(newBoard);
+
+      setIsCreateBoardDialogOpen(false);
+  
+    } catch (error) {
+      console.error('Error creating board:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar quadro',
+        description: 'Não foi possível criar o novo quadro. Tente novamente.',
+      });
+    }
+  };
 
   const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt' >) => {
     if (!user || !activeBoard) return;
@@ -99,41 +154,54 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title={currentBoardName}>
-        <div className="flex items-center gap-2">
-          {activeBoard && (
-            <Button onClick={() => setIsNewTaskDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Tarefa
-            </Button>
+    <>
+      <div className="flex flex-col h-full">
+        <Header title={currentBoardName}>
+          <div className="flex items-center gap-2">
+            {activeBoard && (
+              <Button onClick={() => setIsNewTaskDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Tarefa
+              </Button>
+            )}
+            <BoardSelector 
+              boards={boards || []} 
+              activeBoard={activeBoard} 
+              setActiveBoard={handleSetActiveBoard} 
+              onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
+            />
+          </div>
+        </Header>
+        <div className="flex-1 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+          {areListsLoading && <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin text-primary" /></div>}
+          {!areListsLoading && activeBoard && lists ? (
+            <KanbanBoard boardId={activeBoard.id} lists={lists} />
+          ) : (
+            !areBoardsLoading && !activeBoard && (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                  <LayoutDashboard className="w-20 h-20 text-muted mb-4" />
+                <h2 className="text-2xl font-semibold mb-2">Bem-vindo(a) ao seu espaço de organização!</h2>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">Crie seu primeiro quadro para começar a visualizar suas tarefas, projetos ou ideias.</p>
+                <Button onClick={() => setIsCreateBoardDialogOpen(true)} size="lg">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Criar seu primeiro quadro
+                </Button>
+              </div>
+            )
           )}
-          <BoardSelector 
-            boards={boards || []} 
-            activeBoard={activeBoard} 
-            setActiveBoard={handleSetActiveBoard} 
-          />
         </div>
-      </Header>
-      <div className="flex-1 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-        {areListsLoading && <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin text-primary" /></div>}
-        {!areListsLoading && activeBoard && lists ? (
-          <KanbanBoard boardId={activeBoard.id} lists={lists} />
-        ) : (
-          !areBoardsLoading && !activeBoard && (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <h2 className="text-2xl font-semibold mb-2">Bem-vindo(a) ao seu espaço!</h2>
-              <p className="text-muted-foreground mb-4">Parece que você ainda não tem nenhum quadro. Que tal criar um?</p>
-            </div>
-          )
-        )}
+        {lists && <TaskDialog
+          isOpen={isNewTaskDialogOpen}
+          onClose={() => setIsNewTaskDialogOpen(false)}
+          onSave={handleCreateTask}
+          lists={lists}
+        />}
       </div>
-      {lists && <TaskDialog
-        isOpen={isNewTaskDialogOpen}
-        onClose={() => setIsNewTaskDialogOpen(false)}
-        onSave={handleCreateTask}
-        lists={lists}
-      />}
-    </div>
+      <CreateBoardDialog 
+        isOpen={isCreateBoardDialogOpen}
+        onClose={() => setIsCreateBoardDialogOpen(false)}
+        onCreate={handleCreateBoard}
+      />
+    </>
   );
 }
