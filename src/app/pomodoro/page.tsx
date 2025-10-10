@@ -190,7 +190,7 @@ export default function PomodoroPage() {
                 </CardContent>
             </Card>
         </div>
-        <div>
+        <div className="md:col-span-1">
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><History className='w-5 h-5 shrink-0' /> Histórico de Foco</CardTitle>
