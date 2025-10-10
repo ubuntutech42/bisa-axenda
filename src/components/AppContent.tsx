@@ -19,7 +19,7 @@ import { FloatingActions } from './layout/FloatingActions';
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isFloatingPomodoroOpen } = usePomodoro();
+  const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
@@ -91,7 +91,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
         <BottomNav />
         <FloatingActions />
         <Toaster />
-        {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => {}} />}
+        {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
       </div>
     );
   }
