@@ -172,7 +172,7 @@ export default function BoardPage() {
             />
           </div>
         </Header>
-        <div className="flex-1 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex-1">
           {areListsLoading && <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin text-primary" /></div>}
           {!areListsLoading && activeBoard && lists ? (
             <KanbanBoard boardId={activeBoard.id} lists={lists} />
