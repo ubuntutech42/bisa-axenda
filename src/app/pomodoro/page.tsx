@@ -123,7 +123,7 @@ export default function PomodoroPage() {
 
 
   return (
-    <div>
+    <div className="flex flex-col gap-8">
       <Header title="Foco Pomodoro" />
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2">

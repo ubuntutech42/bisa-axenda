@@ -110,7 +110,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-8">
       <Header title={`Bem-vindo(a), ${user.displayName?.split(' ')[0] || 'Guerreiro(a)'}!`} />
 
       <div className="space-y-8">
