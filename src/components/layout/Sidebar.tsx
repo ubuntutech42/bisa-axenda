@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -25,6 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
 import { SettingsDialog } from '@/components/layout/SettingsDialog';
@@ -41,6 +43,8 @@ const navItems = [
 function UserProfile() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const { setIsFloatingPomodoroOpen } = usePomodoro();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   if (isUserLoading) {
     return <Loader className="h-6 w-6 animate-spin" />;
@@ -55,44 +59,50 @@ function UserProfile() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-            <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.displayName}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Sair</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+              <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.displayName}</p>
+              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+           <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
+              <Timer className="mr-2 h-4 w-4" />
+              <span>Timer Flutuante</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Configurações</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+    </>
   );
 }
 
 function NavContent() {
   const pathname = usePathname();
-  const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const auth = useAuth();
-
-  const handleLogout = async () => {
-    await signOut(auth);
-  };
 
   return (
-    <>
       <nav className="flex-1 overflow-y-auto px-4 py-4">
         <div className="flex flex-col gap-2">
           {navItems.map((item) => {
@@ -113,24 +123,6 @@ function NavContent() {
           })}
         </div>
       </nav>
-      <div className="px-4 py-2 border-t border-border">
-        <Button variant="ghost" className="w-full justify-start" onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
-            <Timer className="mr-3 h-5 w-5" />
-            {isFloatingPomodoroOpen ? 'Ocultar Timer' : 'Timer Flutuante'}
-        </Button>
-        <Button variant="ghost" className="w-full justify-start" onClick={() => setIsSettingsOpen(true)}>
-          <Settings className="mr-3 h-5 w-5" />
-          Configurações
-        </Button>
-      </div>
-      <div className="mt-auto p-4 border-t border-border">
-           <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-              <LogOut className="mr-3 h-5 w-5" />
-              Sair
-          </Button>
-      </div>
-      <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-    </>
   );
 }
 

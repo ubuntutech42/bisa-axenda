@@ -14,6 +14,7 @@ import { createUserProfile } from '@/lib/user';
 import { Loader } from 'lucide-react';
 import LandingLayout from '@/app/landing/layout';
 import LandingPage from '@/app/landing/page';
+import { FloatingActions } from './layout/FloatingActions';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -82,6 +83,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <BottomNav />
+        <FloatingActions />
         <Toaster />
         {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => {}} />}
       </div>
