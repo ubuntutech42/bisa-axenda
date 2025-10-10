@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -154,8 +155,7 @@ export default function BoardPage() {
   }
 
   return (
-    <>
-      <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
         <Header title={currentBoardName}>
           <div className="flex items-center gap-2">
             {activeBoard && (
@@ -172,7 +172,7 @@ export default function BoardPage() {
             />
           </div>
         </Header>
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
           {areListsLoading && <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin text-primary" /></div>}
           {!areListsLoading && activeBoard && lists ? (
             <KanbanBoard boardId={activeBoard.id} lists={lists} />
@@ -196,12 +196,11 @@ export default function BoardPage() {
           onSave={handleCreateTask}
           lists={lists}
         />}
-      </div>
       <CreateBoardDialog 
         isOpen={isCreateBoardDialogOpen}
         onClose={() => setIsCreateBoardDialogOpen(false)}
         onCreate={handleCreateBoard}
       />
-    </>
+    </div>
   );
 }

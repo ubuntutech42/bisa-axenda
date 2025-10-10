@@ -100,7 +100,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDi
   
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-lg p-4 sm:p-6 overflow-y-auto">
         <form onSubmit={handleSubmit(handleFormSubmit)}>
           <SheetHeader>
             <SheetTitle className="font-headline">{isEditing ? 'Editar Tarefa' : 'Criar Nova Tarefa'}</SheetTitle>

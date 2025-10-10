@@ -74,7 +74,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar />
-        <div className="flex flex-col flex-1 pb-16 md:pb-0">
+        <div className="flex flex-col flex-1 pb-16 md:pb-0 md:w-0">
           <main className="flex-1 p-4 sm:p-6 lg:p-8">
             {children}
           </main>

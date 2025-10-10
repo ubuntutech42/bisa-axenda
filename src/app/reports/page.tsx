@@ -100,7 +100,7 @@ export default function ReportsPage() {
       <Header title="Relatórios & Insights">
         {boards && boards.length > 0 && (
            <Select onValueChange={setSelectedBoardId} value={selectedBoardId}>
-              <SelectTrigger className="w-[220px]">
+              <SelectTrigger className="w-full sm:w-[220px]">
                 <SelectValue placeholder="Selecione um quadro" />
               </SelectTrigger>
               <SelectContent>
