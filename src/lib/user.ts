@@ -7,14 +7,11 @@ import { doc, setDoc } from 'firebase/firestore';
  * @param user The Firebase Auth user object.
  * @param firestore The Firestore instance.
  */
-export const createUserProfile = async (user: User, firestore?: Firestore) => {
+export const createUserProfile = async (user: User, firestore: Firestore) => {
   if (!user) throw new Error('User object is required.');
+  if (!firestore) throw new Error('Firestore instance is required.');
   
-  // This is a bit of a hack. If firestore isn't passed, we are on the client
-  // and need to dynamically import it to avoid server/client context issues.
-  const db = firestore || (await import('@/firebase')).useFirestore();
-
-  const userRef = doc(db, 'users', user.uid);
+  const userRef = doc(firestore, 'users', user.uid);
   
   const displayName = user.displayName || 'Usuário Axénda';
   const firstName = displayName.split(' ')[0] || '';

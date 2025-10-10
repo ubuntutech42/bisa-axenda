@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Metadata } from 'next';
@@ -24,7 +25,7 @@ import { createUserProfile } from '@/lib/user';
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
+  const { isFloatingPomodoroOpen } = usePomodoro();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
@@ -35,7 +36,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
         const userSnap = await getDoc(userRef);
         if (!userSnap.exists()) {
           try {
-            await createUserProfile(user);
+            // Pass the firestore instance directly
+            await createUserProfile(user, firestore);
           } catch (error) {
             console.error("Failed to create user profile on-demand:", error);
           }
@@ -79,7 +81,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
         </div>
         <BottomNav />
         <Toaster />
-        {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
+        {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => {}} />}
       </div>
     );
   }
