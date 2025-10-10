@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -10,7 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Loader, Moon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
@@ -99,9 +100,7 @@ export function EventCalendar() {
       }
 
       const tasksPromises = boards.map(board => 
-        import('firebase/firestore').then(({ getDocs, collection }) => 
-          getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
-        )
+        getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
       );
       
       const snapshots = await Promise.all(tasksPromises);
