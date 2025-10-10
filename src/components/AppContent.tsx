@@ -23,29 +23,44 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  useEffect(() => {
-    if (user && firestore) {
-      const checkAndCreateUserProfile = async () => {
-        const userRef = doc(firestore, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          try {
-            await createUserProfile(user, firestore);
-          } catch (error) {
-            console.error("Failed to create user profile on-demand:", error);
-          }
-        }
-      };
-      checkAndCreateUserProfile();
-    }
-  }, [user, firestore]);
-  
-  // These are the public-only paths
   const publicPaths = ['/login', '/register'];
   const isPublicPath = publicPaths.includes(pathname);
   const isLandingPage = pathname === '/';
 
-  if (isUserLoading) {
+
+  useEffect(() => {
+    if (isUserLoading) return; // Do nothing while loading
+
+    if (user) {
+      if (isPublicPath) {
+        // Logged-in user on a public-only path, redirect to dashboard
+        router.replace('/dashboard');
+      }
+      // Check and create profile if it doesn't exist
+      const checkAndCreateUserProfile = async () => {
+        if (firestore) {
+          const userRef = doc(firestore, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            try {
+              await createUserProfile(user, firestore);
+            } catch (error) {
+              console.error("Failed to create user profile on-demand:", error);
+            }
+          }
+        }
+      };
+      checkAndCreateUserProfile();
+    } else {
+      // Not logged-in user
+      if (!isPublicPath && !isLandingPage) {
+        // Trying to access a protected page, redirect to login
+        router.replace('/login');
+      }
+    }
+  }, [user, isUserLoading, isPublicPath, isLandingPage, pathname, router, firestore]);
+  
+  if (isUserLoading || (!user && !isPublicPath && !isLandingPage) || (user && isPublicPath)) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <Loader className="h-10 w-10 animate-spin text-primary" />
@@ -53,7 +68,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
   
-  if(isLandingPage) {
+  if(isLandingPage && !user) {
     return (
         <LandingLayout>
             <LandingPage/>
@@ -62,16 +77,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   }
 
   if (user) {
-    // If user is logged in, but tries to access a public-only path, redirect to dashboard
-    if (isPublicPath) {
-      router.replace('/dashboard');
-      return (
-        <div className="flex items-center justify-center h-screen bg-background">
-            <Loader className="h-10 w-10 animate-spin text-primary" />
-        </div>
-      );
-    }
-    // For authenticated users, show the full app layout.
+    // For authenticated users, show the full app layout on non-public paths.
     return (
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar />
@@ -90,21 +96,16 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If user is not authenticated
-  if (!user) {
-      // Allow access to public paths
-      if (isPublicPath) {
-          return <>{children}</>;
-      }
-      // For any other path, redirect to login
-      router.replace('/login');
-      return (
-        <div className="flex items-center justify-center h-screen bg-background">
-            <Loader className="h-10 w-10 animate-spin text-primary" />
-        </div>
-      );
+  // If user is not authenticated, and it's a public path, show children
+  if (!user && isPublicPath) {
+    return <>{children}</>;
   }
 
-  // Fallback just in case, though it should not be reached.
-  return <>{children}</>;
+
+  // Fallback just in case, though it should not be reached with the useEffect logic.
+  return (
+    <div className="flex items-center justify-center h-screen bg-background">
+      <Loader className="h-10 w-10 animate-spin text-primary" />
+    </div>
+  );
 }
