@@ -139,7 +139,7 @@ export default function PomodoroPage() {
                     
                     <div className='w-full max-w-sm space-y-2'>
                         <Select onValueChange={(id) => setCurrentBoardId(id)} value={currentBoardId || ''} disabled={isActive}>
-                            <SelectTrigger id="board-select">
+                            <SelectTrigger id="board-select" className="w-full">
                                 <SelectValue placeholder="Selecione um quadro" />
                             </SelectTrigger>
                             <SelectContent>
