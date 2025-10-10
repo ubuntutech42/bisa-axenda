@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import type { Task, KanbanBoard } from '@/lib/types';
 import { Header } from '@/components/layout/Header';
 import { AiInsights } from '@/components/reports/AiInsights';
@@ -12,12 +12,15 @@ import { TimeDistributionChart } from '@/components/reports/TimeDistributionChar
 import { Loader } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// Add boardId to the Task type for local use in this component
+type TaskWithBoardId = Task & { boardId: string };
+
 export default function ReportsPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
   const [selectedBoardId, setSelectedBoardId] = useState<string>('all');
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskWithBoardId[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
 
   const boardsQuery = useMemoFirebase(() => 
@@ -32,77 +35,57 @@ export default function ReportsPage() {
       router.push('/login');
       return;
     }
-    if (areBoardsLoading) return;
+  }, [isUserLoading, user, router]);
 
-    const fetchAllTasks = async () => {
-      if (!boards || !firestore || !user) {
-        setAllTasks([]);
+
+  useEffect(() => {
+    if (!user || !firestore || areBoardsLoading) return;
+
+    const fetchTasks = async () => {
+      setAreTasksLoading(true);
+      if (!boards || boards.length === 0) {
+        setTasks([]);
         setAreTasksLoading(false);
         return;
       }
-      setAreTasksLoading(true);
-      const tasksPromises = boards.map(board => 
-        getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
+      
+      let tasksToFetch: {boardId: string, boardName: string}[] = [];
+
+      if (selectedBoardId === 'all') {
+        tasksToFetch = boards.map(b => ({boardId: b.id, boardName: b.name}));
+      } else {
+        const selectedBoard = boards.find(b => b.id === selectedBoardId);
+        if (selectedBoard) {
+            tasksToFetch = [{boardId: selectedBoard.id, boardName: selectedBoard.name}];
+        }
+      }
+
+      if (tasksToFetch.length === 0) {
+        setTasks([]);
+        setAreTasksLoading(false);
+        return;
+      }
+      
+      const tasksPromises = tasksToFetch.map(board => 
+        getDocs(collection(firestore, 'kanbanBoards', board.boardId, 'tasks'))
       );
+
       const taskSnapshots = await Promise.all(tasksPromises);
-      const tasks: Task[] = [];
-      taskSnapshots.forEach(snapshot => {
+      
+      const fetchedTasks: TaskWithBoardId[] = [];
+      taskSnapshots.forEach((snapshot, index) => {
+        const boardId = tasksToFetch[index].boardId;
         snapshot.forEach(doc => {
-          tasks.push({ id: doc.id, ...doc.data() } as Task);
+          fetchedTasks.push({ id: doc.id, boardId, ...doc.data() } as TaskWithBoardId);
         });
       });
-      setAllTasks(tasks);
+
+      setTasks(fetchedTasks);
       setAreTasksLoading(false);
     };
 
-    fetchAllTasks();
-  }, [user, isUserLoading, boards, areBoardsLoading, firestore, router]);
-
-  const filteredTasks = useMemo(() => {
-    if (selectedBoardId === 'all') {
-      return allTasks;
-    }
-    return allTasks.filter(task => {
-        const board = boards?.find(b => b.name === task.category); // This logic might be incorrect
-        // A task doesn't have a direct boardId property in its schema, need to cross reference.
-        // This is complex. Let's assume for now tasks are not filtered client side by board.
-        // Let's re-think. The task collection is nested under boards.
-        // So when we fetch all tasks, we lose the board context.
-        // Let's add boardId to the task when fetching.
-
-        // Re-doing the fetch logic to include boardId
-        return true; // placeholder
-    });
-  }, [allTasks, selectedBoardId, boards]);
-
-  const tasksForDisplay = useMemo(() => {
-    if (selectedBoardId === 'all') {
-      return allTasks;
-    }
-    // We need boardId on tasks. Let's adjust the fetch logic.
-    // The current fetch logic does not associate a task with its board.
-    
-    // Correct approach: We need to know which board a task belongs to.
-    // The current task model doesn't have a `boardId`. The relationship is parental.
-    // When fetching, we need to inject it.
-
-    // Given the current logic, filtering is not straightforward.
-    // Let's adjust the filtering logic.
-    // We can't filter because we don't know which board a task belongs to after fetching.
-    // The prompt is about showing ALL data.
-    // So `selectedBoardId` will filter `allTasks`.
-    
-    // Let's re-fetch when board changes instead of client-side filtering. This is simpler to implement.
-    // No, the request is to show ALL data. So the initial fetch of all tasks is correct.
-    // The filter is an addition.
-    
-    // The problem is `allTasks` doesn't have `boardId`.
-    // The path is `kanbanBoards/{boardId}/tasks/{taskId}`.
-    // Let's modify the fetch logic to include the boardId.
-    // The fetch logic is in this file.
-
-    return allTasks; // For now return all
-  }, [allTasks, selectedBoardId]);
+    fetchTasks();
+  }, [user, firestore, boards, areBoardsLoading, selectedBoardId]);
 
   if (isUserLoading || areBoardsLoading || areTasksLoading || !user) {
     return (
@@ -130,10 +113,10 @@ export default function ReportsPage() {
         )}
       </Header>
       <div className="space-y-8">
-        {allTasks.length > 0 ? (
+        {tasks.length > 0 ? (
           <>
-            <TimeDistributionChart tasks={allTasks} />
-            <AiInsights tasks={allTasks} />
+            <TimeDistributionChart tasks={tasks} />
+            <AiInsights tasks={tasks} />
           </>
         ) : (
           <div className="text-center py-10">
