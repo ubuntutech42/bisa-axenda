@@ -1,18 +1,30 @@
 
-import { Hero } from '@/components/landing/Hero';
-import { Features } from '@/components/landing/Features';
-import { Inspiration } from '@/components/landing/Inspiration';
-import { CTA } from '@/components/landing/CTA';
+'use client';
 
-export default function LandingPage() {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-1">
-        <Hero />
-        <Features />
-        <Inspiration />
-        <CTA />
-      </main>
-    </div>
-  );
+import { useUser } from '@/firebase';
+import DashboardPage from './dashboard/page';
+import LandingPage from './landing/page';
+import { Loader } from 'lucide-react';
+import LandingLayout from './landing/layout';
+
+export default function HomePage() {
+  const { user, isUserLoading } = useUser();
+
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <Loader className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+     <LandingLayout>
+        <LandingPage />
+     </LandingLayout>
+    );
+  }
+
+  return <DashboardPage />;
 }
