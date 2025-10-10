@@ -7,10 +7,10 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { getSdks } from '@/firebase';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+import { createUserProfile } from '@/lib/user';
 
 // Helper to initialize and get services
 function getFirebaseServices() {
@@ -28,21 +28,18 @@ export async function signup(name: string, email: string, password: string) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Update user profile
+    // Update user profile display name
     await updateProfile(user, { displayName: name });
+    
+    // This is needed to make sure the user object is updated with the display name
+    // before creating the profile doc.
+    await user.reload();
+    const updatedUser = auth.currentUser!;
 
     // Create user document in Firestore
-    const userRef = doc(firestore, 'users', user.uid);
-    await setDoc(userRef, {
-        id: user.uid,
-        email: user.email,
-        userName: name,
-        firstName: name.split(' ')[0] || '',
-        lastName: name.split(' ').slice(1).join(' ') || '',
-        profileImageUrl: user.photoURL || '',
-    }, { merge: true });
+    await createUserProfile(updatedUser, firestore);
 
-    return { uid: user.uid, email: user.email };
+    return { uid: updatedUser.uid, email: updatedUser.email };
   } catch (error: any) {
     throw new Error(error.message);
   }

@@ -12,6 +12,10 @@ import './globals.css';
 import { usePathname } from 'next/navigation';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { Footer } from '@/components/landing/Footer';
+import { useEffect } from 'react';
+import { useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { createUserProfile } from '@/lib/user';
 
 // export const metadata: Metadata = {
 //   title: 'Axénda',
@@ -22,6 +26,24 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (user && firestore) {
+      const checkAndCreateUserProfile = async () => {
+        const userRef = doc(firestore, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          try {
+            await createUserProfile(user);
+          } catch (error) {
+            console.error("Failed to create user profile on-demand:", error);
+          }
+        }
+      };
+      checkAndCreateUserProfile();
+    }
+  }, [user, firestore]);
 
   const isHomePage = pathname === '/';
 
