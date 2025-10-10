@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -192,7 +193,7 @@ export default function PomodoroPage() {
         <div>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><History className='w-5 h-5' /> Histórico de Foco</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><History className='w-5 h-5 shrink-0' /> Histórico de Foco</CardTitle>
                     <CardDescription>Suas sessões de Pomodoro concluídas.</CardDescription>
                 </CardHeader>
                 <CardContent>
