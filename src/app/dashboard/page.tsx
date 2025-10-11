@@ -30,11 +30,17 @@ export default function DashboardPage() {
 
 
   useEffect(() => {
-    if (!boards || !firestore || !user) {
-      if(boards === null || user === null) {
-        setAreGlobalTasksLoading(false);
-      }
+    if (isUserLoading) return;
+    if (!user) {
+      router.push('/');
       return;
+    }
+
+    if (areBoardsLoading || !boards || !firestore) {
+        if(boards === null || !areBoardsLoading) {
+            setAreGlobalTasksLoading(false);
+        }
+        return;
     };
 
     const fetchAllData = async () => {
@@ -46,46 +52,47 @@ export default function DashboardPage() {
         return;
       }
 
-      const tasksPromises = boards.map(board => 
-        getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
-      );
-      const listsPromises = boards.map(board =>
-        getDocs(collection(firestore, 'kanbanBoards', board.id, 'lists'))
-      );
-      
-      const [taskSnapshots, listSnapshots] = await Promise.all([
-        Promise.all(tasksPromises),
-        Promise.all(listsPromises)
-      ]);
-
-      const tasks: Task[] = [];
-      taskSnapshots.forEach(snapshot => {
-        snapshot.forEach(doc => {
-          tasks.push({ id: doc.id, ...doc.data() } as Task);
+      try {
+        const tasksPromises = boards.map(board => 
+          getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
+        );
+        const listsPromises = boards.map(board =>
+          getDocs(collection(firestore, 'kanbanBoards', board.id, 'lists'))
+        );
+        
+        const [taskSnapshots, listSnapshots] = await Promise.all([
+          Promise.all(tasksPromises),
+          Promise.all(listsPromises)
+        ]);
+  
+        const tasks: Task[] = [];
+        taskSnapshots.forEach(snapshot => {
+          snapshot.forEach(doc => {
+            tasks.push({ id: doc.id, ...doc.data() } as Task);
+          });
         });
-      });
-
-      const lists: KanbanList[] = [];
-      listSnapshots.forEach(snapshot => {
-        snapshot.forEach(doc => {
-          lists.push({ id: doc.id, ...doc.data() } as KanbanList);
+  
+        const lists: KanbanList[] = [];
+        listSnapshots.forEach(snapshot => {
+          snapshot.forEach(doc => {
+            lists.push({ id: doc.id, ...doc.data() } as KanbanList);
+          });
         });
-      });
-
-      setAllTasks(tasks);
-      setAllLists(lists);
-      setAreGlobalTasksLoading(false);
+  
+        setAllTasks(tasks);
+        setAllLists(lists);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        setAllTasks([]);
+        setAllLists([]);
+      } finally {
+        setAreGlobalTasksLoading(false);
+      }
     };
 
     fetchAllData();
-  }, [boards, firestore, user]);
+  }, [boards, areBoardsLoading, firestore, user, router, isUserLoading]);
 
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/');
-    }
-  }, [isUserLoading, user, router]);
 
   const stats = useMemo(() => {
     if (!allTasks || !allLists) {
