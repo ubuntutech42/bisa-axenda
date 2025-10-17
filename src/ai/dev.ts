@@ -6,7 +6,7 @@
 import { config } from 'dotenv';
 config();
 
-import { exec } from 'child_process';
+import { exec, ChildProcess } from 'child_process';
 
 const GENKIT_PORT = process.env.GENKIT_PORT || 1001;
 const FLOW_PORT_BASE = 3100;
@@ -28,27 +28,33 @@ const command = `genkit start --port ${GENKIT_PORT} --flows-from ${flowsFrom}`;
 console.log('Starting Genkit servers...');
 console.log(`Executing: ${command}`);
 
-const genkitProcess = exec(command, { detached: true });
+// Keep a reference to the child process
+let genkitProcess: ChildProcess | null = null;
 
-genkitProcess.stdout?.on('data', (data) => {
-  process.stdout.write(data);
-});
+function startGenkit() {
+    genkitProcess = exec(command, { detached: true });
 
-genkitProcess.stderr?.on('data', (data) => {
-  process.stderr.write(data);
-});
+    genkitProcess.stdout?.on('data', (data) => {
+        process.stdout.write(data);
+    });
 
-genkitProcess.on('close', (code) => {
-  console.log(`Genkit process exited with code ${code}`);
-});
+    genkitProcess.stderr?.on('data', (data) => {
+        process.stderr.write(data);
+    });
+
+    genkitProcess.on('close', (code) => {
+        console.log(`Genkit process exited with code ${code}`);
+        genkitProcess = null; // Clear the reference
+    });
+}
 
 // Graceful shutdown
 const handleShutdown = (signal: string) => {
   console.log(`Received ${signal}. Shutting down all Genkit servers...`);
-  if (genkitProcess.pid) {
-    // Use kill() to send the signal to the process group
-    // The negative PID kills the process and all of its children.
+  if (genkitProcess && genkitProcess.pid) {
     try {
+        // Use kill() to send the signal to the process group
+        // The negative PID kills the process and all of its children.
         process.kill(-genkitProcess.pid, signal);
     } catch (e) {
         // Ignore errors if the process is already gone
@@ -57,5 +63,12 @@ const handleShutdown = (signal: string) => {
   process.exit();
 };
 
+
+// Start the process for the first time
+startGenkit();
+
+// Register shutdown handlers only once
 process.on('SIGINT', () => handleShutdown('SIGINT'));
 process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('exit', () => handleShutdown('exit'));
+
