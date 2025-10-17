@@ -1,10 +1,11 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, getRedirectResult, signInWithRedirect } from 'firebase/auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/layout/Logo';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
+import { Loader } from 'lucide-react';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
@@ -36,10 +38,31 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          router.push('/dashboard'); 
+        } else {
+          setIsCheckingRedirect(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Error getting redirect result:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro de Autenticação',
+          description: 'Não foi possível completar o login com o Google.',
+        });
+        setIsCheckingRedirect(false);
+      });
+  }, [auth, router, toast]);
 
   const handleEmailSignIn = async (data: LoginFormData) => {
     setLoading(true);
@@ -58,18 +81,8 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-    } catch (error) {
-      if ((error as any).code === 'auth/popup-closed-by-user') return;
-      console.error('Error signing in with Google: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro de Autenticação',
-        description: 'Não foi possível fazer login com o Google. Tente novamente.',
-      });
-    }
+    setLoading(true);
+    await signInWithRedirect(auth, provider);
   };
 
   const handlePasswordReset = async () => {
@@ -91,6 +104,16 @@ export default function LoginPage() {
       }
     }
   };
+  
+  if (isCheckingRedirect) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Verificando autenticação...</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -136,8 +159,8 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <Button onClick={handleGoogleSignIn} className="w-full" size="lg" variant="outline">
-            <GoogleIcon className="mr-2" />
+          <Button onClick={handleGoogleSignIn} className="w-full" size="lg" variant="outline" disabled={loading}>
+            {loading ? <Loader className="mr-2 animate-spin"/> : <GoogleIcon className="mr-2" />}
             Google
           </Button>
 
