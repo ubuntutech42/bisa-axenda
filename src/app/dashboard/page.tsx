@@ -37,7 +37,7 @@ export default function DashboardPage() {
     }
 
     if (areBoardsLoading || !boards || !firestore) {
-        if(boards === null || !areBoardsLoading) {
+        if(boards === null || (boards?.length === 0 && !areBoardsLoading)) {
             setAreGlobalTasksLoading(false);
         }
         return;
