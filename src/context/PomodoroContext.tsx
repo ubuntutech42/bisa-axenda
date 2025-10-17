@@ -4,7 +4,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
-import { playFocusStartSound, playBreakStartSound, playTickSound } from '@/lib/sounds';
 import type { Task } from '@/lib/types';
 
 type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak';
@@ -133,7 +132,8 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     setTime(timeOptions[mode]);
   }, [mode, timeOptions]);
 
-  const advanceToNextMode = useCallback(() => {
+  const advanceToNextMode = useCallback(async () => {
+      const { playBreakStartSound, playFocusStartSound } = await import('@/lib/sounds');
       setIsActive(false);
       if (mode === 'pomodoro') {
         const newPomodoroCount = pomodoroCount + 1;
@@ -150,9 +150,12 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isActive && time > 0) {
-      interval = setInterval(() => {
+      interval = setInterval(async () => {
         setTime(t => t - 1);
-        if (time > 1 && time % 60 === 1) playTickSound();
+        if (time > 1 && time % 60 === 1) {
+            const { playTickSound } = await import('@/lib/sounds');
+            playTickSound();
+        };
       }, 1000);
     } else if (isActive && time === 0) {
         if (mode === 'pomodoro' && sessionStartTime) {
@@ -166,7 +169,8 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [isActive, time, mode, sessionStartTime, saveSession, advanceToNextMode, timeOptions.pomodoro]);
 
-  const toggleTimer = () => {
+  const toggleTimer = async () => {
+    const { playFocusStartSound, playBreakStartSound } = await import('@/lib/sounds');
     if (mode === 'pomodoro' && !currentTaskId) {
       alert("Por favor, selecione uma tarefa para iniciar o foco.");
       return;
