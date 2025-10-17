@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -59,8 +60,7 @@ export function EventCalendar() {
     const year = getYear(monthDate);
 
     const monthKey = format(monthDate, 'yyyy-MM');
-    // Check if data for this month is already fetched by checking a representative key
-    const firstDayOfMonthKey = `${monthKey}-01`;
+    // Check if data for this month is already fetched
     if (Object.keys(lunarData).some(key => key.startsWith(monthKey))) {
         setIsLunarDataLoading(false);
         return;
@@ -340,3 +340,5 @@ export function EventCalendar() {
     </div>
   );
 }
+
+    
