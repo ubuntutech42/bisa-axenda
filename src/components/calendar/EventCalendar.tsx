@@ -55,40 +55,41 @@ export function EventCalendar() {
   );
   const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
 
-  const fetchLunarDataForMonth = useCallback(async (month: Date) => {
-    setIsLunarDataLoading(true);
-    const start = startOfMonth(month);
-    const end = endOfMonth(month);
-    const days = eachDayOfInterval({ start, end });
-    const promises = days.map(day => {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      // Avoid refetching if data already exists
-      if (lunarData[dateStr]) {
-        return Promise.resolve({ date: dateStr, result: { success: true, data: lunarData[dateStr] } });
-      }
-      return getLunarPhaseAction({ date: dateStr }).then(result => ({ date: dateStr, result }));
-    });
-  
-    const results = await Promise.all(promises);
-    const newLunarData: Record<string, LunarPhase> = {};
-    results.forEach(({ date, result }) => {
-      if (result.success && result.data) {
-        newLunarData[date] = {
-          id: `lunar-${date}`,
-          date: date,
-          phaseName: result.data.phaseName as LunarPhaseName,
-          description: result.data.description,
-        };
-      }
-    });
-  
-    setLunarData(prevData => ({ ...prevData, ...newLunarData }));
-    setIsLunarDataLoading(false);
-  }, [lunarData]); // Dependency on lunarData to avoid refetching
-
   useEffect(() => {
+    const fetchLunarDataForMonth = async (month: Date) => {
+      setIsLunarDataLoading(true);
+      const start = startOfMonth(month);
+      const end = endOfMonth(month);
+      const days = eachDayOfInterval({ start, end });
+      const promises = days.map(day => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        // Avoid refetching if data already exists
+        if (lunarData[dateStr]) {
+          return Promise.resolve({ date: dateStr, result: { success: true, data: lunarData[dateStr] } });
+        }
+        return getLunarPhaseAction({ date: dateStr }).then(result => ({ date: dateStr, result }));
+      });
+    
+      const results = await Promise.all(promises);
+      const newLunarData: Record<string, LunarPhase> = {};
+      results.forEach(({ date, result }) => {
+        if (result.success && result.data) {
+          newLunarData[date] = {
+            id: `lunar-${date}`,
+            date: date,
+            phaseName: result.data.phaseName as LunarPhaseName,
+            description: result.data.description,
+          };
+        }
+      });
+    
+      setLunarData(prevData => ({ ...prevData, ...newLunarData }));
+      setIsLunarDataLoading(false);
+    };
+  
     fetchLunarDataForMonth(currentMonth);
-  }, [currentMonth, fetchLunarDataForMonth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMonth]);
 
 
   useEffect(() => {
