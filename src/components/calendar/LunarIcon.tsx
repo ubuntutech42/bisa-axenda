@@ -13,32 +13,30 @@ interface LunarIconProps {
 export function LunarIcon({ phase, className }: LunarIconProps) {
   const baseClass = cn("w-4 h-4 text-muted-foreground", className);
 
-  // Note: fill="currentColor" will use the current text color.
-  // stroke="none" is used to avoid outlines on the shapes.
-  // The background is assumed to be transparent.
   switch (phase) {
-    case "Lua Nova": // New Moon - Dark circle
+    case "Lua Nova": // New Moon
       return (
-        <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" fill="none" />
+        <svg viewBox="0 0 24 24" className={baseClass} fill="none" stroke="currentColor" strokeWidth="1.5">
+          <circle cx="12" cy="12" r="10" />
         </svg>
       );
     case "Lua Crescente Côncava": // Waxing Crescent (left side lit in SH)
       return (
-        <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none" style={{ transform: 'scaleX(-1)' }}>
-           <path d="M12 2 A10 10 0 1 1 12 22 A7 7 0 1 0 12 2 Z" />
+        <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none">
+          <path d="M12 2A10 10 0 1 0 12 22A7.5 7.5 0 1 1 12 2z" transform="scale(-1, 1) translate(-24, 0)" />
         </svg>
       );
     case "Quarto Crescente": // First Quarter (left half lit in SH)
       return (
         <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none">
-          <path d="M12 2 a10 10 0 0 0 0 20 V2Z" />
+          <path d="M12 2a10 10 0 1 0 0 20V2z" />
         </svg>
       );
     case "Lua Crescente Gibosa": // Waxing Gibbous (mostly lit, dark on right in SH)
-       return (
-        <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none" style={{ transform: 'scaleX(-1)' }}>
-            <path d="M12 2 A10 10 0 1 1 12 22 A7 7 0 1 1 12 2 Z" />
+      return (
+        <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="17" cy="12" r="7.5" fill="var(--background-color, hsl(var(--background)))" />
         </svg>
       );
     case "Lua Cheia": // Full Moon
@@ -50,19 +48,20 @@ export function LunarIcon({ phase, className }: LunarIconProps) {
     case "Lua Minguante Gibosa": // Waning Gibbous (mostly lit, dark on left in SH)
         return (
             <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none">
-                <path d="M12 2 A10 10 0 1 1 12 22 A7 7 0 1 1 12 2 Z" />
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="7" cy="12" r="7.5" fill="var(--background-color, hsl(var(--background)))" />
             </svg>
           );
     case "Quarto Minguante": // Last Quarter (right half lit in SH)
       return (
         <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none">
-          <path d="M12 2 a10 10 0 0 1 0 20 V2Z" />
+          <path d="M12 2a10 10 0 1 1 0 20V2z" />
         </svg>
       );
     case "Lua Minguante Côncava": // Waning Crescent (right side lit in SH)
         return (
             <svg viewBox="0 0 24 24" className={baseClass} fill="currentColor" stroke="none">
-                <path d="M12 2 A10 10 0 1 1 12 22 A7 7 0 1 0 12 2 Z" />
+                <path d="M12 2A10 10 0 1 1 12 22A7.5 7.5 0 1 0 12 2z" />
             </svg>
           );
     default:
