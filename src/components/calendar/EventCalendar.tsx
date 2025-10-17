@@ -58,7 +58,6 @@ export function EventCalendar() {
     setIsLunarDataLoading(true);
     const month = getMonth(monthDate) + 1; // 1-based month
     const year = getYear(monthDate);
-    const monthKey = `${year}-${month}`;
 
     // Check cache first - using a representative date from the month
     const firstDayKey = format(startOfMonth(monthDate), 'yyyy-MM-dd');
@@ -86,12 +85,11 @@ export function EventCalendar() {
       console.error("Failed to fetch lunar data:", result.error);
     }
     setIsLunarDataLoading(false);
-  }, [lunarData]); // Depend on lunarData to avoid re-fetching what's already there
+  }, [lunarData]);
 
   useEffect(() => {
     fetchLunarDataForMonth(currentMonth);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentMonth]);
+  }, [currentMonth, fetchLunarDataForMonth]);
 
 
   useEffect(() => {

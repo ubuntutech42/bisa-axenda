@@ -27,7 +27,7 @@ const command = `genkit start --port ${GENKIT_PORT} --flows-from ${flowsFrom}`;
 console.log('Starting Genkit servers...');
 console.log(`Executing: ${command}`);
 
-const genkitProcess = exec(command);
+const genkitProcess = exec(command, { detached: true });
 
 genkitProcess.stdout?.on('data', (data) => {
   process.stdout.write(data);
@@ -46,7 +46,12 @@ const handleShutdown = (signal: string) => {
   console.log(`Received ${signal}. Shutting down Genkit servers...`);
   if (genkitProcess.pid) {
     // Use kill() to send the signal to the process group
-    process.kill(-genkitProcess.pid, signal);
+    // The negative PID kills the process and all of its children.
+    try {
+        process.kill(-genkitProcess.pid, signal);
+    } catch (e) {
+        // Ignore errors if the process is already gone
+    }
   }
   process.exit();
 };
