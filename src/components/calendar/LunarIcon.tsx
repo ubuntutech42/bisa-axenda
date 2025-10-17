@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { LunarPhaseName } from "@/lib/types";

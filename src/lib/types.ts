@@ -92,8 +92,7 @@ export type LunarPhaseName =
   | "Lua Cheia" 
   | "Lua Minguante Gibosa" 
   | "Quarto Minguante" 
-  | "Lua Minguante Côncava"
-  | "Lua Minguante"; // Add fallback type
+  | "Lua Minguante Côncava";
 
 export interface LunarPhase {
     id: string;
