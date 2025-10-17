@@ -3,9 +3,7 @@
 
 import type { LunarPhase, LunarPhaseName } from "@/lib/types";
 import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
-import { LunarIcon } from "./LunarIcon";
 import { Skeleton } from "../ui/skeleton";
 
 interface LunarMonthSummaryProps {
@@ -22,21 +20,19 @@ const mainPhases: LunarPhaseName[] = [
 
 export function LunarMonthSummary({ lunarData, isLoading }: LunarMonthSummaryProps) {
   const monthMainPhases = useMemo(() => {
-    const phases: { phaseName: LunarPhaseName; date: string }[] = [];
+    const phases: { phaseName: LunarPhaseName; date: string; svg: string; }[] = [];
     const processedPhases = new Set<LunarPhaseName>();
 
     const sortedDates = Object.keys(lunarData).sort();
     
-    // Find the first occurrence of each main phase in the month
     for (const phaseName of mainPhases) {
       const foundDate = sortedDates.find(date => lunarData[date]?.phaseName === phaseName);
-      if (foundDate) {
-        phases.push({ phaseName, date: foundDate });
+      if (foundDate && lunarData[foundDate]) {
+        phases.push({ phaseName, date: foundDate, svg: lunarData[foundDate]!.svg });
         processedPhases.add(phaseName);
       }
     }
 
-    // Sort by date
     return phases.sort((a,b) => parseISO(a.date).getDate() - parseISO(b.date).getDate());
 
   }, [lunarData]);
@@ -61,9 +57,9 @@ export function LunarMonthSummary({ lunarData, isLoading }: LunarMonthSummaryPro
 
   return (
     <div className="space-y-2 mt-2">
-      {monthMainPhases.map(({ phaseName, date }) => (
+      {monthMainPhases.map(({ phaseName, date, svg }) => (
         <div key={phaseName} className="flex items-center gap-2 text-sm">
-          <LunarIcon phase={phaseName} className="w-5 h-5 shrink-0" />
+          <div className="w-5 h-5 shrink-0" dangerouslySetInnerHTML={{ __html: svg }}></div>
           <span className="font-medium text-foreground">{phaseName}</span>
           <span className="ml-auto text-muted-foreground font-mono">
             {format(parseISO(date), "dd/MM")}
@@ -73,5 +69,3 @@ export function LunarMonthSummary({ lunarData, isLoading }: LunarMonthSummaryPro
     </div>
   );
 }
-
-    

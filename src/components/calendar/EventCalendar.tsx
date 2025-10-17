@@ -15,7 +15,6 @@ import { Loader } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
 import { getLunarDataForMonthAction } from '@/app/actions';
-import { LunarIcon } from './LunarIcon';
 import { LunarMonthSummary } from './LunarMonthSummary';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -59,11 +58,12 @@ export function EventCalendar() {
     const month = getMonth(monthDate) + 1; // 1-based month
     const year = getYear(monthDate);
 
-    // Check cache first - using a representative date from the month
-    const firstDayKey = format(startOfMonth(monthDate), 'yyyy-MM-dd');
-    if (lunarData[firstDayKey]) {
-      setIsLunarDataLoading(false);
-      return;
+    const monthKey = format(monthDate, 'yyyy-MM');
+    // Check if data for this month is already fetched by checking a representative key
+    const firstDayOfMonthKey = `${monthKey}-01`;
+    if (Object.keys(lunarData).some(key => key.startsWith(monthKey))) {
+        setIsLunarDataLoading(false);
+        return;
     }
     
     const result = await getLunarDataForMonthAction(month, year);
@@ -78,6 +78,7 @@ export function EventCalendar() {
           date: dateStr,
           phaseName: phaseInfo.phaseName as LunarPhaseName,
           description: phaseInfo.svgDescription,
+          svg: phaseInfo.svg,
         };
       }
       setLunarData(prevData => ({ ...prevData, ...newLunarData }));
@@ -226,8 +227,7 @@ export function EventCalendar() {
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <div className="absolute top-0 right-0 pt-1 pr-1">
-                         <LunarIcon phase={dayLunarData.phaseName} className="w-3.5 h-3.5" />
+                      <div className="absolute top-0 right-0 pt-1 pr-1 w-4 h-4" dangerouslySetInnerHTML={{ __html: dayLunarData.svg }}>
                       </div>
                     )}
                     {format(date, 'd')}
@@ -319,7 +319,7 @@ export function EventCalendar() {
                         <>
                           <div className="flex justify-between items-start">
                              <div className='flex items-center gap-2'>
-                                <LunarIcon phase={event.phaseName} />
+                                <div className="w-5 h-5" dangerouslySetInnerHTML={{ __html: event.svg }}></div>
                                 <p className="font-semibold">{event.phaseName}</p>
                              </div>
                              <Badge variant="outline">Lua</Badge>
