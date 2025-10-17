@@ -44,7 +44,7 @@ genkitProcess.on('close', (code) => {
 
 // Graceful shutdown
 const handleShutdown = (signal: string) => {
-  console.log(`Received ${signal}. Shutting down Genkit servers...`);
+  console.log(`Received ${signal}. Shutting down all Genkit servers...`);
   if (genkitProcess.pid) {
     // Use kill() to send the signal to the process group
     // The negative PID kills the process and all of its children.
