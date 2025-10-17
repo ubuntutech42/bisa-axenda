@@ -44,7 +44,7 @@ const lunarPhasePrompt = ai.definePrompt({
   output: {schema: GetLunarPhaseOutputSchema},
   prompt: `Você é um astrólogo e especialista em calendários lunares. 
   
-  Para a data fornecida ({{{date}}}), determine a fase exata da lua no hemisfério sul.
+  Para a data fornecida ({{{date}}}), determine a fase exata da lua no hemisfério sul, considerando o fuso horário de São Paulo (America/Sao_Paulo).
   
   Forneça o nome exato da fase da lua e uma descrição poética e concisa sobre a energia e influência dessa fase para o dia.
   
