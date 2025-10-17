@@ -1,15 +1,16 @@
+'use server';
 /**
  * @fileoverview This file is the entry point for running Genkit in development.
  */
-
 import { config } from 'dotenv';
 config();
 
 import { exec } from 'child_process';
 
-const GENKIT_PORT = 1001; // The port for the main Genkit UI and flow server
-const FLOW_PORT_BASE = 3100; // Starting port for individual flow servers
+const GENKIT_PORT = process.env.GENKIT_PORT || 1001;
+const FLOW_PORT_BASE = 3100;
 
+// List your flow file names here (without the .ts extension)
 const flows = [
   'time-tracking-insights',
   'generate-motivational-quotes',
@@ -40,8 +41,15 @@ genkitProcess.on('close', (code) => {
   console.log(`Genkit process exited with code ${code}`);
 });
 
-process.on('SIGINT', () => {
-    console.log('Shutting down Genkit servers...');
-    genkitProcess.kill('SIGINT');
-    process.exit();
-});
+// Graceful shutdown
+const handleShutdown = (signal: string) => {
+  console.log(`Received ${signal}. Shutting down Genkit servers...`);
+  if (genkitProcess.pid) {
+    // Use kill() to send the signal to the process group
+    process.kill(-genkitProcess.pid, signal);
+  }
+  process.exit();
+};
+
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));

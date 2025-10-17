@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -6,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
 import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName } from '@/lib/types';
-import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getMonth, getYear } from 'date-fns';
+import { format, isSameDay, parseISO, startOfMonth, getMonth, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -55,41 +54,41 @@ export function EventCalendar() {
   );
   const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
 
-  useEffect(() => {
-    const fetchLunarDataForMonth = async (monthDate: Date) => {
-      setIsLunarDataLoading(true);
-      const month = getMonth(monthDate) + 1; // 1-based month
-      const year = getYear(monthDate);
-      const monthKey = `${year}-${month}`;
+  const fetchLunarDataForMonth = useCallback(async (monthDate: Date) => {
+    setIsLunarDataLoading(true);
+    const month = getMonth(monthDate) + 1; // 1-based month
+    const year = getYear(monthDate);
+    const monthKey = `${year}-${month}`;
 
-      // Check cache first
-      const firstDayOfMonth = format(startOfMonth(monthDate), 'yyyy-MM-dd');
-      if (lunarData[firstDayOfMonth]) {
-        setIsLunarDataLoading(false);
-        return;
-      }
-      
-      const result = await getLunarDataForMonthAction(month, year);
-      
-      if (result.success && result.data) {
-        const newLunarData: Record<string, LunarPhase> = {};
-        for (const day in result.data.phase) {
-          const phaseInfo = result.data.phase[day];
-          const dateStr = format(new Date(year, month - 1, parseInt(day)), 'yyyy-MM-dd');
-          newLunarData[dateStr] = {
-            id: `lunar-${dateStr}`,
-            date: dateStr,
-            phaseName: phaseInfo.phaseName as LunarPhaseName,
-            description: phaseInfo.svgDescription,
-          };
-        }
-        setLunarData(prevData => ({ ...prevData, ...newLunarData }));
-      } else {
-        console.error("Failed to fetch lunar data:", result.error);
-      }
+    // Check cache first - using a representative date from the month
+    const firstDayKey = format(startOfMonth(monthDate), 'yyyy-MM-dd');
+    if (lunarData[firstDayKey]) {
       setIsLunarDataLoading(false);
-    };
-  
+      return;
+    }
+    
+    const result = await getLunarDataForMonthAction(month, year);
+    
+    if (result.success && result.data) {
+      const newLunarData: Record<string, LunarPhase> = {};
+      for (const day in result.data.phase) {
+        const phaseInfo = result.data.phase[day];
+        const dateStr = format(new Date(year, month - 1, parseInt(day)), 'yyyy-MM-dd');
+        newLunarData[dateStr] = {
+          id: `lunar-${dateStr}`,
+          date: dateStr,
+          phaseName: phaseInfo.phaseName as LunarPhaseName,
+          description: phaseInfo.svgDescription,
+        };
+      }
+      setLunarData(prevData => ({ ...prevData, ...newLunarData }));
+    } else {
+      console.error("Failed to fetch lunar data:", result.error);
+    }
+    setIsLunarDataLoading(false);
+  }, [lunarData]); // Depend on lunarData to avoid re-fetching what's already there
+
+  useEffect(() => {
     fetchLunarDataForMonth(currentMonth);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMonth]);
