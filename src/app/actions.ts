@@ -2,7 +2,8 @@
 "use server";
 
 import { getTimeTrackingInsights, type TimeTrackingInsightsInput } from "@/ai/flows/time-tracking-insights";
-import { getLunarPhase, type GetLunarPhaseInput } from "@/ai/flows/get-lunar-phase";
+import type { LunarDataResponse } from "@/lib/types";
+import { format } from "date-fns";
 
 export async function generateInsightsAction(input: TimeTrackingInsightsInput) {
   try {
@@ -14,12 +15,16 @@ export async function generateInsightsAction(input: TimeTrackingInsightsInput) {
   }
 }
 
-export async function getLunarPhaseAction(input: GetLunarPhaseInput) {
+export async function getLunarDataForMonthAction(month: number, year: number) {
   try {
-    const result = await getLunarPhase(input);
-    return { success: true, data: result };
+    const response = await fetch(`https://www.icalendar37.net/lunar/api/?lang=pt&month=${month}&year=${year}&loc=Belo%20Horizonte&shadeColor=gray&size=100`);
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+    const data: LunarDataResponse = await response.json();
+    return { success: true, data };
   } catch (error) {
-    console.error("Error getting lunar phase:", error);
-    return { success: false, error: "Failed to get lunar phase." };
+    console.error("Error getting lunar data:", error);
+    return { success: false, error: "Failed to get lunar data." };
   }
 }

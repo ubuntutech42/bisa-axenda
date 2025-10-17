@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
 import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName } from '@/lib/types';
-import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getMonth, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,7 +15,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
-import { getLunarPhaseAction } from '@/app/actions';
+import { getLunarDataForMonthAction } from '@/app/actions';
 import { LunarIcon } from './LunarIcon';
 import { LunarMonthSummary } from './LunarMonthSummary';
 import { Separator } from '@/components/ui/separator';
@@ -47,7 +47,7 @@ export function EventCalendar() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
   const [lunarData, setLunarData] = useState<Record<string, LunarPhase>>({});
-  const [isLunarDataLoading, setIsLunarDataLoading] = useState(false);
+  const [isLunarDataLoading, setIsLunarDataLoading] = useState(true);
 
   const userEventsQuery = useMemoFirebase(() =>
     user ? query(collection(firestore, 'users', user.uid, 'calendarEvents')) : null,
@@ -56,34 +56,37 @@ export function EventCalendar() {
   const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
 
   useEffect(() => {
-    const fetchLunarDataForMonth = async (month: Date) => {
+    const fetchLunarDataForMonth = async (monthDate: Date) => {
       setIsLunarDataLoading(true);
-      const start = startOfMonth(month);
-      const end = endOfMonth(month);
-      const days = eachDayOfInterval({ start, end });
-      const promises = days.map(day => {
-        const dateStr = format(day, 'yyyy-MM-dd');
-        // Avoid refetching if data already exists
-        if (lunarData[dateStr]) {
-          return Promise.resolve({ date: dateStr, result: { success: true, data: lunarData[dateStr] } });
-        }
-        return getLunarPhaseAction({ date: dateStr }).then(result => ({ date: dateStr, result }));
-      });
-    
-      const results = await Promise.all(promises);
-      const newLunarData: Record<string, LunarPhase> = {};
-      results.forEach(({ date, result }) => {
-        if (result.success && result.data) {
-          newLunarData[date] = {
-            id: `lunar-${date}`,
-            date: date,
-            phaseName: result.data.phaseName as LunarPhaseName,
-            description: result.data.description,
+      const month = getMonth(monthDate) + 1; // 1-based month
+      const year = getYear(monthDate);
+      const monthKey = `${year}-${month}`;
+
+      // Check cache first
+      const firstDayOfMonth = format(startOfMonth(monthDate), 'yyyy-MM-dd');
+      if (lunarData[firstDayOfMonth]) {
+        setIsLunarDataLoading(false);
+        return;
+      }
+      
+      const result = await getLunarDataForMonthAction(month, year);
+      
+      if (result.success && result.data) {
+        const newLunarData: Record<string, LunarPhase> = {};
+        for (const day in result.data.phase) {
+          const phaseInfo = result.data.phase[day];
+          const dateStr = format(new Date(year, month - 1, parseInt(day)), 'yyyy-MM-dd');
+          newLunarData[dateStr] = {
+            id: `lunar-${dateStr}`,
+            date: dateStr,
+            phaseName: phaseInfo.phaseName as LunarPhaseName,
+            description: phaseInfo.svgDescription,
           };
         }
-      });
-    
-      setLunarData(prevData => ({ ...prevData, ...newLunarData }));
+        setLunarData(prevData => ({ ...prevData, ...newLunarData }));
+      } else {
+        console.error("Failed to fetch lunar data:", result.error);
+      }
       setIsLunarDataLoading(false);
     };
   

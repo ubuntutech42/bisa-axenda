@@ -86,17 +86,28 @@ export interface CalendarEvent {
 
 export type LunarPhaseName = 
   | "Lua Nova" 
-  | "Lua Crescente Côncava" 
+  | "Lua Crescente Côncava"
   | "Quarto Crescente" 
   | "Lua Crescente Gibosa" 
   | "Lua Cheia" 
   | "Lua Minguante Gibosa" 
   | "Quarto Minguante" 
-  | "Lua Minguante Côncava";
+  | "Lua Minguante Côncava"
+  | "Lua Minguante"; // Add fallback type
 
 export interface LunarPhase {
     id: string;
     date: string;
     phaseName: LunarPhaseName;
     description: string;
+}
+
+export interface LunarDataResponse {
+    phase: {
+        [day: string]: {
+            phaseName: string;
+            svg: string;
+            svgDescription: string;
+        }
+    }
 }
