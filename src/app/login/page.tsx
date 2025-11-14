@@ -46,29 +46,37 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          router.push('/dashboard'); 
-        } else {
-          setIsCheckingRedirect(false);
+    // This effect runs on page load to check for a redirect result
+    const checkRedirect = async () => {
+        try {
+            const result = await getRedirectResult(auth);
+            if (result?.user) {
+              // User has successfully signed in via redirect.
+              // The main AppContent layout will handle redirecting to /dashboard.
+              // We just need to stop showing the loader.
+              // No need to call router.push here.
+            }
+        } catch (error: any) {
+            console.error("Error signing in with Google redirect:", error);
+            toast({
+              variant: 'destructive',
+              title: 'Erro no Login com Google',
+              description: error.message || 'Não foi possível completar o login com Google.',
+            });
+        } finally {
+            setIsCheckingRedirect(false);
         }
-      })
-      .catch((error) => {
-        console.error("Error getting redirect result:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Erro de Autenticação',
-          description: 'Não foi possível completar o login com o Google.',
-        });
-        setIsCheckingRedirect(false);
-      });
+    };
+
+    checkRedirect();
   }, [auth, router, toast]);
 
   const handleEmailSignIn = async (data: LoginFormData) => {
     setLoading(true);
     try {
       initiateEmailSignIn(auth, data.email, data.password);
+      // The onAuthStateChanged listener will handle the redirect
+      // We can optimistically redirect to dashboard
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -83,6 +91,8 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     setLoading(true);
+    // signInWithRedirect will navigate away, no need to handle the result here.
+    // The useEffect will handle it on page load after redirect.
     await signInWithRedirect(auth, provider);
   };
 
