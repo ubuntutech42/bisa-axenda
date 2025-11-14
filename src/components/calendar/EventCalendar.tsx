@@ -79,6 +79,7 @@ export function EventCalendar() {
           date: dateStr,
           phaseName: phaseInfo.phaseName as LunarPhaseName,
           description: phaseInfo.svgDescription,
+          svg: phaseInfo.svg,
         };
       }
       setLunarData(prevData => ({ ...prevData, ...newLunarData }));
@@ -198,10 +199,10 @@ export function EventCalendar() {
                 head_cell:
                   "text-muted-foreground rounded-md w-full font-normal text-sm justify-center flex",
                 row: "flex w-full mt-2 justify-between",
-                cell: "h-12 w-full text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                cell: "h-auto aspect-square text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                 day: cn(
                   buttonVariants({ variant: "ghost" }),
-                  "h-12 w-full p-0 font-normal aria-selected:opacity-100"
+                  "h-full w-full p-0 font-normal aria-selected:opacity-100"
                 ),
                 day_range_end: "day-range-end",
                 day_selected:
@@ -226,11 +227,11 @@ export function EventCalendar() {
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <div className="absolute top-0 right-0 pt-1 pr-1 w-5 h-5">
+                      <div className="absolute top-0 left-0 pt-1 pl-1 w-6 h-6">
                         <LunarIcon phaseName={dayLunarData.phaseName} className="w-full h-full" />
                       </div>
                     )}
-                    {format(date, 'd')}
+                    <span className="relative">{format(date, 'd')}</span>
                     {dayEvents.length > 0 && (
                       <div className="absolute bottom-1 flex justify-center gap-1">
                         {dayEvents.filter(e => e.type !== 'lunar').slice(0,3).map(event => (
@@ -342,3 +343,5 @@ export function EventCalendar() {
     </div>
   );
 }
+
+    
