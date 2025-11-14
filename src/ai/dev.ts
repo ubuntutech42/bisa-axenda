@@ -2,72 +2,81 @@
 'use server';
 /**
  * @fileoverview This file is the entry point for running Genkit in development.
+ * It spawns the Genkit server as a child process and ensures it's properly
+ * terminated when the main Next.js dev server restarts.
  */
 import { config } from 'dotenv';
 config();
 
-import { exec, ChildProcess } from 'child_process';
+import { exec, type ChildProcess } from 'child_process';
 
-const GENKIT_PORT = process.env.GENKIT_PORT || 1001;
-const FLOW_PORT_BASE = 3100;
+// Only run this logic in the main Next.js development process, not in workers.
+// The `tsx` process is the parent, and we check that we are not in a Genkit-spawned process.
+if (process.env.npm_lifecycle_event === 'dev' && !process.env.GENKIT_ENV) {
+  const GENKIT_PORT = process.env.GENKIT_PORT || 1001;
+  const FLOW_PORT_BASE = 3100;
 
-// List your flow file names here (without the .ts extension)
-const flows = [
-  'time-tracking-insights',
-  'generate-motivational-quotes',
-  'analyze-schedule-quality',
-];
+  // List your flow file names here (without the .ts extension)
+  const flows = [
+    'time-tracking-insights',
+    'generate-motivational-quotes',
+    'analyze-schedule-quality',
+  ];
 
-// Dynamically build the --flows-from argument
-const flowsFrom = flows
-  .map((flow, index) => `src/ai/flows/${flow}.ts,${FLOW_PORT_BASE + index}`)
-  .join(' ');
+  // Dynamically build the --flows-from argument
+  const flowsFrom = flows
+    .map((flow, index) => `src/ai/flows/${flow}.ts,${FLOW_PORT_BASE + index}`)
+    .join(' ');
 
-const command = `genkit start --port ${GENKIT_PORT} --flows-from ${flowsFrom}`;
+  const command = `genkit start --port ${GENKIT_PORT} --flows-from ${flowsFrom}`;
 
-console.log('Starting Genkit servers...');
-console.log(`Executing: ${command}`);
+  let genkitProcess: ChildProcess | null = null;
 
-// Keep a reference to the child process
-let genkitProcess: ChildProcess | null = null;
-
-function startGenkit() {
+  function startGenkit() {
+    // Start the genkit process in detached mode to manage it as a group leader
     genkitProcess = exec(command, { detached: true });
 
+    console.log('Starting Genkit servers...');
+    console.log(`Executing: ${command}`);
+    console.log(`Genkit process started with PID: ${genkitProcess.pid}`);
+
     genkitProcess.stdout?.on('data', (data) => {
-        process.stdout.write(data);
+      process.stdout.write(data);
     });
 
     genkitProcess.stderr?.on('data', (data) => {
-        process.stderr.write(data);
+      process.stderr.write(data);
     });
 
     genkitProcess.on('close', (code) => {
-        console.log(`Genkit process exited with code ${code}`);
-        genkitProcess = null; // Clear the reference
+      if (code !== null) { // If code is null, it was killed intentionally
+        console.log(`Genkit process exited with code ${code}. Restarting...`);
+        startGenkit(); // Restart if it crashes unexpectedly
+      }
     });
-}
-
-// Graceful shutdown
-const handleShutdown = (signal: string) => {
-  console.log(`Received ${signal}. Shutting down all Genkit servers...`);
-  if (genkitProcess && genkitProcess.pid) {
-    try {
-        // Use kill() to send the signal to the process group
-        // The negative PID kills the process and all of its children.
-        process.kill(-genkitProcess.pid, signal);
-    } catch (e) {
-        // Ignore errors if the process is already gone
-    }
   }
-  process.exit();
-};
 
+  function handleShutdown(signal: string) {
+    console.log(`Received ${signal}. Shutting down Genkit servers...`);
+    if (genkitProcess && genkitProcess.pid) {
+      try {
+        // Kill the entire process group by using a negative PID.
+        // This is crucial to ensure all child processes of Genkit are terminated.
+        process.kill(-genkitProcess.pid, signal);
+        console.log(`Sent ${signal} to process group ${genkitProcess.pid}`);
+      } catch (e) {
+        console.error(`Error killing process group ${genkitProcess.pid}:`, e);
+      }
+      genkitProcess = null;
+    }
+    // Allow the main process to exit naturally
+  }
+  
+  // Start Genkit for the first time
+  startGenkit();
 
-// Start the process for the first time
-startGenkit();
-
-// Register shutdown handlers only once
-process.on('SIGINT', () => handleShutdown('SIGINT'));
-process.on('SIGTERM', () => handleShutdown('SIGTERM'));
-process.on('exit', () => handleShutdown('exit'));
+  // Register shutdown handlers
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('exit', () => handleShutdown('exit'));
+}
