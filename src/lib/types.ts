@@ -99,7 +99,6 @@ export interface LunarPhase {
     date: string;
     phaseName: LunarPhaseName;
     description: string;
-    svg: string;
 }
 
 export interface LunarDataResponse {
@@ -111,3 +110,5 @@ export interface LunarDataResponse {
         }
     }
 }
+
+    

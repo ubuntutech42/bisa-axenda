@@ -20,6 +20,7 @@ import { LunarMonthSummary } from './LunarMonthSummary';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import { LunarIcon } from './LunarIcon';
 
 type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural'; id: string; title: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
@@ -78,7 +79,6 @@ export function EventCalendar() {
           date: dateStr,
           phaseName: phaseInfo.phaseName as LunarPhaseName,
           description: phaseInfo.svgDescription,
-          svg: phaseInfo.svg,
         };
       }
       setLunarData(prevData => ({ ...prevData, ...newLunarData }));
@@ -227,7 +227,8 @@ export function EventCalendar() {
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <div className="absolute top-0 right-0 pt-1 pr-1 w-5 h-5" dangerouslySetInnerHTML={{ __html: dayLunarData.svg }}>
+                      <div className="absolute top-0 right-0 pt-1 pr-1 w-5 h-5">
+                        <LunarIcon phaseName={dayLunarData.phaseName} className="w-full h-full" />
                       </div>
                     )}
                     {format(date, 'd')}
@@ -319,7 +320,9 @@ export function EventCalendar() {
                         <>
                           <div className="flex justify-between items-start">
                              <div className='flex items-center gap-2'>
-                                <div className="w-5 h-5" dangerouslySetInnerHTML={{ __html: event.svg }}></div>
+                                <div className="w-5 h-5">
+                                    <LunarIcon phaseName={event.phaseName} className="w-full h-full" />
+                                </div>
                                 <p className="font-semibold">{event.phaseName}</p>
                              </div>
                              <Badge variant="outline">Lua</Badge>
