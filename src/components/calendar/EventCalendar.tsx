@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
 import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName } from '@/lib/types';
-import { format, isSameDay, parseISO, startOfMonth, getMonth, getYear } from 'date-fns';
+import { format, isSameDay, parseISO, getMonth, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,7 +15,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
-import { getLunarDataForMonthAction } from '@/app/actions';
+import { getLunarDataForMonthAction } from '@/app/calendar/actions';
 import { LunarMonthSummary } from './LunarMonthSummary';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -227,7 +227,7 @@ export function EventCalendar() {
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <div className="absolute top-0 right-0 pt-1 pr-1 w-4 h-4" dangerouslySetInnerHTML={{ __html: dayLunarData.svg }}>
+                      <div className="absolute top-0 right-0 pt-1 pr-1 w-5 h-5" dangerouslySetInnerHTML={{ __html: dayLunarData.svg }}>
                       </div>
                     )}
                     {format(date, 'd')}
