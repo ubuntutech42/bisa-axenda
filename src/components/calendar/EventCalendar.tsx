@@ -184,7 +184,7 @@ export function EventCalendar() {
             locale={ptBR}
             classNames={{
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                month: "space-y-4 w-full",
+                month: "space-y-4",
                 caption: "flex justify-center pt-1 relative items-center",
                 caption_label: "text-sm font-medium",
                 nav: "space-x-1 flex items-center",
@@ -195,14 +195,14 @@ export function EventCalendar() {
                 nav_button_previous: "absolute left-1",
                 nav_button_next: "absolute right-1",
                 table: "w-full border-collapse space-y-1",
-                head_row: "flex justify-between",
+                head_row: "flex",
                 head_cell:
-                  "text-muted-foreground rounded-md w-full font-normal text-sm justify-center flex",
-                row: "flex w-full mt-2 justify-between",
-                cell: "h-auto aspect-square text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                  "text-muted-foreground rounded-md w-full font-normal text-sm",
+                row: "flex w-full mt-2",
+                cell: "h-12 w-full text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                 day: cn(
                   buttonVariants({ variant: "ghost" }),
-                  "h-full w-full p-0 font-normal aria-selected:opacity-100"
+                  "h-12 w-12 p-0 font-normal aria-selected:opacity-100"
                 ),
                 day_range_end: "day-range-end",
                 day_selected:
@@ -227,9 +227,10 @@ export function EventCalendar() {
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <div className="absolute top-0 left-0 pt-1 pl-1 w-6 h-6">
-                        <LunarIcon phaseName={dayLunarData.phaseName} className="w-full h-full" />
-                      </div>
+                      <div 
+                        className="absolute top-1 right-1 w-4 h-4 text-foreground"
+                        dangerouslySetInnerHTML={{ __html: dayLunarData.svg }}
+                      />
                     )}
                     <span className="relative">{format(date, 'd')}</span>
                     {dayEvents.length > 0 && (
@@ -344,4 +345,5 @@ export function EventCalendar() {
   );
 }
 
+    
     
