@@ -41,6 +41,7 @@ export interface CulturalEvent {
   date: string; // YYYY-MM-DD
   title: string;
   description: string;
+  type: 'cultural' | 'comercial';
 }
 
 export interface Quote {
@@ -101,6 +102,7 @@ export interface LunarPhase {
     date: string;
     phaseName: LunarPhaseName;
     description: string;
+    svg: string;
 }
 
 export interface LunarDataResponse {

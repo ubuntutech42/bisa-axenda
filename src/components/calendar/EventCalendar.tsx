@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { LunarIcon } from './LunarIcon';
 
-type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural'; id: string; title: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
+type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { id: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -31,6 +31,7 @@ export function EventCalendar() {
   const [activeCategories, setActiveCategories] = useState({
     task: true,
     cultural: true,
+    comercial: true,
     userEvent: true,
     lunar: true,
   });
@@ -136,7 +137,10 @@ export function EventCalendar() {
         eventList.push(...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })));
     }
     if (activeCategories.cultural) {
-        eventList.push(...culturalEvents.map(e => ({...e, type: 'cultural' as const, id: e.title, title: e.title})));
+        eventList.push(...culturalEvents.filter(e => e.type === 'cultural').map(e => ({...e, id: e.title})));
+    }
+    if (activeCategories.comercial) {
+        eventList.push(...culturalEvents.filter(e => e.type === 'comercial').map(e => ({...e, id: e.title})));
     }
     if (activeCategories.userEvent && userEvents) {
       eventList.push(...userEvents.map(e => ({...e, type: 'userEvent' as const })));
@@ -154,7 +158,7 @@ export function EventCalendar() {
     return isSameDay(parseISO(eventDate), date);
   }) : [];
 
-  const handleCategoryChange = (category: 'task' | 'cultural' | 'userEvent' | 'lunar', checked: CheckedState) => {
+  const handleCategoryChange = (category: keyof typeof activeCategories, checked: CheckedState) => {
     setActiveCategories(prev => ({
       ...prev,
       [category]: !!checked,
@@ -165,6 +169,17 @@ export function EventCalendar() {
     if (event.type === 'task') return event.deadline;
     return event.date;
   }
+  
+  const getEventColor = (event: CombinedEvent): string => {
+    switch (event.type) {
+        case 'cultural': return 'hsl(var(--accent))';
+        case 'comercial': return 'hsl(var(--chart-3))';
+        case 'task': return 'hsl(var(--primary))';
+        case 'userEvent': return event.color || 'hsl(var(--secondary))';
+        default: return 'transparent';
+    }
+  }
+
 
   if (areBoardsLoading || areTasksLoading || areUserEventsLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
@@ -184,11 +199,33 @@ export function EventCalendar() {
             style={{ maxWidth: 'none' }}
             locale={ptBR}
             classNames={{
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                month: "space-y-4 w-full",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-medium",
+                nav: "space-x-1 flex items-center",
+                nav_button: cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                ),
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex justify-between",
+                head_cell: "text-muted-foreground rounded-md w-full font-normal text-sm",
+                row: "flex w-full mt-2 justify-between",
                 cell: "h-12 w-full text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                 day: cn(
                   buttonVariants({ variant: "ghost" }),
                   "h-12 w-full p-0 font-normal aria-selected:opacity-100"
                 ),
+                day_range_end: "day-range-end",
+                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day_outside: "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                day_disabled: "text-muted-foreground opacity-50",
+                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                day_hidden: "invisible",
               }}
             components={{
               DayContent: ({ date }) => {
@@ -212,7 +249,7 @@ export function EventCalendar() {
                       <div className="absolute bottom-1 flex justify-center gap-1">
                         {dayEvents.filter(e => e.type !== 'lunar').slice(0,3).map(event => (
                             <div key={`${event.type}-${event.id}`} className="w-1.5 h-1.5 rounded-full" style={{
-                              backgroundColor: event.type === 'cultural' ? 'hsl(var(--accent))' : event.type === 'task' ? 'hsl(var(--primary))' : event.type === 'userEvent' ? event.color || 'hsl(var(--secondary))' : 'transparent'
+                              backgroundColor: getEventColor(event)
                             }}></div>
                         ))}
                       </div>
@@ -251,6 +288,12 @@ export function EventCalendar() {
                 </label>
               </div>
               <div className="flex items-center space-x-2">
+                <Checkbox id="comercial-filter" checked={activeCategories.comercial} onCheckedChange={(checked) => handleCategoryChange('comercial', checked)} />
+                <label htmlFor="comercial-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Comercial
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
                 <Checkbox id="userEvent-filter" checked={activeCategories.userEvent} onCheckedChange={(checked) => handleCategoryChange('userEvent', checked)} />
                 <label htmlFor="userEvent-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Eventos
@@ -280,7 +323,15 @@ export function EventCalendar() {
                         <>
                            <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
-                             <Badge className="bg-accent text-accent-foreground">Cultural</Badge>
+                             <Badge style={{ backgroundColor: getEventColor(event) }} className="text-accent-foreground">Cultural</Badge>
+                           </div>
+                           <p className="text-muted-foreground mt-1">{event.description}</p>
+                        </>
+                      ) : event.type === 'comercial' ? (
+                        <>
+                           <div className="flex justify-between items-start">
+                             <p className="font-semibold">{event.title}</p>
+                             <Badge style={{ backgroundColor: getEventColor(event), color: 'white' }}>Comercial</Badge>
                            </div>
                            <p className="text-muted-foreground mt-1">{event.description}</p>
                         </>

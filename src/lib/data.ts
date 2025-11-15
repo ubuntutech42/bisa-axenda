@@ -1,24 +1,38 @@
 
+
 import type { CulturalEvent, Quote } from './types';
 
 export const culturalEvents: CulturalEvent[] = [
-  { date: '2025-01-01', title: 'Confraternização Universal', description: 'Feriado nacional.' },
-  { date: '2025-02-12', title: 'Carnaval', description: 'Ponto facultativo.' },
-  { date: '2025-02-13', title: 'Carnaval', description: 'Ponto facultativo.' },
-  { date: '2025-02-14', title: 'Quarta-feira de Cinzas', description: 'Ponto facultativo até às 14h.' },
-  { date: '2025-03-29', title: 'Paixão de Cristo', description: 'Feriado nacional.' },
-  { date: '2025-04-21', title: 'Tiradentes', description: 'Feriado nacional.' },
-  { date: '2025-05-01', title: 'Dia do Trabalho', description: 'Feriado nacional.' },
-  { date: '2025-05-13', title: 'Dia Nacional de Denúncia contra o Racismo', description: 'Dia para denunciar o racismo, marcando a abolição da escravatura no Brasil.' },
-  { date: '2025-05-30', title: 'Corpus Christi', description: 'Ponto facultativo.' },
-  { date: '2025-07-25', title: 'Dia da Mulher Negra Latino-Americana e Caribenha', description: 'Homenageia as contribuições e lutas das mulheres negras na América Latina e no Caribe.' },
-  { date: '2025-09-07', title: 'Independência do Brasil', description: 'Feriado nacional.' },
-  { date: '2025-10-12', title: 'Nossa Senhora Aparecida', description: 'Feriado nacional.' },
-  { date: '2025-10-28', title: 'Dia do Servidor Público', description: 'Ponto facultativo.' },
-  { date: '2025-11-02', title: 'Finados', description: 'Feriado nacional.' },
-  { date: '2025-11-15', title: 'Proclamação da República', description: 'Feriado nacional.' },
-  { date: '2025-11-20', title: 'Dia da Consciência Negra', description: 'Celebra a consciência e resistência negra no Brasil.' },
-  { date: '2025-12-25', title: 'Natal', description: 'Feriado nacional.' },
+  // Feriados Nacionais e Pontos Facultativos
+  { date: '2025-01-01', title: 'Confraternização Universal', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-03-03', title: 'Carnaval', description: 'Ponto facultativo.', type: 'cultural' },
+  { date: '2025-03-04', title: 'Carnaval', description: 'Ponto facultativo.', type: 'cultural' },
+  { date: '2025-03-05', title: 'Quarta-feira de Cinzas', description: 'Ponto facultativo até às 14h.', type: 'cultural' },
+  { date: '2025-04-18', title: 'Paixão de Cristo', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-04-21', title: 'Tiradentes', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-05-01', title: 'Dia do Trabalho', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-06-19', title: 'Corpus Christi', description: 'Ponto facultativo.', type: 'cultural' },
+  { date: '2025-09-07', title: 'Independência do Brasil', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-10-12', title: 'Nossa Senhora Aparecida', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-10-28', title: 'Dia do Servidor Público', description: 'Ponto facultativo.', type: 'cultural' },
+  { date: '2025-11-02', title: 'Finados', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-11-15', title: 'Proclamação da República', description: 'Feriado nacional.', type: 'cultural' },
+  { date: '2025-12-25', title: 'Natal', description: 'Feriado nacional.', type: 'cultural' },
+  
+  // Datas Culturais Afro-Brasileiras
+  { date: '2025-05-13', title: 'Dia Nacional de Denúncia contra o Racismo', description: 'Marca a data da abolição da escravatura, ressignificada como um dia de luta.', type: 'cultural' },
+  { date: '2025-07-25', title: 'Dia da Mulher Negra Latino-Americana e Caribenha', description: 'Homenageia a luta e resistência das mulheres negras.', type: 'cultural' },
+  { date: '2025-11-20', title: 'Dia da Consciência Negra', description: 'Celebra a consciência e resistência negra no Brasil, em homenagem a Zumbi dos Palmares.', type: 'cultural' },
+
+  // Datas Comerciais
+  { date: '2025-03-15', title: 'Dia do Consumidor', description: 'Semana de promoções focada nos direitos e valorização do consumidor.', type: 'comercial' },
+  { date: '2025-05-11', title: 'Dia das Mães', description: 'Segunda data mais importante do varejo. Alta procura por presentes.', type: 'comercial' },
+  { date: '2025-06-12', title: 'Dia dos Namorados', description: 'Forte apelo para presentes e serviços para casais.', type: 'comercial' },
+  { date: '2025-08-10', title: 'Dia dos Pais', description: 'Data importante para o varejo, com foco em presentes masculinos.', type: 'comercial' },
+  { date: '2025-09-15', title: 'Dia do Cliente', description: 'Oportunidade para ações de fidelização e promoções.', type: 'comercial' },
+  { date: '2025-10-12', title: 'Dia das Crianças', description: 'Alta demanda por brinquedos, jogos e produtos infantis.', type: 'comercial' },
+  { date: '2025-11-28', title: 'Black Friday', description: 'Principal data do varejo online. Grande volume de vendas e promoções.', type: 'comercial' },
+  { date: '2025-12-01', title: 'Cyber Monday', description: 'Foco em promoções de eletrônicos e produtos de tecnologia.', type: 'comercial' },
 ];
 
 export const quotes: Quote[] = [
