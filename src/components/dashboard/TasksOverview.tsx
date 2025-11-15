@@ -1,6 +1,6 @@
 "use client";
 
-import type { Task, Priority } from '@/lib/types';
+import type { Task, Priority, KanbanList } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
@@ -15,15 +15,17 @@ const priorityVariantMap: Record<Priority, BadgeProps['variant']> = {
 
 interface TasksOverviewProps {
     tasks: Task[];
-    lists: { id: string, name: string }[];
+    lists: KanbanList[];
 }
 
 export function TasksOverview({ tasks, lists }: TasksOverviewProps) {
-  const completedListName = 'Concluído';
-  const completedList = lists.find(list => list.name.toLowerCase() === completedListName.toLowerCase());
+  const completedListNames = ['concluído', 'done'];
+  const completedListIds = lists
+      .filter(l => completedListNames.includes(l.name.toLowerCase()))
+      .map(l => l.id);
 
   const upcomingTasks = tasks
-    .filter(task => (!completedList || task.listId !== completedList.id) && task.deadline)
+    .filter(task => !completedListIds.includes(task.listId) && task.deadline)
     .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
     .slice(0, 5);
 
