@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for Axénda application.
  *
@@ -14,6 +15,7 @@
  * - `/users/{userId}/categories/{categoryId}`: Stores user-created categories, only accessible to the owning user.
  * - `/users/{userId}/pomodoroSessions/{pomodoroSessionId}`: Stores Pomodoro sessions for a user, only accessible to the owning user.
  * - `/users/{userId}/calendarEvents/{calendarEventId}`: Stores calendar events for a user, only accessible to the owning user.
+ * - `/users/{userId}/eventCategories/{eventCategoryId}`: Stores event categories for a user, only accessible to the owning user.
  * - `/culturalEvents/{culturalEventId}`: Stores global cultural events, publicly readable, but write-protected.
  *
  * Key Security Decisions:
@@ -192,6 +194,25 @@ service cloud.firestore {
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
+    
+    /**
+     * @description Enforces user-ownership for event categories.
+     * @path /users/{userId}/eventCategories/{eventCategoryId}
+     * @allow (create,get,update,delete,list) - The owning user can perform any operation.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/eventCategories/{eventCategoryId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isCreatingOwner(userId) {
+        return request.auth != null && request.auth.uid == userId && request.resource.data.userId == userId;
+      }
+
+      allow read, update, delete: if isOwner(userId);
+      allow create: if isCreatingOwner(userId);
+    }
+
 
     /**
      * @description Enforces user-ownership for calendar events.
@@ -206,13 +227,16 @@ service cloud.firestore {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
+       function isCreatingOwner(userId) {
+        return request.auth != null && request.auth.uid == userId && request.resource.data.userId == userId;
+      }
       function isExistingOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
 
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow create: if isCreatingOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
@@ -235,3 +259,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

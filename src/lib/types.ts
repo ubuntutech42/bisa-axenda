@@ -76,14 +76,21 @@ export interface PomodoroSession {
   category: string;
 }
 
+export interface CalendarEventCategory {
+  id: string;
+  userId: string;
+  name: string;
+  color: string;
+  createdAt: Timestamp;
+}
+
 export interface CalendarEvent {
   id: string;
   userId: string;
   title: string;
   description?: string;
   date: string; // YYYY-MM-DD
-  category: string;
-  color: string;
+  categoryId: string;
   createdAt: Timestamp;
 }
 

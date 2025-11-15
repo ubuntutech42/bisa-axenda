@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useTheme } from 'next-themes';
@@ -21,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { usePomodoro } from '@/context/PomodoroContext';
 import { useForm } from 'react-hook-form';
+import { EventCategoryManager } from './EventCategoryManager';
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -49,57 +51,63 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
             Personalize a aparência e o comportamento do Axénda.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Tabs defaultValue="pomodoro" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
-              <TabsTrigger value="appearance">Aparência</TabsTrigger>
-            </TabsList>
-            <TabsContent value="pomodoro" className="py-4">
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="pomodoro">Foco (min)</Label>
-                        <Input id="pomodoro" type="number" {...register('pomodoro', { valueAsNumber: true })} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="shortBreak">Pausa Curta (min)</Label>
-                        <Input id="shortBreak" type="number" {...register('shortBreak', { valueAsNumber: true })} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="longBreak">Pausa Longa (min)</Label>
-                        <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true })} />
-                    </div>
+        <Tabs defaultValue="pomodoro" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
+            <TabsTrigger value="categories">Categorias</TabsTrigger>
+            <TabsTrigger value="appearance">Aparência</TabsTrigger>
+          </TabsList>
+          <TabsContent value="pomodoro" className="py-4">
+             <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="pomodoro">Foco (min)</Label>
+                          <Input id="pomodoro" type="number" {...register('pomodoro', { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="shortBreak">Pausa Curta (min)</Label>
+                          <Input id="shortBreak" type="number" {...register('shortBreak', { valueAsNumber: true })} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="longBreak">Pausa Longa (min)</Label>
+                          <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true })} />
+                      </div>
+                  </div>
+                  <div className='space-y-2'>
+                      <Label htmlFor="longBreakInterval">Intervalo da Pausa Longa</Label>
+                      <p className="text-sm text-muted-foreground">A pausa longa acontece após este número de sessões de foco.</p>
+                      <Input id="longBreakInterval" type="number" {...register('longBreakInterval', { valueAsNumber: true })} />
+                  </div>
                 </div>
-                <div className='space-y-2'>
-                    <Label htmlFor="longBreakInterval">Intervalo da Pausa Longa</Label>
-                    <p className="text-sm text-muted-foreground">A pausa longa acontece após este número de sessões de foco.</p>
-                    <Input id="longBreakInterval" type="number" {...register('longBreakInterval', { valueAsNumber: true })} />
+                 <div className="flex justify-end gap-2 mt-6">
+                    <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+                    <Button type="submit">Salvar Pomodoro</Button>
                 </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="appearance" className="py-4">
-              <div className="space-y-2">
-                <Label htmlFor="theme-select">Tema Visual</Label>
-                <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger id="theme-select">
-                    <SelectValue placeholder="Selecione um tema" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Diurno</SelectItem>
-                    <SelectItem value="dark">Noturno</SelectItem>
-                    <SelectItem value="system">Sistema</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </TabsContent>
-          </Tabs>
-          <div className="flex justify-end gap-2 mt-4">
-              <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-              <Button type="submit">Salvar Alterações</Button>
-          </div>
-        </form>
+              </form>
+          </TabsContent>
+           <TabsContent value="categories" className="py-4">
+              <EventCategoryManager />
+          </TabsContent>
+          <TabsContent value="appearance" className="py-4">
+            <div className="space-y-2">
+              <Label htmlFor="theme-select">Tema Visual</Label>
+              <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger id="theme-select">
+                  <SelectValue placeholder="Selecione um tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Diurno</SelectItem>
+                  <SelectItem value="dark">Noturno</SelectItem>
+                  <SelectItem value="system">Sistema</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
 }
+
+    

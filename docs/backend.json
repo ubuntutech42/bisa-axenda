@@ -395,6 +395,41 @@
         "reminderTime"
       ]
     },
+    "CalendarEventCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CalendarEventCategory",
+      "type": "object",
+      "description": "Represents a user-defined category for calendar events.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the event category."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this category."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category (e.g., 'Pessoal', 'Trabalho')."
+        },
+        "color": {
+          "type": "string",
+          "description": "A hex color code for the category."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "color",
+        "createdAt"
+      ]
+    },
     "CalendarEvent": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "CalendarEvent",
@@ -422,13 +457,9 @@
           "description": "Date of the calendar event in YYYY-MM-DD format.",
           "format": "date"
         },
-        "category": {
+        "categoryId": {
             "type": "string",
-            "description": "A user-defined category for the event."
-        },
-        "color": {
-            "type": "string",
-            "description": "A hex color code for the event category."
+            "description": "A reference to the user's event category for this event."
         },
         "createdAt": {
           "type": "string",
@@ -440,8 +471,7 @@
         "userId",
         "title",
         "date",
-        "category",
-        "color",
+        "categoryId",
         "createdAt"
       ]
     },
@@ -511,7 +541,7 @@
       "schema": {
         "$ref": "#/entities/Category"
       },
-      "description": "Stores user-created categories."
+      "description": "Stores user-created categories for tasks."
     },
     "/users/{userId}/pomodoroSessions/{pomodoroSessionId}": {
       "schema": {
@@ -525,6 +555,12 @@
       },
       "description": "Stores calendar events for a user."
     },
+    "/users/{userId}/eventCategories/{eventCategoryId}": {
+      "schema": {
+        "$ref": "#/entities/CalendarEventCategory"
+      },
+      "description": "Stores user-defined categories for calendar events."
+    },
     "/culturalEvents/{culturalEventId}": {
       "schema": {
         "$ref": "#/entities/CulturalEvent"
@@ -533,3 +569,5 @@
     }
   }
 }
+
+    

@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
-import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName } from '@/lib/types';
+import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName, CalendarEventCategory } from '@/lib/types';
 import { format, isSameDay, parseISO, getMonth, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,17 @@ export function EventCalendar() {
     [firestore, user]
   );
   const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
+
+  const eventCategoriesQuery = useMemoFirebase(() =>
+    user ? query(collection(firestore, 'users', user.uid, 'eventCategories')) : null,
+    [firestore, user]
+  );
+  const { data: eventCategories, isLoading: areEventCategoriesLoading } = useCollection<CalendarEventCategory>(eventCategoriesQuery);
+  
+  const eventCategoriesMap = useMemo(() => {
+    if (!eventCategories) return new Map<string, CalendarEventCategory>();
+    return new Map(eventCategories.map(cat => [cat.id, cat]));
+  }, [eventCategories]);
 
   const fetchLunarDataForMonth = useCallback(async (monthDate: Date) => {
     setIsLunarDataLoading(true);
@@ -175,13 +186,13 @@ export function EventCalendar() {
         case 'cultural': return 'hsl(var(--accent))';
         case 'comercial': return 'hsl(var(--chart-3))';
         case 'task': return 'hsl(var(--primary))';
-        case 'userEvent': return event.color || 'hsl(var(--secondary))';
+        case 'userEvent': return eventCategoriesMap.get(event.categoryId)?.color || 'hsl(var(--secondary))';
         default: return 'transparent';
     }
   }
 
 
-  if (areBoardsLoading || areTasksLoading || areUserEventsLoading) {
+  if (areBoardsLoading || areTasksLoading || areUserEventsLoading || areEventCategoriesLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
   }
 
@@ -214,7 +225,7 @@ export function EventCalendar() {
                 head_row: "flex justify-between",
                 head_cell: "text-muted-foreground rounded-md w-full font-normal text-sm",
                 row: "flex w-full mt-2 justify-between",
-                cell: "h-12 w-full text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                cell: "h-auto text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                 day: cn(
                   buttonVariants({ variant: "ghost" }),
                   "h-12 w-full p-0 font-normal aria-selected:opacity-100"
@@ -309,7 +320,11 @@ export function EventCalendar() {
             <ScrollArea className="h-64">
               <div className="space-y-4">
                 {selectedDayEvents.length > 0 ? (
-                  selectedDayEvents.map((event) => (
+                  selectedDayEvents.map((event) => {
+                     const category = event.type === 'userEvent' ? eventCategoriesMap.get(event.categoryId) : undefined;
+                     const eventColor = getEventColor(event);
+
+                    return (
                     <div key={`${event.type}-${event.id}`} className="p-3 rounded-lg bg-muted/50 text-sm">
                       {event.type === 'task' ? (
                         <>
@@ -323,7 +338,7 @@ export function EventCalendar() {
                         <>
                            <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
-                             <Badge style={{ backgroundColor: getEventColor(event) }} className="text-accent-foreground">Cultural</Badge>
+                             <Badge style={{ backgroundColor: eventColor }} className="text-accent-foreground">Cultural</Badge>
                            </div>
                            <p className="text-muted-foreground mt-1">{event.description}</p>
                         </>
@@ -331,15 +346,15 @@ export function EventCalendar() {
                         <>
                            <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
-                             <Badge style={{ backgroundColor: getEventColor(event), color: 'white' }}>Comercial</Badge>
+                             <Badge style={{ backgroundColor: eventColor, color: 'white' }}>Comercial</Badge>
                            </div>
                            <p className="text-muted-foreground mt-1">{event.description}</p>
                         </>
-                      ) : event.type === 'userEvent' ? (
+                      ) : event.type === 'userEvent' && category ? (
                         <>
                           <div className="flex justify-between items-start">
                              <p className="font-semibold">{event.title}</p>
-                             <Badge style={{ backgroundColor: event.color, color: 'white' }}>{event.category}</Badge>
+                             <Badge style={{ backgroundColor: category.color, color: 'white' }}>{category.name}</Badge>
                            </div>
                            {event.description && <p className="text-muted-foreground mt-1">{event.description}</p>}
                         </>
@@ -358,7 +373,7 @@ export function EventCalendar() {
                         </>
                       ) : null }
                     </div>
-                  ))
+                  )})
                 ) : (
                   <p className="text-center text-muted-foreground py-10">Nenhum evento para este dia.</p>
                 )}
@@ -370,3 +385,5 @@ export function EventCalendar() {
     </div>
   );
 }
+
+    
