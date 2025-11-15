@@ -22,6 +22,7 @@ const selectImageForQuote = (quote: Quote): ImagePlaceholder => {
 export function WisdomNugget() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [image, setImage] = useState<ImagePlaceholder | null>(null);
+  const [googleSearchUrl, setGoogleSearchUrl] = useState('');
 
   useEffect(() => {
     // This logic runs only on the client to prevent hydration mismatch
@@ -29,6 +30,7 @@ export function WisdomNugget() {
     const selectedImage = selectImageForQuote(randomQuote);
     setQuote(randomQuote);
     setImage(selectedImage);
+    setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(randomQuote.author)}`);
   }, []);
 
   if (!quote || !image) {
@@ -64,7 +66,18 @@ export function WisdomNugget() {
         <blockquote className="text-lg font-semibold text-primary-foreground italic border-l-4 border-primary pl-4">
           "{quote.text}"
         </blockquote>
-        <p className="text-right mt-2 text-sm text-muted-foreground">- {quote.author}</p>
+        <p className="text-right mt-2 text-sm text-muted-foreground">
+            -{' '}
+            <a
+                href={googleSearchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline hover:text-foreground transition-colors"
+                onClick={(e) => e.stopPropagation()} // Prevents the card's click event if it had one
+            >
+                {quote.author}
+            </a>
+        </p>
       </CardContent>
     </Card>
   );
