@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -15,6 +15,7 @@ import { Loader } from 'lucide-react';
 import LandingLayout from '@/app/landing/layout';
 import LandingPage from '@/app/landing/page';
 import { FloatingActions } from './layout/FloatingActions';
+import { cn } from '@/lib/utils';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,6 +23,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
 
   const publicPaths = ['/login', '/register'];
   const isPublicPath = publicPaths.includes(pathname);
@@ -79,10 +82,12 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   if (user) {
     // For authenticated users, show the full app layout on non-public paths.
     return (
-      <div className="flex h-full w-full bg-background">
-        <Sidebar />
-        <div className="flex flex-col flex-1 w-full md:w-0">
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
+      <div className="flex h-screen w-full bg-background">
+        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(prev => !prev)} />
+        <div className={cn("flex flex-col flex-1 transition-all duration-300 ease-in-out", 
+            isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
+        )}>
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 overflow-y-auto">
               {children}
             </main>
         </div>
