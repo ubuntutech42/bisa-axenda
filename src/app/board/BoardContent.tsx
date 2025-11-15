@@ -30,6 +30,7 @@ export function BoardContent() {
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
   const [activeBoard, setActiveBoard] = useState<KanbanBoardType | null>(null);
+  const [initialBoardId, setInitialBoardId] = useState<string | null>(null);
   const [isDeleteBoardAlertOpen, setIsDeleteBoardAlertOpen] = useState(false);
 
   const groupFilter = searchParams.get('group');
@@ -66,11 +67,21 @@ export function BoardContent() {
     }
   }, [user, groupFilter]);
 
+  // Effect to get initialBoardId from localStorage, runs ONLY on client
   useEffect(() => {
+    if (user && groupFilter) {
+      const key = `${LAST_BOARD_ID_KEY_PREFIX}${user.uid}-${groupFilter}`;
+      const lastBoardId = localStorage.getItem(key);
+      setInitialBoardId(lastBoardId);
+    }
+  }, [user, groupFilter]);
+
+
+  useEffect(() => {
+    if (areBoardsLoading || initialBoardId === null) return; // Wait for boards and initial ID
+
     if (boards && boards.length > 0 && !activeBoard) {
-      const key = user && groupFilter ? `${LAST_BOARD_ID_KEY_PREFIX}${user.uid}-${groupFilter}` : '';
-      const lastBoardId = key ? localStorage.getItem(key) : null;
-      const lastBoardInGroup = boards.find(b => b.id === lastBoardId);
+      const lastBoardInGroup = boards.find(b => b.id === initialBoardId);
       
       if (lastBoardInGroup) {
         handleSetActiveBoard(lastBoardInGroup);
@@ -78,11 +89,12 @@ export function BoardContent() {
         handleSetActiveBoard(boards[0]);
       }
     }
+    // If the active board is no longer in the filtered list, reset it
     if (activeBoard && boards && !boards.find(b => b.id === activeBoard.id)) {
         handleSetActiveBoard(boards.length > 0 ? boards[0] : null);
     }
 
-  }, [boards, activeBoard, handleSetActiveBoard, user, groupFilter]);
+  }, [boards, activeBoard, handleSetActiveBoard, areBoardsLoading, initialBoardId]);
   
   const handleCreateBoard = async (name: string, type: KanbanBoardType['type'], group?: string) => {
     if (!user || !groupFilter) return;
@@ -208,6 +220,8 @@ export function BoardContent() {
       </>
     ) : "Todos os Quadros";
 
+  const isLoading = areBoardsLoading || initialBoardId === null;
+
   return (
     <div className="flex flex-col h-full w-full">
         <Header title={activeBoard?.name || headerTitle}>
@@ -245,16 +259,17 @@ export function BoardContent() {
           </div>
         </Header>
         <div className="flex-1 overflow-hidden h-full">
-          {areListsLoading && activeBoard && <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin text-primary" /></div>}
+          {isLoading && <div className="flex items-center justify-center h-full"><Loader className="h-8 w-8 animate-spin text-primary" /></div>}
           
-          {!areListsLoading && activeBoard && lists ? (
+          {!isLoading && activeBoard && lists ? (
             <KanbanBoard boardId={activeBoard.id} lists={lists} />
           ) : (
-             boards.length > 0 && !activeBoard ? (
+             !isLoading && boards.length > 0 && !activeBoard ? (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-muted-foreground">Selecione um quadro para começar.</p>
                 </div>
             ) : (
+              !isLoading && (
               <div className="flex flex-col items-center justify-center h-full text-center p-8">
                   <LayoutDashboard className="w-20 h-20 text-muted mb-4" />
                 <h2 className="text-2xl font-semibold mb-2">Nenhum quadro neste grupo</h2>
@@ -264,6 +279,7 @@ export function BoardContent() {
                     Criar um quadro
                 </Button>
               </div>
+              )
             )
           )}
         </div>
@@ -296,3 +312,5 @@ export function BoardContent() {
     </div>
   );
 }
+
+    
