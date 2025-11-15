@@ -18,10 +18,7 @@ export function BoardGroupCard({ groupName, boards }: BoardGroupCardProps) {
 
     return (
         <Card className={cn(
-            "w-72 flex-shrink-0 flex flex-col relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2",
-            // Add a delay to the animation based on the group name to avoid all cards animating in sync
-            // This is a simple hash function to generate a semi-random delay
-            `animate-float animation-delay-${groupName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 10 * 100}`
+            "w-72 flex-shrink-0 flex flex-col relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 animate-float"
         )}>
             <CardHeader>
                 <CardTitle className="font-headline text-primary truncate">{groupName}</CardTitle>
