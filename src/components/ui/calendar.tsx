@@ -34,7 +34,7 @@ function Calendar({
         table: "w-full border-collapse space-y-1",
         head_row: "flex justify-between",
         head_cell:
-          "text-muted-foreground rounded-md w-full font-normal text-sm",
+          "text-muted-foreground rounded-md font-normal text-sm",
         row: "flex w-full mt-2 justify-between",
         cell: "h-auto p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
         day: cn(
