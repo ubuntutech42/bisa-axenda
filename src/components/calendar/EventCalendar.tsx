@@ -24,6 +24,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { CreateEventDialog } from './CreateEventDialog';
 import { addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { buttonVariants } from '@/components/ui/button';
 
 type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { id: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
@@ -426,3 +427,5 @@ export function EventCalendar() {
     </>
   );
 }
+
+    
