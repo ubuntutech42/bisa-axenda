@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { usePomodoro } from '@/context/PomodoroContext';
 import { useForm } from 'react-hook-form';
 import { EventCategoryManager } from './EventCategoryManager';
+import { useToast } from '@/hooks/use-toast';
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -37,12 +38,12 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
     defaultValues: settings,
   });
 
+  const { toast } = useToast();
+
   const onSubmit = (data: typeof settings) => {
     updateSettings(data);
     toast({ title: "Configurações salvas!", description: "Suas preferências de Pomodoro foram atualizadas." });
   };
-
-  const { toast } = useToast();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
