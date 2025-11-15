@@ -127,6 +127,10 @@
           "type": "string",
           "description": "Name of the board."
         },
+        "group": {
+            "type": "string",
+            "description": "An optional grouping for the board, e.g., 'Work' or 'Studies'."
+        },
         "type": {
           "type": "string",
           "description": "The type or template of the board.",

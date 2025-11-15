@@ -26,20 +26,22 @@ type BoardType = KanbanBoard['type'];
 interface CreateBoardDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, type: BoardType) => void;
+  onCreate: (name: string, type: BoardType, group?: string) => void;
 }
 
 export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDialogProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<BoardType>('kanban');
+  const [group, setGroup] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onCreate(name, type);
+      onCreate(name, type, group.trim() || undefined);
       // Reset state after creation
       setName('');
       setType('kanban');
+      setGroup('');
     }
   };
 
@@ -50,7 +52,7 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
           <DialogHeader>
             <DialogTitle>Criar Novo Quadro</DialogTitle>
             <DialogDescription>
-              Escolha um nome e um modelo para começar.
+              Escolha um nome e um modelo para começar. Você também pode agrupar quadros por temas.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
@@ -62,6 +64,15 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Meu Projeto Secreto"
                 required
+              />
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="board-group">Grupo do Quadro (Opcional)</Label>
+              <Input
+                id="board-group"
+                value={group}
+                onChange={(e) => setGroup(e.target.value)}
+                placeholder="Ex: Estudos, Trabalho, Pessoal"
               />
             </div>
             <div className="space-y-2">

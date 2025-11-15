@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pessoal';
@@ -25,6 +26,7 @@ export interface KanbanBoard {
   id: string;
   userId: string;
   name: string;
+  group?: string;
   type: 'kanban' | 'swot' | 'business_canvas' | 'custom';
   createdAt: Timestamp;
 }
