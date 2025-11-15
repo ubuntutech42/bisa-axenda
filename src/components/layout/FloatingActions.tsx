@@ -34,10 +34,10 @@ export function FloatingActions() {
 
     return (
         <>
-            <div className="md:hidden fixed bottom-20 right-4 z-50 flex flex-col items-center gap-2">
+            <div className="md:hidden fixed bottom-[5.5rem] right-4 z-50 flex flex-col items-center gap-3 pb-[env(safe-area-inset-bottom)]">
                 <div 
                     className={cn(
-                        "flex flex-col items-center gap-2 transition-all duration-300 ease-in-out",
+                        "flex flex-col items-center gap-3 transition-all duration-300 ease-in-out",
                         isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
                     )}
                 >
@@ -49,7 +49,7 @@ export function FloatingActions() {
                                         size="icon"
                                         variant="secondary"
                                         className="rounded-full h-12 w-12 shadow-lg"
-                                        onClick={action.onClick}
+                                        onClick={() => { action.onClick(); setIsOpen(false); }}
                                         aria-label={action.label}
                                     >
                                         <action.icon className="h-6 w-6" />
@@ -76,4 +76,3 @@ export function FloatingActions() {
         </>
     );
 }
-

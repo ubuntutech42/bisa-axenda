@@ -79,14 +79,12 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   if (user) {
     // For authenticated users, show the full app layout on non-public paths.
     return (
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex h-full w-full bg-background">
         <Sidebar />
-        <div className="flex flex-col flex-1 pb-16 md:pb-0 w-full md:w-0">
-          <div className="w-full max-w-screen-xl mx-auto">
-            <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col flex-1 w-full md:w-0">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
               {children}
             </main>
-          </div>
         </div>
         <BottomNav />
         <FloatingActions />
