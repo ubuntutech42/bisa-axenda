@@ -32,11 +32,11 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
-        head_row: "flex justify-between",
+        head_row: "flex w-full",
         head_cell:
-          "text-muted-foreground rounded-md font-normal text-sm",
-        row: "flex w-full mt-2 justify-between",
-        cell: "h-auto p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
+          "text-muted-foreground rounded-md w-full font-normal text-[0.8rem]",
+        row: "flex w-full mt-2",
+        cell: "h-auto text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 w-full",
         day: cn(
           buttonVariants({ variant: "ghost" }),
           "h-12 w-full p-0 font-normal aria-selected:opacity-100"
