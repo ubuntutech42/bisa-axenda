@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
@@ -261,3 +261,5 @@ export default function BoardPage() {
     </div>
   );
 }
+
+    
