@@ -1,13 +1,14 @@
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus, LayoutDashboard, Home } from 'lucide-react';
+import { Loader, Plus, LayoutDashboard, Home, Trash2, MoreVertical } from 'lucide-react';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +16,8 @@ import BoardSelector from '@/components/kanban/BoardSelector';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
 import { boardTemplates } from '@/components/kanban/board-templates';
 import Link from 'next/link';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const LAST_BOARD_ID_KEY_PREFIX = 'axenda-last-board-id-';
 
@@ -27,6 +30,7 @@ export function BoardContent() {
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
   const [activeBoard, setActiveBoard] = useState<KanbanBoardType | null>(null);
+  const [isDeleteBoardAlertOpen, setIsDeleteBoardAlertOpen] = useState(false);
 
   const groupFilter = searchParams.get('group');
 
@@ -56,7 +60,7 @@ export function BoardContent() {
 
   const handleSetActiveBoard = useCallback((board: KanbanBoardType | null) => {
     setActiveBoard(board);
-    if (board && user) {
+    if (board && user && groupFilter) {
       const key = `${LAST_BOARD_ID_KEY_PREFIX}${user.uid}-${groupFilter}`;
       localStorage.setItem(key, board.id);
     }
@@ -64,7 +68,7 @@ export function BoardContent() {
 
   useEffect(() => {
     if (boards && boards.length > 0 && !activeBoard) {
-      const key = user ? `${LAST_BOARD_ID_KEY_PREFIX}${user.uid}-${groupFilter}` : '';
+      const key = user && groupFilter ? `${LAST_BOARD_ID_KEY_PREFIX}${user.uid}-${groupFilter}` : '';
       const lastBoardId = key ? localStorage.getItem(key) : null;
       const lastBoardInGroup = boards.find(b => b.id === lastBoardId);
       
@@ -79,9 +83,9 @@ export function BoardContent() {
     }
 
   }, [boards, activeBoard, handleSetActiveBoard, user, groupFilter]);
-
+  
   const handleCreateBoard = async (name: string, type: KanbanBoardType['type'], group?: string) => {
-    if (!user) return;
+    if (!user || !groupFilter) return;
   
     try {
       const boardsCollection = collection(firestore, 'kanbanBoards');
@@ -90,23 +94,27 @@ export function BoardContent() {
         type,
         userId: user.uid,
         createdAt: serverTimestamp(),
-        // Force the group to be the current group filter
-        group: groupFilter === 'ungrouped' ? undefined : groupFilter || group,
+        // Force the group to be the current group filter, unless it's 'ungrouped'
+        group: groupFilter === 'ungrouped' ? undefined : groupFilter,
       };
+      if (group && groupFilter === 'ungrouped') {
+        boardData.group = group
+      }
 
       const newBoardRef = await addDoc(boardsCollection, boardData);
   
       const listsCollection = collection(firestore, 'kanbanBoards', newBoardRef.id, 'lists');
-      const batch = writeBatch(firestore);
       const template = boardTemplates[type];
+
+      if (template && template.length > 0) {
+          const batch = writeBatch(firestore);
+          template.forEach(list => {
+            const listRef = doc(listsCollection);
+            batch.set(listRef, list);
+          });
+          await batch.commit();
+      }
       
-      template.forEach(list => {
-        const listRef = doc(listsCollection);
-        batch.set(listRef, list);
-      });
-      
-      await batch.commit();
-  
       toast({
         title: 'Quadro criado!',
         description: `O quadro "${name}" foi criado com sucesso.`,
@@ -133,6 +141,41 @@ export function BoardContent() {
       });
     }
   };
+
+  const deleteBoardAndSubcollections = async (boardId: string) => {
+    if (!firestore) return;
+    const boardRef = doc(firestore, 'kanbanBoards', boardId);
+
+    const tasksRef = collection(boardRef, 'tasks');
+    const tasksSnap = await getDocs(tasksRef);
+    const taskDeletes = tasksSnap.docs.map(doc => deleteDoc(doc.ref));
+    
+    const listsRef = collection(boardRef, 'lists');
+    const listsSnap = await getDocs(listsRef);
+    const listDeletes = listsSnap.docs.map(doc => deleteDoc(doc.ref));
+
+    await Promise.all([...taskDeletes, ...listDeletes]);
+
+    await deleteDoc(boardRef);
+  };
+  
+  const handleDeleteBoard = async () => {
+    if (!activeBoard) return;
+
+    toast({ title: 'Excluindo quadro...', description: `Removendo "${activeBoard.name}".`});
+
+    try {
+      await deleteBoardAndSubcollections(activeBoard.id);
+      toast({ title: 'Quadro excluído!', description: 'O quadro foi removido com sucesso.' });
+      setActiveBoard(null); // This will trigger useEffect to select a new board
+    } catch (error) {
+      console.error('Error deleting board:', error);
+      toast({ variant: 'destructive', title: 'Erro ao excluir quadro', description: 'Não foi possível remover o quadro.'});
+    } finally {
+      setIsDeleteBoardAlertOpen(false);
+    }
+  };
+
 
   const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt' >) => {
     if (!user || !activeBoard) return;
@@ -173,10 +216,25 @@ export function BoardContent() {
                 <Link href="/board"><Home className="mr-2 h-4 w-4" /> Ver Grupos</Link>
             </Button>
             {activeBoard && (
-              <Button onClick={() => setIsNewTaskDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Tarefa
-              </Button>
+              <>
+                <Button onClick={() => setIsNewTaskDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Tarefa
+                </Button>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <MoreVertical />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuItem onClick={() => setIsDeleteBoardAlertOpen(true)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir Quadro
+                       </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
             <BoardSelector 
               boards={boards || []} 
@@ -219,7 +277,22 @@ export function BoardContent() {
         isOpen={isCreateBoardDialogOpen}
         onClose={() => setIsCreateBoardDialogOpen(false)}
         onCreate={handleCreateBoard}
+        existingGroups={allUserBoards?.map(b => b.group).filter(Boolean) as string[] || []}
       />
+      <AlertDialog open={isDeleteBoardAlertOpen} onOpenChange={setIsDeleteBoardAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        A exclusão do quadro "{activeBoard?.name}" é permanente. Todas as colunas e tarefas dentro dele serão apagadas para sempre.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive hover:bg-destructive/90">Sim, excluir quadro</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

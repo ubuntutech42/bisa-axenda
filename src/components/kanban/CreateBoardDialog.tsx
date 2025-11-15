@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -21,15 +22,17 @@ import {
 } from '@/components/ui/select';
 import type { KanbanBoard } from '@/lib/types';
 import { boardTemplatesInfo } from './board-templates';
+import { Combobox } from '../ui/combobox';
 
 type BoardType = KanbanBoard['type'];
 interface CreateBoardDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (name: string, type: BoardType, group?: string) => void;
+  existingGroups?: string[];
 }
 
-export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDialogProps) {
+export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = [] }: CreateBoardDialogProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<BoardType>('kanban');
   const [group, setGroup] = useState('');
@@ -44,6 +47,8 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
       setGroup('');
     }
   };
+
+  const groupOptions = existingGroups.map(g => ({ value: g, label: g }));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -68,12 +73,17 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate }: CreateBoardDial
             </div>
              <div className="space-y-2">
               <Label htmlFor="board-group">Grupo do Quadro (Opcional)</Label>
-              <Input
-                id="board-group"
+              <Combobox 
+                options={groupOptions}
                 value={group}
-                onChange={(e) => setGroup(e.target.value)}
-                placeholder="Ex: Estudos, Trabalho, Pessoal"
+                onChange={setGroup}
+                placeholder="Selecione ou crie um grupo..."
+                searchPlaceholder="Buscar grupo..."
+                noResultsText="Nenhum grupo encontrado."
               />
+              <p className="text-xs text-muted-foreground px-1">
+                Você pode criar um novo grupo digitando um nome que não existe.
+               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="board-type">Modelo do Quadro</Label>
