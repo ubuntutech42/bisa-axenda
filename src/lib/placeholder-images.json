@@ -69,6 +69,70 @@
         "imageUrl": "https://picsum.photos/seed/fanon1/600/400?grayscale",
         "imageHint": "Frantz Fanon"
       }
+    ],
+    "Gil Scott-Heron": [
+      {
+        "id": "heron-1",
+        "description": "Gil Scott-Heron.",
+        "imageUrl": "https://picsum.photos/seed/heron/600/400?grayscale",
+        "imageHint": "Gil Scott-Heron"
+      }
+    ],
+    "Partido dos Panteras Negras": [
+      {
+        "id": "panthers-1",
+        "description": "Image for the Black Panthers' motto.",
+        "imageUrl": "https://picsum.photos/seed/panthers/600/400?grayscale",
+        "imageHint": "Black Panther"
+      }
+    ],
+    "Simone de Beauvoir": [
+      {
+        "id": "debeauvoir-1",
+        "description": "Simone de Beauvoir portrait.",
+        "imageUrl": "https://picsum.photos/seed/debeauvoir1/600/400?grayscale",
+        "imageHint": "Simone de Beauvoir"
+      }
+    ],
+    "Maya Angelou": [
+      {
+        "id": "angelou-1",
+        "description": "Maya Angelou portrait.",
+        "imageUrl": "https://picsum.photos/seed/angelou1/600/400?grayscale",
+        "imageHint": "Maya Angelou"
+      }
+    ],
+    "Michelle Obama": [
+      {
+        "id": "obama-1",
+        "description": "Michelle Obama portrait.",
+        "imageUrl": "https://picsum.photos/seed/mobama1/600/400?grayscale",
+        "imageHint": "Michelle Obama"
+      }
+    ],
+    "Shirley Chisholm": [
+      {
+        "id": "chisholm-1",
+        "description": "Shirley Chisholm portrait.",
+        "imageUrl": "https://picsum.photos/seed/chisholm1/600/400?grayscale",
+        "imageHint": "Shirley Chisholm"
+      }
+    ],
+    "Madam C.J. Walker": [
+      {
+        "id": "walker-1",
+        "description": "Madam C.J. Walker portrait.",
+        "imageUrl": "https://picsum.photos/seed/cjwalker1/600/400?grayscale",
+        "imageHint": "Madam C.J. Walker"
+      }
+    ],
+    "Alice Walker": [
+      {
+        "id": "alicewalker-1",
+        "description": "Alice Walker portrait.",
+        "imageUrl": "https://picsum.photos/seed/alicewalker1/600/400?grayscale",
+        "imageHint": "Alice Walker"
+      }
     ]
   },
   "inspirational": [
