@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -72,7 +73,7 @@ export function WisdomNugget() {
                 href={googleSearchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:underline hover:text-foreground transition-colors"
+                className="hover:underline hover:text-[#FFFFFF] transition-colors"
                 onClick={(e) => e.stopPropagation()} // Prevents the card's click event if it had one
             >
                 {quote.author}
