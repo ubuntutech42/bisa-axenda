@@ -77,11 +77,12 @@ export interface PomodoroSession {
 }
 
 export interface CalendarEventCategory {
-  id: string;
-  userId: string;
+  id: string; // For user-created, this is the doc ID. For native, it's the name.
+  userId?: string; // Only present for user-created categories
   name: string;
   color: string;
-  createdAt: Timestamp;
+  isNative?: boolean; // Flag to identify native categories
+  createdAt?: Timestamp; // Only for user-created
 }
 
 export interface CalendarEvent {
@@ -90,7 +91,7 @@ export interface CalendarEvent {
   title: string;
   description?: string;
   date: string; // YYYY-MM-DD
-  categoryId: string;
+  categoryId: string; // This will be the 'id' from CalendarEventCategory
   createdAt: Timestamp;
 }
 
@@ -121,5 +122,3 @@ export interface LunarDataResponse {
         }
     }
 }
-
-    

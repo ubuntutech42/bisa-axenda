@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -19,12 +20,19 @@ import { LunarMonthSummary } from './LunarMonthSummary';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { LunarIcon } from './LunarIcon';
+import { useCategories } from '@/hooks/useCategories';
+import { CreateEventDialog } from './CreateEventDialog';
+import { addDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { id: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const [isCreateEventDialogOpen, setIsCreateEventDialogOpen] = useState(false);
+  const [initialEventDate, setInitialEventDate] = useState<Date | undefined>();
 
   const [activeCategories, setActiveCategories] = useState({
     task: true,
@@ -36,6 +44,9 @@ export function EventCalendar() {
   
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const { allCategories, categoriesMap, isLoading: areCategoriesLoading } = useCategories();
 
   const boardsQuery = useMemoFirebase(() => 
     user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
@@ -53,18 +64,7 @@ export function EventCalendar() {
     [firestore, user]
   );
   const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
-
-  const eventCategoriesQuery = useMemoFirebase(() =>
-    user ? query(collection(firestore, 'users', user.uid, 'eventCategories')) : null,
-    [firestore, user]
-  );
-  const { data: eventCategories, isLoading: areEventCategoriesLoading } = useCollection<CalendarEventCategory>(eventCategoriesQuery);
   
-  const eventCategoriesMap = useMemo(() => {
-    if (!eventCategories) return new Map<string, CalendarEventCategory>();
-    return new Map(eventCategories.map(cat => [cat.id, cat]));
-  }, [eventCategories]);
-
   const fetchLunarDataForMonth = useCallback(async (monthDate: Date) => {
     setIsLunarDataLoading(true);
     const month = getMonth(monthDate) + 1; // 1-based month
@@ -183,18 +183,51 @@ export function EventCalendar() {
     switch (event.type) {
         case 'cultural': return 'hsl(var(--accent))';
         case 'comercial': return 'hsl(var(--chart-3))';
-        case 'task': return 'hsl(var(--primary))';
-        case 'userEvent': return eventCategoriesMap.get(event.categoryId)?.color || 'hsl(var(--secondary))';
+        case 'task': 
+            const category = categoriesMap.get(event.category)
+            return category?.color || 'hsl(var(--secondary))';
+        case 'userEvent': return categoriesMap.get(event.categoryId)?.color || 'hsl(var(--secondary))';
         default: return 'transparent';
     }
   }
+  
+  const handleCreateEvent = async (eventData: Omit<CalendarEventType, 'id' | 'userId' | 'createdAt'>) => {
+    if (!user || !firestore) return;
+    try {
+      const eventsCollection = collection(firestore, 'users', user.uid, 'calendarEvents');
+      await addDoc(eventsCollection, {
+        ...eventData,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+      toast({
+        title: 'Evento criado!',
+        description: `O evento "${eventData.title}" foi adicionado ao seu calendário.`,
+      });
+      setIsCreateEventDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar evento',
+        description: 'Não foi possível salvar o novo evento. Tente novamente.',
+      });
+    }
+  };
+
+  const handleDayClick = (day: Date) => {
+    setDate(day);
+    setInitialEventDate(day);
+    setIsCreateEventDialogOpen(true);
+  }
 
 
-  if (areBoardsLoading || areTasksLoading || areUserEventsLoading || areEventCategoriesLoading) {
+  if (areBoardsLoading || areTasksLoading || areUserEventsLoading || areCategoriesLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
   }
 
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-3 lg:items-start lg:gap-8">
       <div className="lg:col-span-2 mb-8 lg:mb-0">
         <Card>
@@ -202,9 +235,41 @@ export function EventCalendar() {
             mode="single"
             selected={date}
             onSelect={setDate}
+            onDayClick={handleDayClick}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
-            className="p-0 w-full"
+            className="p-0"
+            classNames={{
+              months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
+              month: 'space-y-4 w-full',
+              caption: 'flex justify-center pt-1 relative items-center',
+              caption_label: 'text-sm font-medium',
+              nav: 'space-x-1 flex items-center',
+              nav_button: cn(
+                buttonVariants({ variant: 'outline' }),
+                'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
+              ),
+              nav_button_previous: 'absolute left-1',
+              nav_button_next: 'absolute right-1',
+              table: 'w-full border-collapse space-y-1',
+              head_row: 'flex w-full',
+              head_cell:
+                'text-muted-foreground rounded-md w-full font-normal text-[0.8rem]',
+              row: 'flex w-full mt-2',
+              cell: 'h-auto text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 w-full',
+              day: cn(
+                buttonVariants({ variant: 'ghost' }),
+                'h-12 w-full p-0 font-normal aria-selected:opacity-100'
+              ),
+              day_selected:
+                'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
+              day_today: 'bg-accent text-accent-foreground',
+              day_outside: 'text-muted-foreground opacity-50',
+              day_disabled: 'text-muted-foreground opacity-50',
+              day_range_middle:
+                'aria-selected:bg-accent aria-selected:text-accent-foreground',
+              day_hidden: 'invisible',
+            }}
             style={{ maxWidth: 'none' }}
             locale={ptBR}
             components={{
@@ -290,7 +355,7 @@ export function EventCalendar() {
               <div className="space-y-4">
                 {selectedDayEvents.length > 0 ? (
                   selectedDayEvents.map((event) => {
-                     const category = event.type === 'userEvent' ? eventCategoriesMap.get(event.categoryId) : undefined;
+                     const category = event.type === 'userEvent' ? categoriesMap.get(event.categoryId) : undefined;
                      const eventColor = getEventColor(event);
 
                     return (
@@ -352,5 +417,12 @@ export function EventCalendar() {
         </Card>
       </div>
     </div>
+    <CreateEventDialog
+        isOpen={isCreateEventDialogOpen}
+        onClose={() => setIsCreateEventDialogOpen(false)}
+        onCreate={handleCreateEvent}
+        initialDate={initialEventDate}
+      />
+    </>
   );
 }

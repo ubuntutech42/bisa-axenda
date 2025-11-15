@@ -39,8 +39,10 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
 
   const onSubmit = (data: typeof settings) => {
     updateSettings(data);
-    onClose();
+    toast({ title: "Configurações salvas!", description: "Suas preferências de Pomodoro foram atualizadas." });
   };
+
+  const { toast } = useToast();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -63,21 +65,21 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
                   <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="pomodoro">Foco (min)</Label>
-                          <Input id="pomodoro" type="number" {...register('pomodoro', { valueAsNumber: true })} />
+                          <Input id="pomodoro" type="number" {...register('pomodoro', { valueAsNumber: true, min: 1 })} />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="shortBreak">Pausa Curta (min)</Label>
-                          <Input id="shortBreak" type="number" {...register('shortBreak', { valueAsNumber: true })} />
+                          <Input id="shortBreak" type="number" {...register('shortBreak', { valueAsNumber: true, min: 1 })} />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="longBreak">Pausa Longa (min)</Label>
-                          <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true })} />
+                          <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true, min: 1 })} />
                       </div>
                   </div>
                   <div className='space-y-2'>
                       <Label htmlFor="longBreakInterval">Intervalo da Pausa Longa</Label>
                       <p className="text-sm text-muted-foreground">A pausa longa acontece após este número de sessões de foco.</p>
-                      <Input id="longBreakInterval" type="number" {...register('longBreakInterval', { valueAsNumber: true })} />
+                      <Input id="longBreakInterval" type="number" {...register('longBreakInterval', { valueAsNumber: true, min: 1 })} />
                   </div>
                 </div>
                  <div className="flex justify-end gap-2 mt-6">
@@ -109,5 +111,3 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
     </Dialog>
   );
 }
-
-    

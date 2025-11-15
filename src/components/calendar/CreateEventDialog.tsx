@@ -26,10 +26,10 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { CalendarEvent, CalendarEventCategory } from '@/lib/types';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Combobox } from '../ui/combobox';
+import { collection, query } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useCategories } from '@/hooks/useCategories';
 
 const eventSchema = z.object({
   title: z.string().min(1, { message: "O título é obrigatório." }),
@@ -44,91 +44,36 @@ interface CreateEventDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: Omit<CalendarEvent, 'id' | 'userId' | 'createdAt'>) => void;
+  initialDate?: Date;
 }
 
-export function CreateEventDialog({ isOpen, onClose, onCreate }: CreateEventDialogProps) {
-  const { toast } = useToast();
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const [newCategoryName, setNewCategoryName] = useState('');
+export function CreateEventDialog({ isOpen, onClose, onCreate, initialDate }: CreateEventDialogProps) {
+  const { allCategories, isLoading: areCategoriesLoading } = useCategories();
   
-  const { register, handleSubmit, control, reset, formState: { errors }, setValue } = useForm<EventFormData>({
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
   });
-
-  const categoriesQuery = useMemoFirebase(() => 
-    user ? query(collection(firestore, 'users', user.uid, 'eventCategories')) : null, 
-    [firestore, user]
-  );
-  const { data: categories, isLoading: areCategoriesLoading } = useCollection<CalendarEventCategory>(categoriesQuery);
 
   useEffect(() => {
     if (!isOpen) {
       reset();
-      setNewCategoryName('');
+    } else {
+        reset({
+            date: initialDate || new Date(),
+            title: '',
+            description: '',
+            categoryId: ''
+        })
     }
-  }, [isOpen, reset]);
-
-  const handleCreateCategory = async (categoryName: string) => {
-    if (!user || !firestore || !categoryName.trim()) return null;
-
-    const existingCategory = categories?.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
-    if (existingCategory) {
-      toast({
-        variant: 'destructive',
-        title: 'Categoria já existe',
-        description: `A categoria "${categoryName}" já foi criada.`,
-      });
-      return existingCategory.id;
-    }
-
-    try {
-      const newCategoryRef = await addDoc(collection(firestore, 'users', user.uid, 'eventCategories'), {
-        userId: user.uid,
-        name: categoryName,
-        color: '#E67E22', // Default color
-        createdAt: serverTimestamp(),
-      });
-      toast({
-        title: 'Categoria criada!',
-        description: `A categoria "${categoryName}" foi adicionada.`,
-      });
-      return newCategoryRef.id;
-    } catch (error) {
-      console.error("Error creating category:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao criar categoria',
-      });
-      return null;
-    }
-  };
-
+  }, [isOpen, reset, initialDate]);
 
   const onSubmit = async (data: EventFormData) => {
-    let categoryId = data.categoryId;
-
-    // Check if the selected "ID" is actually a new category name
-    const isNewCategory = !categories?.some(c => c.id === categoryId);
-
-    if (isNewCategory && categoryId) {
-      const newId = await handleCreateCategory(categoryId);
-      if (newId) {
-        categoryId = newId;
-      } else {
-        return; // Stop submission if category creation fails
-      }
-    }
-    
     onCreate({
       ...data,
-      categoryId,
       date: format(data.date, 'yyyy-MM-dd'),
     });
     onClose();
   };
-
-  const categoryOptions = categories?.map(c => ({ value: c.id, label: c.name })) || [];
   
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -190,14 +135,21 @@ export function CreateEventDialog({ isOpen, onClose, onCreate }: CreateEventDial
                   <div className="space-y-2">
                     <Label>Categoria</Label>
                      {areCategoriesLoading ? <Loader className="animate-spin" /> : (
-                      <Combobox
-                        options={categoryOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Selecione ou crie uma categoria..."
-                        searchPlaceholder="Buscar categoria..."
-                        noResultsText="Nenhuma categoria encontrada."
-                      />
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma categoria..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allCategories.map(c => (
+                            <SelectItem key={c.id} value={c.id}>
+                              <span className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: c.color }} />
+                                {c.name}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                      )}
                     {errors.categoryId && <p className="text-sm text-destructive mt-1">{errors.categoryId.message}</p>}
                   </div>
@@ -217,5 +169,3 @@ export function CreateEventDialog({ isOpen, onClose, onCreate }: CreateEventDial
     </Sheet>
   );
 }
-
-    
