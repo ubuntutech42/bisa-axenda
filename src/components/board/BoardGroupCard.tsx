@@ -22,6 +22,8 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
     const groupSlug = groupName === 'Sem Grupo' ? 'ungrouped' : encodeURIComponent(groupName);
     const [isEditing, setIsEditing] = useState(false);
     const [currentGroupName, setCurrentGroupName] = useState(groupName);
+    const isDefaultGroup = groupName === 'Sem Grupo';
+
 
     const handleNameBlur = () => {
         setIsEditing(false);
@@ -61,28 +63,27 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                             {groupName}
                         </CardTitle>
                     )}
-                     {groupName !== 'Sem Grupo' && !isEditing && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <Settings className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    <span>Renomear Grupo</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                    onClick={() => onDeleteGroup(groupName)}
-                                    className="text-destructive focus:text-destructive"
-                                >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    <span>Excluir Grupo</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                <Settings className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDefaultGroup || isEditing}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                <span>Renomear Grupo</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => onDeleteGroup(groupName)}
+                                className="text-destructive focus:text-destructive"
+                                disabled={isDefaultGroup}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Excluir Grupo</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 <CardDescription>{boards.length} {boards.length === 1 ? 'quadro' : 'quadros'} neste grupo</CardDescription>
             </CardHeader>
