@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { KanbanBoard } from "@/lib/types";
-import { FileStack, ArrowRight, Trash2, Pencil } from "lucide-react";
+import { FileStack, ArrowRight, Trash2, Pencil, Settings } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Input } from '../ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 interface BoardGroupCardProps {
     groupName: string;
@@ -21,16 +22,6 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
     const groupSlug = groupName === 'Sem Grupo' ? 'ungrouped' : encodeURIComponent(groupName);
     const [isEditing, setIsEditing] = useState(false);
     const [currentGroupName, setCurrentGroupName] = useState(groupName);
-
-    const handleEditClick = () => {
-        if (groupName !== 'Sem Grupo') {
-            setIsEditing(true);
-        }
-    };
-
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentGroupName(e.target.value);
-    };
 
     const handleNameBlur = () => {
         setIsEditing(false);
@@ -57,7 +48,7 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                     {isEditing ? (
                         <Input
                             value={currentGroupName}
-                            onChange={handleNameChange}
+                            onChange={(e) => setCurrentGroupName(e.target.value)}
                             onBlur={handleNameBlur}
                             onKeyDown={handleKeyDown}
                             autoFocus
@@ -71,14 +62,26 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                         </CardTitle>
                     )}
                      {groupName !== 'Sem Grupo' && !isEditing && (
-                        <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleEditClick}>
-                                <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDeleteGroup(groupName)}>
-                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                            </Button>
-                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <Settings className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    <span>Renomear Grupo</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                    onClick={() => onDeleteGroup(groupName)}
+                                    className="text-destructive focus:text-destructive"
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Excluir Grupo</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     )}
                 </div>
                 <CardDescription>{boards.length} {boards.length === 1 ? 'quadro' : 'quadros'} neste grupo</CardDescription>
