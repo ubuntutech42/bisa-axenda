@@ -16,7 +16,7 @@ import { Logo } from '@/components/layout/Logo';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { Loader } from 'lucide-react';
-import { sendPasswordReset } from '@/firebase/auth/actions';
+import { sendPasswordReset, fetchGoogleProfileData } from '@/firebase/auth/actions';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
@@ -51,10 +51,14 @@ export default function LoginPage() {
         try {
             const result = await getRedirectResult(auth);
             if (result?.user) {
-              // User has successfully signed in via redirect.
-              // The main AppContent layout will handle redirecting to /dashboard.
-              // We just need to stop showing the loader.
-              // No need to call router.push here.
+              const credential = GoogleAuthProvider.credentialFromResult(result);
+              const accessToken = credential?.accessToken;
+
+              if (accessToken) {
+                // Don't block UI, do this in the background
+                fetchGoogleProfileData(accessToken, result.user.uid)
+                .catch(err => console.error("Could not fetch Google Profile data:", err));
+              }
             }
         } catch (error: any) {
             console.error("Error signing in with Google redirect:", error);
@@ -90,6 +94,10 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+    // Add scopes to request gender and birthday
+    provider.addScope('https://www.googleapis.com/auth/user.birthday.read');
+    provider.addScope('https://www.googleapis.com/auth/user.gender.read');
+    
     setLoading(true);
     // signInWithRedirect will navigate away, no need to handle the result here.
     // The useEffect will handle it on page load after redirect.

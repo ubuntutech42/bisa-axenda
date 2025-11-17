@@ -8,7 +8,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { usePomodoro } from '@/context/PomodoroContext';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { createUserProfile } from '@/lib/user';
 import { Loader } from 'lucide-react';
 import LandingLayout from '@/app/landing/layout';
@@ -32,32 +32,44 @@ export function AppContent({ children }: { children: React.ReactNode }) {
 
 
   useEffect(() => {
-    if (isUserLoading) return; // Do nothing while loading
+    if (isUserLoading) return;
 
     if (user) {
       if (isPublicPath) {
-        // Logged-in user on a public-only path, redirect to dashboard
         router.replace('/dashboard');
+        return;
       }
-      // Check and create profile if it doesn't exist
-      const checkAndCreateUserProfile = async () => {
-        if (firestore) {
-          const userRef = doc(firestore, "users", user.uid);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            try {
-              await createUserProfile(user, firestore);
-            } catch (error) {
-              console.error("Failed to create user profile on-demand:", error);
-            }
+      
+      if (!firestore) return;
+
+      const userRef = doc(firestore, "users", user.uid);
+      const unsubscribe = onSnapshot(userRef, (userSnap) => {
+        if (!userSnap.exists()) {
+           // User doc doesn't exist, maybe it's being created.
+           // Let's not rush to create it again, just wait.
+           // It might be created by the login flow with Google data.
+        }
+      }, (error) => {
+        console.error("Error listening to user profile:", error);
+      });
+
+      // Simple one-time check to create profile if it's missing after a short delay
+      setTimeout(async () => {
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          console.log("User profile doesn't exist, creating one...");
+          try {
+            await createUserProfile(user, firestore);
+          } catch (error) {
+            console.error("Failed to create user profile on-demand:", error);
           }
         }
-      };
-      checkAndCreateUserProfile();
+      }, 2000); // 2-second delay to allow login flow to complete
+
+      return () => unsubscribe();
+
     } else {
-      // Not logged-in user
       if (!isPublicPath && !isLandingPage) {
-        // Trying to access a protected page, redirect to login
         router.replace('/login');
       }
     }
