@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BoardGroupCard } from '@/components/board/BoardGroupCard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { boardTemplates } from '@/components/kanban/board-templates';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function BoardsPage() {
     const { user, isUserLoading } = useUser();
@@ -168,10 +169,19 @@ export default function BoardsPage() {
     return (
         <div className="flex flex-col gap-8 h-full">
             <Header title="Meus Quadros">
-                <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Novo Quadro
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button size="icon" aria-label="Criar novo item">
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setIsCreateBoardDialogOpen(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            <span>Novo Quadro</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </Header>
 
             <div className="flex-1 overflow-y-auto">
