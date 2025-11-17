@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -65,7 +66,7 @@ export function KanbanColumn({ list, tasks, onCardClick, onUpdateListName }: Kan
           {tasks.length}
         </span>
       </div>
-      <Droppable droppableId={list.id}>
+      <Droppable droppableId={list.id} isDropDisabled={false}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
