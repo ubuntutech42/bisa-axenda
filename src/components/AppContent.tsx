@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -16,6 +15,7 @@ import LandingLayout from '@/app/landing/layout';
 import LandingPage from '@/app/landing/page';
 import { FloatingActions } from './layout/FloatingActions';
 import { cn } from '@/lib/utils';
+import { FloatingNotifications } from './layout/FloatingNotifications';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,6 +24,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(true); // Placeholder state
 
 
   const publicPaths = ['/login', '/register'];
@@ -83,7 +84,11 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     // For authenticated users, show the full app layout on non-public paths.
     return (
       <div className="flex h-screen w-full bg-background">
-        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(prev => !prev)} />
+        <Sidebar 
+          isCollapsed={isSidebarCollapsed} 
+          onToggle={() => setIsSidebarCollapsed(prev => !prev)}
+          hasNotifications={hasNotifications}
+        />
         <div className={cn("flex flex-col flex-1 transition-all duration-300 ease-in-out", 
             isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
         )}>
@@ -93,6 +98,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
         </div>
         <BottomNav />
         <FloatingActions />
+        <FloatingNotifications hasNotifications={hasNotifications} />
         <Toaster />
         {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
       </div>

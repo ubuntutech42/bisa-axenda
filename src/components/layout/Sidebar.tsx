@@ -1,5 +1,5 @@
 
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -47,9 +47,10 @@ const navItems = [
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
+  hasNotifications: boolean;
 }
 
-function UserProfile({ isCollapsed }: { isCollapsed: boolean }) {
+function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, hasNotifications: boolean }) {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const { setIsFloatingPomodoroOpen } = usePomodoro();
@@ -67,42 +68,54 @@ function UserProfile({ isCollapsed }: { isCollapsed: boolean }) {
     await signOut(auth);
   };
 
+  const notificationCount = 1; // Placeholder
+
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className={cn("relative h-10 w-10 rounded-full", isCollapsed && "mx-auto")}>
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-              <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.displayName}</p>
-              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className={cn("relative h-10 w-10 rounded-full", isCollapsed && "mx-auto")}>
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+             <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
+                <Timer className="mr-2 h-4 w-4" />
+                <span>Timer Flutuante</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configurações</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sair</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {!isCollapsed && hasNotifications && (
+            <div className="relative">
+                <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    {notificationCount}
+                </div>
             </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
-              <Timer className="mr-2 h-4 w-4" />
-              <span>Timer Flutuante</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Configurações</span>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sair</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        )}
+      </div>
       <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );
@@ -118,7 +131,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
         <div className={cn("flex flex-col gap-2", isCollapsed && "items-center")}>
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.href === '/boards' ? isBoardsActive : pathname === item.href;
+            const isActive = item.href === '/boards' ? isBoardsActive || pathname === '/boards' : pathname === item.href;
             return (
               <TooltipProvider key={item.label} delayDuration={0}>
                 <Tooltip>
@@ -151,7 +164,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   );
 }
 
-export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProps) {
   const { user } = useUser();
   const pathname = usePathname();
 
@@ -163,7 +176,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
         <div className={cn("flex h-16 shrink-0 items-center justify-between border-b px-6", isCollapsed && "px-2 justify-center")}>
           {!isCollapsed && <Logo />}
-          <UserProfile isCollapsed={isCollapsed} />
+          <UserProfile isCollapsed={isCollapsed} hasNotifications={hasNotifications} />
         </div>
         <NavContent isCollapsed={isCollapsed} />
         <div className="mt-auto border-t p-2">
