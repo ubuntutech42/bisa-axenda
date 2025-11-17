@@ -27,7 +27,7 @@ export interface KanbanBoard {
   userId: string;
   name: string;
   group?: string;
-  type: 'kanban' | 'swot' | 'business_canvas' | 'custom';
+  type: 'kanban' | 'swot' | 'business_canvas' | 'goal_setting' | 'custom';
   createdAt: Timestamp;
 }
 
