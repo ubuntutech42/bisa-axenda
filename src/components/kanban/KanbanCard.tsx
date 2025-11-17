@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, MessageSquare, CheckSquare } from 'lucide-react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from 'react-beautiful-dnd-next';
 
 interface KanbanCardProps {
   task: Task;
@@ -41,13 +41,13 @@ export function KanbanCard({ task, index, onClick }: KanbanCardProps) {
       const now = new Date();
       const distanceText = formatDistanceToNowStrict(deadlineDate, { locale: ptBR });
       if (deadlineDate < now) {
-        return `Venceu há ${'\'\'\''}{distanceText}${'\'\'\''}`;
+        return `Venceu há ${distanceText}`;
       }
-      return `Vence em ${'\'\'\''}{distanceText}${'\'\'\''}`;
+      return `Vence em ${distanceText}`;
     }
     const createdAtDate = task.createdAt?.toDate();
     if(createdAtDate) {
-      return `Criada há ${'\'\'\''}{formatDistanceToNowStrict(createdAtDate, { locale: ptBR })}${'\'\'\''}`;
+      return `Criada há ${formatDistanceToNowStrict(createdAtDate, { locale: ptBR })}`;
     }
     return '';
   };
