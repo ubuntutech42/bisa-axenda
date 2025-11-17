@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -72,50 +71,59 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className={cn("relative h-10 w-10 rounded-full", isCollapsed && "mx-auto")}>
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-                <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className={cn(
+              "flex items-center gap-2 w-full h-auto p-2 justify-start",
+              isCollapsed ? "w-12 h-12 justify-center p-0" : "w-full"
+            )}>
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+              <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            {!isCollapsed && (
+              <div className="flex flex-col items-start truncate">
+                <span className="text-sm font-semibold truncate">{user.displayName}</span>
+                <span className="text-xs text-muted-foreground truncate">{user.email}</span>
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
-                <Timer className="mr-2 h-4 w-4" />
-                <span>Timer Flutuante</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Configurações</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sair</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {!isCollapsed && hasNotifications && (
-            <div className="relative">
-                <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                    {notificationCount}
+            )}
+             {hasNotifications && (
+                <div className="relative ml-auto">
+                    <div className={cn(
+                      "flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground",
+                      isCollapsed && "absolute top-0 right-0 h-3 w-3"
+                      )}>
+                       {!isCollapsed && notificationCount}
+                    </div>
                 </div>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.displayName}</p>
+              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
             </div>
-        )}
-      </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+           <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
+              <Timer className="mr-2 h-4 w-4" />
+              <span>Timer Flutuante</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Configurações</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );
@@ -174,12 +182,14 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <div className={cn("flex h-16 shrink-0 items-center justify-between border-b px-6", isCollapsed && "px-2 justify-center")}>
-          {!isCollapsed && <Logo />}
-          <UserProfile isCollapsed={isCollapsed} hasNotifications={hasNotifications} />
+        <div className={cn("flex h-16 shrink-0 items-center justify-between border-b px-4", isCollapsed && "px-2 justify-center")}>
+          {!isCollapsed ? <Logo /> : <div className="w-9 h-9 bg-primary rounded-lg" />}
         </div>
         <NavContent isCollapsed={isCollapsed} />
-        <div className="mt-auto border-t p-2">
+        <div className="mt-auto border-t p-4">
+           <UserProfile isCollapsed={isCollapsed} hasNotifications={hasNotifications} />
+        </div>
+         <div className="border-t p-2">
             <Button variant="ghost" className="w-full justify-center" onClick={onToggle}>
                 <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
                 {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}

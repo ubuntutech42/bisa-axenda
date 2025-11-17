@@ -13,7 +13,6 @@ import { createUserProfile } from '@/lib/user';
 import { Loader } from 'lucide-react';
 import LandingLayout from '@/app/landing/layout';
 import LandingPage from '@/app/landing/page';
-import { FloatingActions } from './layout/FloatingActions';
 import { cn } from '@/lib/utils';
 import { FloatingNotifications } from './layout/FloatingNotifications';
 
@@ -97,7 +96,6 @@ export function AppContent({ children }: { children: React.ReactNode }) {
             </main>
         </div>
         <BottomNav />
-        <FloatingActions />
         <FloatingNotifications hasNotifications={hasNotifications} />
         <Toaster />
         {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
