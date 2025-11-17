@@ -170,7 +170,7 @@ function BoardsPageContent() {
         <div className="flex flex-col gap-8 h-full">
             <Header title="Meus Quadros">
                  <DropdownMenu>
-                    <DropdownMenuTrigger>
+                    <DropdownMenuTrigger asChild>
                         <Button size="icon" variant="default" aria-label="Criar novo item">
                             <Plus className="h-4 w-4" />
                         </Button>
