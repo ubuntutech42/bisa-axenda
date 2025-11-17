@@ -135,7 +135,7 @@ export function EventCategoryManager() {
   return (
     <div className="space-y-4">
         <h3 className="text-sm font-medium text-foreground">Categorias</h3>
-        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+        <div className="space-y-3 pr-2">
         
         {/* Native Categories */}
         <p className='text-xs text-muted-foreground font-semibold'>CATEGORIAS NATIVAS</p>
