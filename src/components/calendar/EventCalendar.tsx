@@ -1,8 +1,7 @@
-
-"use client";
+'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { culturalEvents } from '@/lib/data';
 import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName, CalendarEventCategory } from '@/lib/types';
@@ -106,12 +105,17 @@ export function EventCalendar() {
 
 
   useEffect(() => {
-    if (!boards || !firestore || !user) {
-      if(boards === null || user === null) {
-        setAreTasksLoading(false);
-      }
-      return;
+    if (areBoardsLoading || !firestore || !user) {
+        if(boards === null && user === null) {
+          setAreTasksLoading(false);
+        }
+        return;
     };
+    if (boards === null) {
+      setAllTasks([]);
+      setAreTasksLoading(false);
+      return;
+    }
 
     const fetchTasks = async () => {
       setAreTasksLoading(true);
@@ -137,7 +141,7 @@ export function EventCalendar() {
     };
 
     fetchTasks();
-  }, [boards, firestore, user]);
+  }, [boards, areBoardsLoading, firestore, user]);
 
 
   const allEvents: CombinedEvent[] = useMemo(() => {
@@ -427,5 +431,3 @@ export function EventCalendar() {
     </>
   );
 }
-
-    
