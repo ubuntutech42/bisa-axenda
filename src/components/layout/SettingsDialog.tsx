@@ -24,6 +24,7 @@ import { usePomodoro } from '@/context/PomodoroContext';
 import { useForm } from 'react-hook-form';
 import { EventCategoryManager } from './EventCategoryManager';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -49,15 +50,18 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Configurações</DialogTitle>
+          <DialogTitle>Configurações Rápidas</DialogTitle>
           <DialogDescription>
-            Personalize a aparência e o comportamento do Axénda.
+            Ajustes rápidos. Para mais opções,{' '}
+            <Link href="/settings" className="text-primary underline" onClick={onClose}>
+              visite a página de configurações
+            </Link>
+            .
           </DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="pomodoro" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
-            <TabsTrigger value="categories">Categorias</TabsTrigger>
             <TabsTrigger value="appearance">Aparência</TabsTrigger>
           </TabsList>
           <TabsContent value="pomodoro" className="py-4">
@@ -77,20 +81,12 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
                           <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true, min: 1 })} />
                       </div>
                   </div>
-                  <div className='space-y-2'>
-                      <Label htmlFor="longBreakInterval">Intervalo da Pausa Longa</Label>
-                      <p className="text-sm text-muted-foreground">A pausa longa acontece após este número de sessões de foco.</p>
-                      <Input id="longBreakInterval" type="number" {...register('longBreakInterval', { valueAsNumber: true, min: 1 })} />
-                  </div>
                 </div>
                  <div className="flex justify-end gap-2 mt-6">
-                    <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+                    <Button type="button" variant="ghost" onClick={onClose}>Fechar</Button>
                     <Button type="submit">Salvar Pomodoro</Button>
                 </div>
               </form>
-          </TabsContent>
-           <TabsContent value="categories" className="py-4">
-              <EventCategoryManager />
           </TabsContent>
           <TabsContent value="appearance" className="py-4">
             <div className="space-y-2">

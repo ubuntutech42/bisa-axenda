@@ -9,6 +9,7 @@ import {
   Home,
   LayoutGrid,
   Timer,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';

@@ -41,6 +41,7 @@ const navItems = [
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
+  { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -114,7 +115,7 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Configurações</span>
+              <span>Configurações (Modal)</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
