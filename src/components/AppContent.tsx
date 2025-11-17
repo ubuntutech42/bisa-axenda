@@ -14,7 +14,6 @@ import { Loader } from 'lucide-react';
 import LandingLayout from '@/app/landing/layout';
 import LandingPage from '@/app/landing/page';
 import { cn } from '@/lib/utils';
-import { FloatingNotifications } from './layout/FloatingNotifications';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -108,7 +107,6 @@ export function AppContent({ children }: { children: React.ReactNode }) {
             </main>
         </div>
         <BottomNav />
-        <FloatingNotifications hasNotifications={hasNotifications} />
         <Toaster />
         {isFloatingPomodoroOpen && <FloatingPomodoro onClose={() => setIsFloatingPomodoroOpen(false)} />}
       </div>

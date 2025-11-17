@@ -12,7 +12,8 @@ import {
   Settings,
   Timer,
   PanelLeftClose,
-  PanelRightClose
+  PanelRightClose,
+  Bell
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser } from '@/firebase';
@@ -30,9 +31,10 @@ import {
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
-import { SettingsDialog } from '@/components/layout/SettingsDialog';
 import { usePomodoro } from '@/context/PomodoroContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '../ui/separator';
 
 
 const navItems = [
@@ -48,6 +50,56 @@ interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
   hasNotifications: boolean;
+}
+
+function NotificationsSheet({ isCollapsed }: { isCollapsed: boolean }) {
+  const notificationCount = 1;
+
+  return (
+    <Sheet>
+        <SheetTrigger asChild>
+            <Button variant="ghost" className={cn("relative", isCollapsed ? "w-12 h-12" : "w-full justify-start")}>
+                 <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className='relative flex items-center gap-3'>
+                                <Bell className="h-5 w-5 shrink-0" />
+                                <span className={cn(isCollapsed && 'sr-only')}>Notificações</span>
+                                <div className="absolute -top-1 left-3 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
+                                </div>
+                            </div>
+                        </TooltipTrigger>
+                        {isCollapsed && (
+                            <TooltipContent side="right">
+                                Notificações
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                 </TooltipProvider>
+            </Button>
+        </SheetTrigger>
+        <SheetContent className="w-full sm:max-w-md" side="right">
+            <SheetHeader>
+                <SheetTitle>Notificações</SheetTitle>
+                <SheetDescription>Seus lembretes e avisos importantes.</SheetDescription>
+            </SheetHeader>
+            <div className="py-4 space-y-4">
+                {/* Placeholder Content */}
+                <div className="p-4 rounded-lg bg-muted">
+                    <h4 className="font-semibold">Reflexão Semanal</h4>
+                    <p className="text-sm text-muted-foreground">Não se esqueça de preencher sua reflexão da semana hoje à noite!</p>
+                    <Button variant="link" className="p-0 h-auto mt-2">Ver tarefa</Button>
+                </div>
+                <Separator />
+                <div className="p-4 rounded-lg">
+                    <h4 className="font-semibold">Tarefa Urgente: Preparar Apresentação</h4>
+                    <p className="text-sm text-muted-foreground">O prazo para esta tarefa é amanhã.</p>
+                    <Button variant="link" className="p-0 h-auto mt-2">Ver tarefa</Button>
+                </div>
+            </div>
+        </SheetContent>
+    </Sheet>
+  )
 }
 
 function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, hasNotifications: boolean }) {
@@ -67,35 +119,25 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
     await signOut(auth);
   };
 
-  const notificationCount = 1; // Placeholder
-
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className={cn(
-              "flex items-center gap-2 w-full h-auto p-2 justify-start",
-              isCollapsed ? "w-12 h-12 justify-center p-0" : "w-full"
+              "flex items-center gap-2 w-full h-auto p-2",
+              isCollapsed ? "w-12 h-12 justify-center p-0" : "justify-start"
             )}>
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-              <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <div className={cn("relative rounded-full", hasNotifications && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            </div>
             {!isCollapsed && (
               <div className="flex flex-col items-start truncate">
                 <span className="text-sm font-semibold truncate">{user.displayName}</span>
                 <span className="text-xs text-muted-foreground truncate">{user.email}</span>
               </div>
-            )}
-             {hasNotifications && (
-                <div className="relative ml-auto">
-                    <div className={cn(
-                      "flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground",
-                      isCollapsed && "absolute top-0 right-0 h-3 w-3"
-                      )}>
-                       {!isCollapsed && notificationCount}
-                    </div>
-                </div>
             )}
           </Button>
         </DropdownMenuTrigger>
@@ -137,7 +179,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
       <nav className="flex-1 overflow-y-auto px-2 py-4">
-        <div className={cn("flex flex-col gap-2", isCollapsed && "items-center")}>
+        <div className={cn("flex flex-col gap-1", isCollapsed && "items-center")}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.href === '/boards' ? isBoardsActive || pathname === '/boards' : pathname === item.href;
@@ -154,7 +196,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
                       )}
                     >
                       <Icon className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary", { 'text-primary': isActive })} />
-                      <span className={cn("transform transition-all duration-300 ease-in-out group-hover:translate-x-1", isCollapsed && 'sr-only')}>
+                      <span className={cn("transform transition-all duration-300 ease-in-out", isCollapsed && 'sr-only')}>
                         {item.label}
                       </span>
                     </Link>
@@ -186,10 +228,17 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
         <div className={cn("flex h-16 shrink-0 items-center justify-between border-b px-4", isCollapsed && "px-2 justify-center")}>
           {!isCollapsed ? <Logo /> : <div className="w-9 h-9 bg-primary rounded-lg" />}
         </div>
+        
         <NavContent isCollapsed={isCollapsed} />
-        <div className="mt-auto border-t p-4">
+        
+        <div className={cn("px-2", isCollapsed ? "px-2" : "px-4")}>
+            {hasNotifications && <NotificationsSheet isCollapsed={isCollapsed} />}
+        </div>
+        
+        <div className="mt-auto border-t p-2">
            <UserProfile isCollapsed={isCollapsed} hasNotifications={hasNotifications} />
         </div>
+
          <div className="border-t p-2">
             <Button variant="ghost" className="w-full justify-center" onClick={onToggle}>
                 <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
