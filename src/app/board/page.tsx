@@ -1,106 +1,97 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus, LayoutGrid, Trash2, MoreVertical } from 'lucide-react';
+import { Loader, Plus, Trash2 } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
 import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { boardTemplates } from '@/components/kanban/board-templates';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import GroupSelector from '@/components/board/GroupSelector';
-import BoardCarousel from '@/components/board/BoardCarousel';
+import BoardSelector from '@/components/kanban/BoardSelector';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
-
-const LAST_GROUP_ID_KEY = 'axenda-last-group-id-';
+import Link from 'next/link';
 
 export default function BoardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  // Dialog states
   const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   const [boardToDelete, setBoardToDelete] = useState<KanbanBoardType | null>(null);
 
-  // Data states
-  const [activeGroup, setActiveGroup] = useState<string>('');
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [activeBoard, setActiveBoard] = useState<KanbanBoardType | null>(null);
   const [allUserBoards, setAllUserBoards] = useState<KanbanBoardType[]>([]);
 
-  // Firebase Queries
   const boardsQuery = useMemoFirebase(() =>
     user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
     [firestore, user]
   );
   const { data: boardsData, isLoading: areBoardsLoading } = useCollection<KanbanBoardType>(boardsQuery);
-  
+
   const listsQuery = useMemoFirebase(() => 
     user && activeBoard ? query(collection(firestore, 'kanbanBoards', activeBoard.id, 'lists')) : null, 
     [firestore, user, activeBoard]
   );
   const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
-
-  // Redirect unauthenticated users
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [isUserLoading, user, router]);
 
-  // Initialize and filter boards
   useEffect(() => {
     if (boardsData) {
       setAllUserBoards(boardsData);
+      const groupFromUrl = searchParams.get('group') || 'ungrouped';
       
-      if (activeGroup === '' && user) {
-        const lastGroupId = localStorage.getItem(`${LAST_GROUP_ID_KEY}${user.uid}`) || 'ungrouped';
-        const groups = [...new Set(boardsData.map(b => b.group || 'ungrouped'))];
-        setActiveGroup(groups.includes(lastGroupId) ? lastGroupId : 'ungrouped');
+      if (activeGroup !== groupFromUrl) {
+          setActiveGroup(groupFromUrl);
+          setActiveBoard(null); // Reset active board when group changes
       }
     }
-  }, [boardsData, user, activeGroup]);
+  }, [boardsData, searchParams, activeGroup]);
 
-  // Derived state for groups and filtered boards
   const boardGroups = useMemo(() => {
     const groups = new Set(allUserBoards.map(b => b.group || 'ungrouped'));
     return ['ungrouped', ...Array.from(groups).filter(g => g !== 'ungrouped').sort()];
   }, [allUserBoards]);
 
   const boardsInGroup = useMemo(() => {
-    const filtered = allUserBoards.filter(b => (b.group || 'ungrouped') === activeGroup);
-    return filtered.sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+    const groupName = activeGroup === 'ungrouped' ? undefined : activeGroup;
+    return allUserBoards
+      .filter(b => (b.group || undefined) === groupName)
+      .sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
   }, [allUserBoards, activeGroup]);
 
-  // Effect to select active board
   useEffect(() => {
-    if (boardsInGroup.length > 0 && !boardsInGroup.some(b => b.id === activeBoard?.id)) {
-        setActiveBoard(boardsInGroup[0]);
+    if (!activeBoard && boardsInGroup.length > 0) {
+      setActiveBoard(boardsInGroup[0]);
     } else if (boardsInGroup.length === 0) {
-        setActiveBoard(null);
+      setActiveBoard(null);
     }
   }, [boardsInGroup, activeBoard]);
 
-  // Handlers
   const handleGroupChange = (newGroup: string) => {
-    setActiveGroup(newGroup);
-    setActiveBoard(null); // Reset board selection
-    if (user) {
-        localStorage.setItem(`${LAST_GROUP_ID_KEY}${user.uid}`, newGroup);
-    }
+    router.push(`/board?group=${newGroup}`);
   };
 
   const handleCreateBoard = async (name: string, type: KanbanBoardType['type'], group?: string) => {
-    if (!user) return;
+    if (!user || !activeGroup) return;
   
+    const targetGroup = group || (activeGroup === 'ungrouped' ? undefined : activeGroup);
+
     try {
       const boardsCollection = collection(firestore, 'kanbanBoards');
       const boardData: Omit<KanbanBoardType, 'id' | 'createdAt'> & {createdAt: any} = {
@@ -108,7 +99,7 @@ export default function BoardPage() {
         type,
         userId: user.uid,
         createdAt: serverTimestamp(),
-        group: group || activeGroup === 'ungrouped' ? undefined : activeGroup,
+        group: targetGroup,
       };
 
       const newBoardRef = await addDoc(boardsCollection, boardData);
@@ -130,7 +121,9 @@ export default function BoardPage() {
         description: `O quadro "${name}" foi criado com sucesso.`,
       });
       setIsCreateBoardDialogOpen(false);
-      if(group) handleGroupChange(group);
+      if(targetGroup && targetGroup !== activeGroup) {
+        handleGroupChange(targetGroup);
+      }
   
     } catch (error) {
       console.error('Error creating board:', error);
@@ -200,23 +193,30 @@ export default function BoardPage() {
     }
   };
 
-
-  if (isUserLoading || areBoardsLoading || !user) {
+  if (isUserLoading || areBoardsLoading || !user || !activeGroup) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
+  
+  const displayGroup = activeGroup === 'ungrouped' ? 'Sem Grupo' : activeGroup;
 
   return (
     <div className="flex flex-col h-full w-full">
-        <Header title="Meus Quadros">
+        <Header title={activeBoard?.name || 'Carregando...'}>
           <div className="flex items-center gap-2">
             <GroupSelector 
               groups={boardGroups}
               activeGroup={activeGroup}
               onGroupChange={handleGroupChange}
+            />
+            <BoardSelector 
+              boards={boardsInGroup}
+              activeBoard={activeBoard}
+              setActiveBoard={setActiveBoard}
+              onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
             />
             <Button onClick={() => setIsNewTaskDialogOpen(true)} disabled={!activeBoard}>
               <Plus className="mr-2 h-4 w-4" />
@@ -225,36 +225,28 @@ export default function BoardPage() {
           </div>
         </Header>
         
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-            {boardsInGroup.length > 0 ? (
-                <BoardCarousel 
-                    boards={boardsInGroup}
-                    activeBoard={activeBoard}
-                    onSelectBoard={setActiveBoard}
-                    onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
-                    onDeleteBoard={setBoardToDelete}
-                />
-            ) : (
-                <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-48">
-                    <LayoutGrid className="w-12 h-12 text-muted mb-4" />
-                    <h2 className="text-xl font-semibold mb-2">Sem quadros neste grupo</h2>
+        <div className="flex-1 overflow-hidden h-full">
+            {activeBoard && !areListsLoading && lists ? (
+                <KanbanBoard boardId={activeBoard.id} lists={lists} />
+            ) : boardsInGroup.length === 0 ? (
+                <div className="text-center p-8 border-2 border-dashed rounded-lg h-full flex flex-col justify-center items-center">
+                    <h2 className="text-xl font-semibold mb-2">Nenhum quadro em "{displayGroup}"</h2>
                     <p className="text-muted-foreground mb-4 max-w-md mx-auto">Crie seu primeiro quadro neste grupo para começar.</p>
-                    <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Criar Quadro
-                    </Button>
+                    <div className='flex gap-4'>
+                        <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Criar Quadro
+                        </Button>
+                        <Button variant="outline" asChild>
+                           <Link href="/boards">Ver todos os grupos</Link>
+                        </Button>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex items-center justify-center h-full">
+                    <Loader className="h-8 w-8 animate-spin" />
                 </div>
             )}
-            
-            <div className="flex-1 overflow-hidden h-full">
-                {activeBoard && !areListsLoading && lists ? (
-                    <KanbanBoard boardId={activeBoard.id} lists={lists} />
-                ) : (
-                    <div className="flex items-center justify-center h-full">
-                        {areBoardsLoading ? <Loader className="h-8 w-8 animate-spin" /> : <p className="text-muted-foreground">Selecione um quadro acima para visualizar.</p>}
-                    </div>
-                )}
-            </div>
         </div>
 
         <CreateBoardDialog 
@@ -262,6 +254,7 @@ export default function BoardPage() {
             onClose={() => setIsCreateBoardDialogOpen(false)}
             onCreate={handleCreateBoard}
             existingGroups={boardGroups.filter(g => g !== 'ungrouped')}
+            currentGroup={activeGroup}
         />
 
          <AlertDialog open={!!boardToDelete} onOpenChange={(open) => !open && setBoardToDelete(null)}>

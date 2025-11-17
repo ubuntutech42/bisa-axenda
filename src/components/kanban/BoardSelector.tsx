@@ -34,12 +34,12 @@ export default function BoardSelector({ boards, activeBoard, setActiveBoard, onN
   return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            {activeBoard ? activeBoard.name : "Selecione um Quadro"}
-            <ChevronDown className="ml-2 h-4 w-4" />
+          <Button variant="outline" className="min-w-[200px] justify-between">
+            <span className='truncate'>{activeBoard ? activeBoard.name : "Selecione um Quadro"}</span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-[--radix-dropdown-menu-trigger-width]">
           <DropdownMenuLabel>Meus Quadros</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {boards.map(board => (

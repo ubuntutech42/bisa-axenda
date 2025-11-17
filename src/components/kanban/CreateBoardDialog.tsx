@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -30,21 +30,29 @@ interface CreateBoardDialogProps {
   onClose: () => void;
   onCreate: (name: string, type: BoardType, group?: string) => void;
   existingGroups?: string[];
+  currentGroup?: string | null;
 }
 
-export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = [] }: CreateBoardDialogProps) {
+export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = [], currentGroup }: CreateBoardDialogProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<BoardType>('kanban');
   const [group, setGroup] = useState('');
+
+  useEffect(() => {
+    if(isOpen && currentGroup && currentGroup !== 'ungrouped') {
+        setGroup(currentGroup);
+    } else if (!isOpen) {
+        // Reset state when closing
+        setName('');
+        setType('kanban');
+        setGroup('');
+    }
+  }, [isOpen, currentGroup]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
       onCreate(name, type, group.trim() || undefined);
-      // Reset state after creation
-      setName('');
-      setType('kanban');
-      setGroup('');
     }
   };
 

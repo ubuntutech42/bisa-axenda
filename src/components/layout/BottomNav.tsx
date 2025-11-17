@@ -15,7 +15,7 @@ import { useUser } from '@/firebase';
 
 const navItems = [
   { href: '/dashboard', label: 'Painel', icon: Home },
-  { href: '/board', label: 'Quadro', icon: LayoutGrid },
+  { href: '/boards', label: 'Quadros', icon: LayoutGrid },
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
@@ -25,7 +25,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const { user } = useUser();
 
-  if (!user) {
+  if (!user || pathname.startsWith('/landing') || pathname === '/') {
     return null;
   }
 
@@ -38,7 +38,8 @@ export function BottomNav() {
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-t-lg z-40 pb-[env(safe-area-inset-bottom)]">
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isBoardsActive = item.href === '/boards' && pathname.startsWith('/board');
+          const isActive = isBoardsActive || pathname === item.href;
           const Icon = item.icon;
           return (
             <Link

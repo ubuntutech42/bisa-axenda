@@ -38,7 +38,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 
 const navItems = [
   { href: '/dashboard', label: 'Painel', icon: Home },
-  { href: '/board', label: 'Quadro', icon: LayoutGrid },
+  { href: '/boards', label: 'Quadros', icon: LayoutGrid },
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
@@ -111,11 +111,14 @@ function UserProfile({ isCollapsed }: { isCollapsed: boolean }) {
 function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   const pathname = usePathname();
 
+  const isBoardsActive = pathname.startsWith('/board');
+
   return (
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         <div className={cn("flex flex-col gap-2", isCollapsed && "items-center")}>
           {navItems.map((item) => {
             const Icon = item.icon;
+            const isActive = item.href === '/boards' ? isBoardsActive : pathname === item.href;
             return (
               <TooltipProvider key={item.label} delayDuration={0}>
                 <Tooltip>
@@ -125,10 +128,10 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
                       className={cn(
                         'group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all duration-300 ease-in-out hover:text-primary hover:bg-primary/10',
                          isCollapsed ? 'w-12 h-12 justify-center' : 'w-full',
-                        pathname === item.href && 'bg-primary/20 text-primary font-bold'
+                        isActive && 'bg-primary/20 text-primary font-bold'
                       )}
                     >
-                      <Icon className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary", { 'text-primary': pathname === item.href })} />
+                      <Icon className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary", { 'text-primary': isActive })} />
                       <span className={cn("transform transition-all duration-300 ease-in-out group-hover:translate-x-1", isCollapsed && 'sr-only')}>
                         {item.label}
                       </span>
@@ -150,8 +153,9 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { user } = useUser();
+  const pathname = usePathname();
 
-  if (!user) {
+  if (!user || pathname.startsWith('/landing') || pathname === '/') {
     return null;
   }
   
