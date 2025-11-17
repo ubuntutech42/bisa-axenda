@@ -3,7 +3,7 @@
 
 import { useTheme } from 'next-themes';
 import { Header } from '@/components/layout/Header';
-import { useUser, useFirestore, useDoc }from '@/firebase';
+import { useUser, useFirestore, useDoc, useAuth }from '@/firebase';
 import { Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,13 +17,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { EventCategoryManager } from '@/components/layout/EventCategoryManager';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { updateProfile as updateAuthProfile } from 'firebase/auth';
 import type { User as UserType } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updateUserProfile } from '@/firebase/auth/actions';
 
 const profileSchema = z.object({
     userName: z.string().min(2, { message: 'O nome de usuário deve ter pelo menos 2 caracteres.' }),
@@ -39,6 +39,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 function ProfileSettings() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
+    const auth = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,18 +72,35 @@ function ProfileSettings() {
     }, [userProfile, reset]);
 
     const handleProfileUpdate = async (data: ProfileFormData) => {
-        if (!user) return;
+        if (!user || !auth.currentUser) return;
         setIsSubmitting(true);
+        
         try {
-            await updateUserProfile(user.uid, {
-                displayName: data.userName,
-                ...data,
-            });
+            // Firestore update
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const firestoreUpdates: any = {};
+            if (data.firstName) firestoreUpdates.firstName = data.firstName;
+            if (data.lastName) firestoreUpdates.lastName = data.lastName;
+            if (data.userName) firestoreUpdates.userName = data.userName;
+            if (data.age) firestoreUpdates.age = data.age;
+            if (data.gender) firestoreUpdates.gender = data.gender;
+            if (data.bio) firestoreUpdates.bio = data.bio;
+            
+            if (Object.keys(firestoreUpdates).length > 0) {
+              await updateDoc(userDocRef, firestoreUpdates);
+            }
+
+            // Auth profile update
+            if (data.userName && data.userName !== auth.currentUser.displayName) {
+                await updateAuthProfile(auth.currentUser, { displayName: data.userName });
+            }
+
             toast({
                 title: "Perfil atualizado!",
                 description: "Suas informações foram salvas com sucesso.",
             });
         } catch (error: any) {
+            console.error("Error updating profile:", error);
             toast({
                 variant: 'destructive',
                 title: 'Erro ao atualizar perfil',
@@ -264,9 +282,9 @@ export default function SettingsPage() {
                                       </div>
                                   </div>
                                 </CardContent>
-                                <CardContent>
+                                <CardFooter>
                                     <Button type="submit">Salvar Alterações</Button>
-                                </CardContent>
+                                </CardFooter>
                             </Card>
                         </form>
                     </TabsContent>
