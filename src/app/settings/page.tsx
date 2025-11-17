@@ -45,7 +45,7 @@ function ProfileSettings() {
     const userDocRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserType>(userDocRef);
 
-    const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<ProfileFormData>({
+    const { register, handleSubmit, reset, control, formState: { errors, isDirty } } = useForm<ProfileFormData>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
             userName: '',
@@ -141,7 +141,24 @@ function ProfileSettings() {
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="gender">Gênero</Label>
-                            <Input id="gender" {...register('gender')} placeholder="Ex: Mulher, Não-binário, Homem" />
+                            <Controller
+                                name="gender"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <SelectTrigger id="gender">
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Mulher">Mulher</SelectItem>
+                                            <SelectItem value="Homem">Homem</SelectItem>
+                                            <SelectItem value="Não-binário">Não-binário</SelectItem>
+                                            <SelectItem value="Outro">Outro</SelectItem>
+                                            <SelectItem value="Prefiro não informar">Prefiro não informar</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
                         </div>
                     </div>
                 </CardContent>
