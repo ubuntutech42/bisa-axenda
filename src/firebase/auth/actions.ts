@@ -6,7 +6,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  updateProfile,
+  updateProfile as updateAuthProfile,
 } from 'firebase/auth';
 import { getSdks } from '@/firebase';
 import { initializeApp, getApps } from 'firebase/app';
@@ -14,6 +14,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { createUserProfile } from '@/lib/user';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '../errors';
+import { doc, updateDoc } from 'firebase/firestore';
 
 // Helper to initialize and get services
 function getFirebaseServices() {
@@ -32,7 +33,7 @@ export async function signup(name: string, email: string, password: string) {
     const user = userCredential.user;
 
     // This can happen in the background. The user is already authenticated.
-    updateProfile(user, { displayName: name }).then(async () => {
+    updateAuthProfile(user, { displayName: name }).then(async () => {
         try {
             await createUserProfile(user, firestore);
         } catch (e: any) {
@@ -64,4 +65,51 @@ export async function sendPasswordReset(email: string) {
     }
     throw new Error('Não foi possível enviar o e-mail de redefinição de senha.');
   }
+}
+
+// Update user profile
+export async function updateUserProfile(uid: string, data: {
+    displayName?: string;
+    photoURL?: string;
+    firstName?: string;
+    lastName?: string;
+    age?: number;
+    gender?: string;
+    bio?: string;
+}) {
+    const { auth, firestore } = getFirebaseServices();
+    const user = auth.currentUser;
+
+    if (!user || user.uid !== uid) {
+        throw new Error("Permissão negada.");
+    }
+
+    const authUpdates: { displayName?: string; photoURL?: string } = {};
+    if (data.displayName) authUpdates.displayName = data.displayName;
+    if (data.photoURL) authUpdates.photoURL = data.photoURL;
+
+    const firestoreUpdates: any = {};
+    if (data.firstName) firestoreUpdates.firstName = data.firstName;
+    if (data.lastName) firestoreUpdates.lastName = data.lastName;
+    if (data.displayName) firestoreUpdates.userName = data.displayName;
+    if (data.age) firestoreUpdates.age = data.age;
+    if (data.gender) firestoreUpdates.gender = data.gender;
+    if (data.bio) firestoreUpdates.bio = data.bio;
+
+
+    try {
+        // Update Firebase Auth profile
+        if (Object.keys(authUpdates).length > 0) {
+            await updateAuthProfile(user, authUpdates);
+        }
+
+        // Update Firestore user document
+        if (Object.keys(firestoreUpdates).length > 0) {
+            const userDocRef = doc(firestore, 'users', uid);
+            await updateDoc(userDocRef, firestoreUpdates);
+        }
+    } catch (error: any) {
+        console.error("Error updating profile:", error);
+        throw new Error("Ocorreu um erro ao atualizar o perfil.");
+    }
 }

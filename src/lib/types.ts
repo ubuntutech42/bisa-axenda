@@ -2,6 +2,18 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
+export interface User {
+    id: string;
+    email: string;
+    userName: string;
+    firstName?: string;
+    lastName?: string;
+    profileImageUrl?: string;
+    age?: number;
+    gender?: string;
+    bio?: string;
+}
+
 export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pessoal';
 
 export type Priority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
@@ -122,5 +134,3 @@ export interface LunarDataResponse {
         }
     }
 }
-
-    

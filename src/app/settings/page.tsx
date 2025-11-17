@@ -1,21 +1,161 @@
+
 'use client';
 
 import { useTheme } from 'next-themes';
 import { Header } from '@/components/layout/Header';
-import { useUser }from '@/firebase';
+import { useUser, useFirestore, useDoc }from '@/firebase';
 import { Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePomodoro } from '@/context/PomodoroContext';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { EventCategoryManager } from '@/components/layout/EventCategoryManager';
+import { doc } from 'firebase/firestore';
+import type { User as UserType } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { updateUserProfile } from '@/firebase/auth/actions';
+
+const profileSchema = z.object({
+    userName: z.string().min(2, { message: 'O nome de usuário deve ter pelo menos 2 caracteres.' }),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    bio: z.string().optional(),
+    age: z.coerce.number().optional(),
+    gender: z.string().optional(),
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
+
+function ProfileSettings() {
+    const { user, isUserLoading } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const userDocRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserType>(userDocRef);
+
+    const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<ProfileFormData>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            userName: '',
+            firstName: '',
+            lastName: '',
+            bio: '',
+            age: undefined,
+            gender: '',
+        }
+    });
+
+    useEffect(() => {
+        if (userProfile) {
+            reset({
+                userName: userProfile.userName,
+                firstName: userProfile.firstName,
+                lastName: userProfile.lastName,
+                bio: userProfile.bio,
+                age: userProfile.age,
+                gender: userProfile.gender,
+            });
+        }
+    }, [userProfile, reset]);
+
+    const handleProfileUpdate = async (data: ProfileFormData) => {
+        if (!user) return;
+        setIsSubmitting(true);
+        try {
+            await updateUserProfile(user.uid, {
+                displayName: data.userName,
+                ...data,
+            });
+            toast({
+                title: "Perfil atualizado!",
+                description: "Suas informações foram salvas com sucesso.",
+            });
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao atualizar perfil',
+                description: error.message || 'Não foi possível salvar suas informações.',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    if(isProfileLoading || isUserLoading) {
+        return <div className="flex items-center justify-center p-8"><Loader className="h-6 w-6 animate-spin" /></div>
+    }
+
+    return (
+        <form onSubmit={handleSubmit(handleProfileUpdate)}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Perfil Público</CardTitle>
+                    <CardDescription>Esta informação pode ser exibida em áreas públicas do aplicativo.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        <Avatar className='h-20 w-20'>
+                            <AvatarImage src={user?.photoURL || undefined} />
+                            <AvatarFallback>{user?.displayName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className='flex-1'>
+                             <Label htmlFor="photo">URL da Foto</Label>
+                             <Input id="photo" defaultValue={user?.photoURL || ''} disabled placeholder="Conecte com o Google para ter uma foto." />
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="userName">Nome de Usuário</Label>
+                        <Input id="userName" {...register('userName')} />
+                        {errors.userName && <p className="text-sm text-destructive mt-1">{errors.userName.message}</p>}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="firstName">Nome</Label>
+                            <Input id="firstName" {...register('firstName')} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="lastName">Sobrenome</Label>
+                            <Input id="lastName" {...register('lastName')} />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="bio">Bio</Label>
+                        <Textarea id="bio" {...register('bio')} placeholder="Conte um pouco sobre você..." />
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="age">Idade</Label>
+                            <Input id="age" type="number" {...register('age')} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="gender">Gênero</Label>
+                            <Input id="gender" {...register('gender')} placeholder="Ex: Mulher, Não-binário, Homem" />
+                        </div>
+                    </div>
+                </CardContent>
+                <CardFooter className='justify-end'>
+                    <Button type="submit" disabled={isSubmitting || !isDirty}>
+                        {isSubmitting ? <Loader className="mr-2 animate-spin" /> : null}
+                        Salvar Alterações
+                    </Button>
+                </CardFooter>
+            </Card>
+        </form>
+    )
+}
+
 
 export default function SettingsPage() {
     const { user, isUserLoading } = useUser();
@@ -51,12 +191,16 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-8">
             <Header title="Configurações" />
             <div className="max-w-4xl mx-auto w-full">
-                <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                <Tabs defaultValue="profile" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="profile">Perfil</TabsTrigger>
                         <TabsTrigger value="general">Geral</TabsTrigger>
                         <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
                         <TabsTrigger value="categories">Categorias</TabsTrigger>
                     </TabsList>
+                    <TabsContent value="profile">
+                        <ProfileSettings />
+                    </TabsContent>
                     <TabsContent value="general">
                         <Card>
                             <CardHeader>

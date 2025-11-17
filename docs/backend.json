@@ -33,6 +33,18 @@
           "type": "string",
           "description": "URL to the user's profile image.",
           "format": "uri"
+        },
+        "age": {
+          "type": "number",
+          "description": "Age of the user."
+        },
+        "gender": {
+          "type": "string",
+          "description": "Gender of the user (free-form text)."
+        },
+        "bio": {
+            "type": "string",
+            "description": "A short bio about the user."
         }
       },
       "required": [
@@ -569,5 +581,3 @@
     }
   }
 }
-
-    
