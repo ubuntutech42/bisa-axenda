@@ -54,8 +54,8 @@ export default function BoardCarousel({
             </Button>
          </CarouselItem>
       </CarouselContent>
-      <CarouselPrevious className="hidden md:flex" />
-      <CarouselNext className="hidden md:flex" />
+      <CarouselPrevious />
+      <CarouselNext />
     </Carousel>
   );
 }
