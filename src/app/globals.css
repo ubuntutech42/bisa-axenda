@@ -14,6 +14,7 @@
     --popover-foreground: 24 20% 15%;
 
     --primary: 28 80% 52%; /* #E67E22 */
+    --primary-hover: 28 80% 47%; /* Darker Orange */
     --primary-foreground: 24 100% 98%;
 
     --secondary: 24 40% 90%;
@@ -23,12 +24,13 @@
     --muted-foreground: 24 15% 45%;
 
     --accent: 47 88% 44%; /* #D4AC0D */
+    --accent-hover: 47 88% 39%; /* Darker Yellow */
     --accent-foreground: 24 20% 15%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 24 30% 85%;
+    --border: 24 30% 88%;
     --input: 24 30% 88%;
     --ring: 28 80% 52%;
     
@@ -52,6 +54,7 @@
     --popover-foreground: 24 100% 95%;
 
     --primary: 28 80% 52%;
+    --primary-hover: 28 80% 58%; /* Lighter Orange for dark mode */
     --primary-foreground: 24 100% 98%;
     
     --secondary: 28 15% 20%;
@@ -61,6 +64,7 @@
     --muted-foreground: 24 20% 65%;
     
     --accent: 47 88% 44%;
+    --accent-hover: 47 88% 50%; /* Lighter Yellow for dark mode */
     --accent-foreground: 24 20% 15%;
     
     --destructive: 0 62.8% 30.6%;
