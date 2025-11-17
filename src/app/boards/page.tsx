@@ -7,7 +7,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query, where, writeBatch, doc, getDocs, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus } from 'lucide-react';
+import { Loader, Plus, LayoutGrid } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
 import type { KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +23,7 @@ function BoardsPageContent() {
     const { toast } = useToast();
 
     const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
+    const [createDialogMode, setCreateDialogMode] = useState<'board' | 'group'>('board');
     const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
 
     const boardsQuery = useMemoFirebase(() =>
@@ -176,9 +177,13 @@ function BoardsPageContent() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setIsCreateBoardDialogOpen(true)}>
-                            <Plus />
+                        <DropdownMenuItem onSelect={() => { setCreateDialogMode('board'); setIsCreateBoardDialogOpen(true); }}>
+                            <LayoutGrid />
                             <span>Novo Quadro</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => { setCreateDialogMode('group'); setIsCreateBoardDialogOpen(true); }}>
+                            <Plus />
+                            <span>Novo Grupo</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -201,7 +206,7 @@ function BoardsPageContent() {
                     <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-full">
                         <h2 className="text-xl font-semibold mb-2">Nenhum quadro encontrado</h2>
                         <p className="text-muted-foreground mb-4 max-w-md mx-auto">Comece criando seu primeiro quadro para organizar suas ideias e tarefas.</p>
-                        <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
+                        <Button onClick={() => { setCreateDialogMode('board'); setIsCreateBoardDialogOpen(true); }}>
                             <Plus />
                             Criar Primeiro Quadro
                         </Button>
@@ -214,6 +219,7 @@ function BoardsPageContent() {
                 onClose={() => setIsCreateBoardDialogOpen(false)}
                 onCreate={handleCreateBoard}
                 existingGroups={sortedGroups.filter(g => g !== 'Sem Grupo')}
+                initialFocus={createDialogMode}
             />
 
             <AlertDialog open={!!groupToDelete} onOpenChange={(open) => !open && setGroupToDelete(null)}>

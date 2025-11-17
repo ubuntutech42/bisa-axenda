@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,16 @@ interface CreateBoardDialogProps {
   onCreate: (name: string, type: BoardType, group?: string) => void;
   existingGroups?: string[];
   currentGroup?: string | null;
+  initialFocus?: 'board' | 'group';
 }
 
-export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = [], currentGroup }: CreateBoardDialogProps) {
+export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = [], currentGroup, initialFocus = 'board' }: CreateBoardDialogProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<BoardType>('kanban');
   const [group, setGroup] = useState('');
+  
+  const groupInputRef = useRef<HTMLButtonElement>(null);
+  const boardNameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if(isOpen && currentGroup && currentGroup !== 'ungrouped') {
@@ -58,8 +62,21 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = 
 
   const groupOptions = existingGroups.map(g => ({ value: g, label: g }));
 
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setTimeout(() => {
+        if (initialFocus === 'group' && groupInputRef.current) {
+          groupInputRef.current.click();
+        } else if (boardNameInputRef.current) {
+          boardNameInputRef.current.focus();
+        }
+      }, 100);
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -73,6 +90,7 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = 
               <Label htmlFor="board-name">Nome do Quadro</Label>
               <Input
                 id="board-name"
+                ref={boardNameInputRef}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Meu Projeto Secreto"
@@ -82,6 +100,7 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = 
              <div className="space-y-2">
               <Label htmlFor="board-group">Grupo do Quadro (Opcional)</Label>
               <Combobox 
+                ref={groupInputRef}
                 options={groupOptions}
                 value={group}
                 onChange={setGroup}
