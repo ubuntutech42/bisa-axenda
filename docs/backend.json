@@ -134,7 +134,7 @@
         "type": {
           "type": "string",
           "description": "The type or template of the board.",
-          "enum": ["kanban", "swot", "business_canvas", "custom"]
+          "enum": ["kanban", "swot", "business_canvas", "custom", "goal_setting", "weekly_reflection"]
         },
         "createdAt": {
           "type": "string",
@@ -166,7 +166,7 @@
       "required": ["id", "name", "order"]
     },
     "KanbanCard": {
-      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "KanbanCard",
       "type": "object",
       "description": "Represents a card within a Kanban list, representing a task.",
@@ -365,7 +365,7 @@
       ]
     },
     "Reminder": {
-      "$schema": "http://json-schema.org/draft_07/schema#_disabled",
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Reminder",
       "type": "object",
       "description": "Represents a reminder for a Kanban card.",

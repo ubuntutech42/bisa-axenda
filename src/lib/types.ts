@@ -27,7 +27,7 @@ export interface KanbanBoard {
   userId: string;
   name: string;
   group?: string;
-  type: 'kanban' | 'swot' | 'business_canvas' | 'goal_setting' | 'custom';
+  type: 'kanban' | 'swot' | 'business_canvas' | 'goal_setting' | 'custom' | 'weekly_reflection';
   createdAt: Timestamp;
 }
 
@@ -122,3 +122,5 @@ export interface LunarDataResponse {
         }
     }
 }
+
+    

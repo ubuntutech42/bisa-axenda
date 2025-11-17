@@ -32,13 +32,22 @@ export const boardTemplates: Record<KanbanBoard['type'], { name: string; order: 
     { name: 'Pausado / Revisando', order: 3 },
     { name: 'Concluído / Celebrar!', order: 4 },
   ],
+  weekly_reflection: [
+    { name: 'Conquistas da Semana', order: 0 },
+    { name: 'Desafios e Aprendizados', order: 1 },
+    { name: 'Como me Senti', order: 2 },
+    { name: 'Ajustes para a Próxima Semana', order: 3 },
+  ],
   custom: [],
 };
 
 export const boardTemplatesInfo: {type: KanbanBoard['type'], name: string, description: string}[] = [
     { type: 'kanban', name: 'Kanban Padrão', description: 'Para gerenciamento de fluxo de trabalho (A Fazer, Em Progresso, Concluído).' },
     { type: 'goal_setting', name: 'Quadro de Intenções', description: 'Para definir e acompanhar objetivos e como você quer se sentir durante o processo.' },
+    { type: 'weekly_reflection', name: 'Reflexão Semanal', description: 'Um espaço para refletir sobre conquistas, desafios e sentimentos da semana.' },
     { type: 'swot', name: 'Análise SWOT (FOFA)', description: 'Para análise estratégica (Forças, Fraquezas, Oportunidades, Ameaças).' },
     { type: 'business_canvas', name: 'Canvas de Negócio', description: 'Para modelagem de negócios e planejamento estratégico.' },
     { type: 'custom', name: 'Personalizado', description: 'Comece com um quadro em branco e adicione suas próprias colunas.' },
 ]
+
+    
