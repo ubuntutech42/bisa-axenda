@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, MessageSquare, CheckSquare } from 'lucide-react';
-import { Draggable } from 'react-beautiful-dnd-next';
+import { Draggable } from 'react-beautiful-dnd';
 
 interface KanbanCardProps {
   task: Task;

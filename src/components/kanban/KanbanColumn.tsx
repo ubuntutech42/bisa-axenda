@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { KanbanCard } from './KanbanCard';
 import type { Task, KanbanList } from '@/lib/types';
 import { Input } from '../ui/input';
-import { Droppable } from 'react-beautiful-dnd-next';
+import { Droppable } from 'react-beautiful-dnd';
 import { cn } from '@/lib/utils';
 
 interface KanbanColumnProps {

@@ -10,7 +10,7 @@ import { collection, doc, updateDoc, serverTimestamp, addDoc } from 'firebase/fi
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
-import { DragDropContext, DropResult } from 'react-beautiful-dnd-next';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 
 interface KanbanBoardProps {
   boardId: string;
