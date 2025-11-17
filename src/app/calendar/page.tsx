@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import { Header } from '@/components/layout/Header';
@@ -14,7 +14,7 @@ import { useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { CalendarEvent as CalendarEventType } from '@/lib/types';
 
-export default function CalendarPage() {
+function CalendarPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
@@ -77,4 +77,12 @@ export default function CalendarPage() {
       />
     </div>
   );
+}
+
+export default function CalendarPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>}>
+            <CalendarPageContent />
+        </Suspense>
+    );
 }
