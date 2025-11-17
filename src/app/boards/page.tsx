@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, writeBatch, doc, getDocs, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus, Trash2 } from 'lucide-react';
+import { Loader, Plus } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
 import type { KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { boardTemplates } from '@/components/kanban/board-templates';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-export default function BoardsPage() {
+function BoardsPageContent() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
     const firestore = useFirestore();
@@ -169,9 +169,9 @@ export default function BoardsPage() {
     return (
         <div className="flex flex-col gap-8 h-full">
             <Header title="Meus Quadros">
-                <DropdownMenu>
+                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button size="icon" aria-label="Criar novo item">
+                        <Button size="icon" variant="default" aria-label="Criar novo item">
                             <Plus className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
@@ -231,5 +231,13 @@ export default function BoardsPage() {
                 </AlertDialogContent>
             </AlertDialog>
         </div>
+    );
+}
+
+export default function BoardsPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>}>
+            <BoardsPageContent />
+        </Suspense>
     );
 }
