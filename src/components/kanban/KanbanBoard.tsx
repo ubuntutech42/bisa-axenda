@@ -10,6 +10,7 @@ import { collection, doc, updateDoc, serverTimestamp, addDoc } from 'firebase/fi
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 
 interface KanbanBoardProps {
   boardId: string;
@@ -100,6 +101,39 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
     }
   };
 
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+    
+    if (!user || !boardId) return;
+
+    try {
+        const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', draggableId);
+        await updateDoc(taskRef, {
+            listId: destination.droppableId,
+            updatedAt: serverTimestamp(),
+        });
+        // Optimistic update handled by useCollection hook
+    } catch (error) {
+        console.error("Error updating task list:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Erro ao mover tarefa',
+            description: 'Não foi possível mover a tarefa. Por favor, tente novamente.',
+        });
+    }
+  };
+
   const tasksByListId = useMemo(() => {
     if (!tasks) return {};
     return tasks.reduce((acc, task) => {
@@ -118,7 +152,7 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
   }
 
   return (
-    <>
+    <DragDropContext onDragEnd={onDragEnd}>
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-4 pb-4 items-start">
           {sortedLists.map((list) => {
@@ -149,6 +183,6 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
         onSave={handleSaveTask}
         lists={sortedLists}
       />
-    </>
+    </DragDropContext>
   );
 }

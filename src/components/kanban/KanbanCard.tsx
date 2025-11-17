@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,9 +7,11 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, MessageSquare, CheckSquare } from 'lucide-react';
+import { Draggable } from 'react-beautiful-dnd';
 
 interface KanbanCardProps {
   task: Task;
+  index: number;
   onClick: () => void;
 }
 
@@ -30,7 +31,7 @@ const categoryClasses: Record<Task['category'], string> = {
 };
 
 
-export function KanbanCard({ task, onClick }: KanbanCardProps) {
+export function KanbanCard({ task, index, onClick }: KanbanCardProps) {
   const checklistProgress = task.checklist ? task.checklist.filter(item => item.completed).length : 0;
   const checklistTotal = task.checklist ? task.checklist.length : 0;
 
@@ -40,54 +41,66 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
       const now = new Date();
       const distanceText = formatDistanceToNowStrict(deadlineDate, { locale: ptBR });
       if (deadlineDate < now) {
-        return `Venceu há ${distanceText}`;
+        return `Venceu há ${'\'\'\''}{distanceText}${'\'\'\''}`;
       }
-      return `Vence em ${distanceText}`;
+      return `Vence em ${'\'\'\''}{distanceText}${'\'\'\''}`;
     }
     const createdAtDate = task.createdAt?.toDate();
     if(createdAtDate) {
-      return `Criada há ${formatDistanceToNowStrict(createdAtDate, { locale: ptBR })}`;
+      return `Criada há ${'\'\'\''}{formatDistanceToNowStrict(createdAtDate, { locale: ptBR })}${'\'\'\''}`;
     }
     return '';
   };
   const timeText = getTimeText();
 
   return (
-    <Card
-      onClick={onClick}
-      className={cn(
-        'mb-2 cursor-pointer hover:shadow-lg transition-shadow duration-200 border-l-4',
-        priorityClasses[task.priority]
+    <Draggable draggableId={task.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            onClick={onClick}
+            className="mb-2"
+        >
+            <Card
+              className={cn(
+                'cursor-pointer hover:shadow-lg transition-shadow duration-200 border-l-4 bg-card',
+                priorityClasses[task.priority],
+                snapshot.isDragging && 'shadow-xl ring-2 ring-primary'
+              )}
+            >
+              <CardContent className="p-3">
+                <p className="font-semibold mb-2 text-foreground">{task.title}</p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <Badge variant="outline" className={cn(categoryClasses[task.category])}>
+                    {task.category}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{timeText}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {task.comments && task.comments.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" />
+                        <span>{task.comments.length}</span>
+                      </div>
+                    )}
+                    {checklistTotal > 0 && (
+                      <div className="flex items-center gap-1">
+                        <CheckSquare className="w-3 h-3" />
+                        <span>{checklistProgress}/{checklistTotal}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+        </div>
       )}
-    >
-      <CardContent className="p-3">
-        <p className="font-semibold mb-2 text-foreground">{task.title}</p>
-        <div className="flex flex-wrap gap-2 mb-3">
-          <Badge variant="outline" className={cn(categoryClasses[task.category])}>
-            {task.category}
-          </Badge>
-        </div>
-        <div className="flex justify-between items-center text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>{timeText}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {task.comments && task.comments.length > 0 && (
-              <div className="flex items-center gap-1">
-                <MessageSquare className="w-3 h-3" />
-                <span>{task.comments.length}</span>
-              </div>
-            )}
-            {checklistTotal > 0 && (
-              <div className="flex items-center gap-1">
-                <CheckSquare className="w-3 h-3" />
-                <span>{checklistProgress}/{checklistTotal}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    </Draggable>
   );
 }

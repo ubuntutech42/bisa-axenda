@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { KanbanCard } from './KanbanCard';
 import type { Task, KanbanList } from '@/lib/types';
 import { Input } from '../ui/input';
+import { Droppable } from 'react-beautiful-dnd';
+import { cn } from '@/lib/utils';
 
 interface KanbanColumnProps {
   list: KanbanList;
@@ -63,11 +65,20 @@ export function KanbanColumn({ list, tasks, onCardClick, onUpdateListName }: Kan
           {tasks.length}
         </span>
       </div>
-      <div className="flex-1 bg-muted/50 rounded-lg p-2 overflow-y-auto min-h-[300px]">
-        {tasks.map((task) => (
-          <KanbanCard key={task.id} task={task} onClick={() => onCardClick(task)} />
-        ))}
-      </div>
+      <Droppable droppableId={list.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={cn("flex-1 bg-muted/50 rounded-lg p-2 overflow-y-auto min-h-[300px] transition-colors", snapshot.isDraggingOver && "bg-primary/10")}
+          >
+            {tasks.map((task, index) => (
+              <KanbanCard key={task.id} task={task} index={index} onClick={() => onCardClick(task)} />
+            ))}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
     </div>
   );
 }
