@@ -54,7 +54,6 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const { setIsFloatingPomodoroOpen } = usePomodoro();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   if (isUserLoading) {
     return <Loader className="h-6 w-6 animate-spin" />;
@@ -113,9 +112,11 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
               <Timer className="mr-2 h-4 w-4" />
               <span>Timer Flutuante</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Configurações (Modal)</span>
+            <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configurações</span>
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
@@ -125,7 +126,6 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <SettingsDialog isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );
 }
