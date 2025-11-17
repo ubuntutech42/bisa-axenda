@@ -17,8 +17,8 @@ import { boardTemplates } from '@/components/kanban/board-templates';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 function BoardsPageContent() {
-    const { user, isUserLoading } = useUser();
     const router = useRouter();
+    const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -172,12 +172,12 @@ function BoardsPageContent() {
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button size="icon" variant="default" aria-label="Criar novo item">
-                            <Plus className="h-4 w-4" />
+                            <Plus />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={() => setIsCreateBoardDialogOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
+                            <Plus />
                             <span>Novo Quadro</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -202,7 +202,7 @@ function BoardsPageContent() {
                         <h2 className="text-xl font-semibold mb-2">Nenhum quadro encontrado</h2>
                         <p className="text-muted-foreground mb-4 max-w-md mx-auto">Comece criando seu primeiro quadro para organizar suas ideias e tarefas.</p>
                         <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
+                            <Plus />
                             Criar Primeiro Quadro
                         </Button>
                     </div>
