@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, writeBatch, doc, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, writeBatch, doc, getDocs, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Loader, Plus, Trash2 } from 'lucide-react';
@@ -12,6 +13,7 @@ import type { KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { BoardGroupCard } from '@/components/board/BoardGroupCard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { boardTemplates } from '@/components/kanban/board-templates';
 
 export default function BoardsPage() {
     const { user, isUserLoading } = useUser();
@@ -54,6 +56,50 @@ export default function BoardsPage() {
             return a.localeCompare(b);
         });
     }, [groupedBoards]);
+
+    const handleCreateBoard = async (name: string, type: KanbanBoardType['type'], group?: string) => {
+        if (!user) return;
+    
+        try {
+          const boardsCollection = collection(firestore, 'kanbanBoards');
+          const boardData: Omit<KanbanBoardType, 'id' | 'createdAt'> & {createdAt: any} = {
+            name,
+            type,
+            userId: user.uid,
+            createdAt: serverTimestamp(),
+            group: group,
+          };
+    
+          const newBoardRef = await addDoc(boardsCollection, boardData);
+      
+          const listsCollection = collection(firestore, 'kanbanBoards', newBoardRef.id, 'lists');
+          const template = boardTemplates[type];
+          
+          if (template && template.length > 0) {
+            const batch = writeBatch(firestore);
+            template.forEach(list => {
+              const listRef = doc(listsCollection);
+              batch.set(listRef, list);
+            });
+            await batch.commit();
+          }
+      
+          toast({
+            title: 'Quadro criado!',
+            description: `O quadro "${name}" foi criado com sucesso.`,
+          });
+          setIsCreateBoardDialogOpen(false);
+          router.push(`/board?group=${group || 'Sem Grupo'}`);
+      
+        } catch (error) {
+          console.error('Error creating board:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Erro ao criar quadro',
+            description: 'Não foi possível criar o novo quadro. Tente novamente.',
+          });
+        }
+      };
 
     const handleDeleteGroup = async () => {
         if (!groupToDelete || !firestore || !boards) return;
@@ -128,7 +174,7 @@ export default function BoardsPage() {
                 </Button>
             </Header>
 
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-y-auto">
                 {sortedGroups.length > 0 ? (
                     <div className="flex flex-wrap gap-8 pb-8">
                         {sortedGroups.map(groupName => (
@@ -156,9 +202,7 @@ export default function BoardsPage() {
             <CreateBoardDialog
                 isOpen={isCreateBoardDialogOpen}
                 onClose={() => setIsCreateBoardDialogOpen(false)}
-                onCreate={(name, type, group) => {
-                    router.push(`/board?group=${group || 'ungrouped'}`);
-                }}
+                onCreate={handleCreateBoard}
                 existingGroups={sortedGroups.filter(g => g !== 'Sem Grupo')}
             />
 

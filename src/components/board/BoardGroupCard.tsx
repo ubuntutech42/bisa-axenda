@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { KanbanBoard } from "@/lib/types";
-import { FileStack, ArrowRight, Trash2 } from "lucide-react";
+import { FileStack, ArrowRight, Trash2, Pencil } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Input } from '../ui/input';
@@ -22,7 +22,7 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
     const [isEditing, setIsEditing] = useState(false);
     const [currentGroupName, setCurrentGroupName] = useState(groupName);
 
-    const handleTitleClick = () => {
+    const handleEditClick = () => {
         if (groupName !== 'Sem Grupo') {
             setIsEditing(true);
         }
@@ -50,11 +50,10 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
 
     return (
         <Card className={cn(
-            "w-72 flex-shrink-0 flex flex-col relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-2",
-            "animate-float"
+            "w-72 flex-shrink-0 flex flex-col relative transition-shadow duration-300 hover:shadow-2xl",
         )}>
             <CardHeader>
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-2">
                     {isEditing ? (
                         <Input
                             value={currentGroupName}
@@ -62,20 +61,24 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                             onBlur={handleNameBlur}
                             onKeyDown={handleKeyDown}
                             autoFocus
-                            className="font-headline text-primary bg-transparent border-primary h-8"
+                            className="font-headline text-primary bg-transparent border-primary h-8 -ml-1"
                         />
                     ) : (
                         <CardTitle 
-                            className="font-headline text-primary truncate cursor-pointer hover:underline"
-                            onClick={handleTitleClick}
+                            className="font-headline text-primary truncate"
                         >
                             {groupName}
                         </CardTitle>
                     )}
-                     {groupName !== 'Sem Grupo' && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 -mt-1 -mr-2" onClick={() => onDeleteGroup(groupName)}>
-                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                        </Button>
+                     {groupName !== 'Sem Grupo' && !isEditing && (
+                        <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleEditClick}>
+                                <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDeleteGroup(groupName)}>
+                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                            </Button>
+                        </div>
                     )}
                 </div>
                 <CardDescription>{boards.length} {boards.length === 1 ? 'quadro' : 'quadros'} neste grupo</CardDescription>
