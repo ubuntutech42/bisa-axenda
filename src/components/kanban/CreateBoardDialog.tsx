@@ -23,6 +23,8 @@ import {
 import type { KanbanBoard } from '@/lib/types';
 import { boardTemplatesInfo } from './board-templates';
 import { Combobox } from '../ui/combobox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { HelpCircle } from 'lucide-react';
 
 type BoardType = KanbanBoard['type'];
 interface CreateBoardDialogProps {
@@ -63,17 +65,23 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = 
   const groupOptions = existingGroups.map(g => ({ value: g, label: g }));
 
   const handleOpenChange = (open: boolean) => {
-    if (open) {
-      setTimeout(() => {
-        if (initialFocus === 'group' && groupInputRef.current) {
-          groupInputRef.current.click();
-        } else if (boardNameInputRef.current) {
-          boardNameInputRef.current.focus();
-        }
-      }, 100);
+    if (!open) {
+        onClose();
     }
-    onClose();
   };
+
+  useEffect(() => {
+    if (isOpen) {
+        setTimeout(() => {
+            if (initialFocus === 'group' && groupInputRef.current) {
+                groupInputRef.current.focus();
+            } else if (boardNameInputRef.current) {
+                boardNameInputRef.current.focus();
+            }
+        }, 100);
+    }
+  }, [isOpen, initialFocus]);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -113,7 +121,19 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = 
                </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="board-type">Modelo do Quadro</Label>
+                <div className="flex items-center gap-2">
+                    <Label htmlFor="board-type">Modelo do Quadro</Label>
+                    <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger type='button'>
+                                <HelpCircle className='w-4 h-4 text-muted-foreground' />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className='max-w-xs'>{boardTemplatesInfo.find(t => t.type === type)?.description}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
               <Select onValueChange={(value) => setType(value as BoardType)} defaultValue={type}>
                 <SelectTrigger id="board-type">
                   <SelectValue placeholder="Selecione um modelo" />
@@ -126,9 +146,6 @@ export function CreateBoardDialog({ isOpen, onClose, onCreate, existingGroups = 
                   ))}
                 </SelectContent>
               </Select>
-               <p className="text-xs text-muted-foreground px-1">
-                {boardTemplatesInfo.find(t => t.type === type)?.description}
-               </p>
             </div>
           </div>
           <DialogFooter>
