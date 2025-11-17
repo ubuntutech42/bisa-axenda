@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import type { KanbanBoard as KanbanBoardType, Task, KanbanList } from '@/lib/types';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs, doc } from 'firebase/firestore';
+import type { KanbanBoard as KanbanBoardType, Task, KanbanList, User as UserType } from '@/lib/types';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { WisdomNugget } from '@/components/dashboard/WisdomNugget';
@@ -21,6 +22,9 @@ export default function DashboardPage() {
   const [allTasks, setAllTasks] = useState<TaskWithBoardId[]>([]);
   const [allLists, setAllLists] = useState<KanbanList[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
+  
+  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserType>(userDocRef);
 
   const boardsQuery = useMemoFirebase(() =>
     user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
@@ -101,8 +105,23 @@ export default function DashboardPage() {
       activeTasks: activeTasks,
     };
   }, [allTasks, allLists]);
+  
+  const getGreeting = () => {
+    const name = userProfile?.firstName || user?.displayName?.split(' ')[0] || 'Guerreiro(a)';
+    switch (userProfile?.gender) {
+      case 'Mulher':
+        return `Bem-vinda, ${name}!`;
+      case 'Homem':
+        return `Bem-vindo, ${name}!`;
+      case 'Não-binário':
+      case 'Outro':
+        return `Bem-vinde, ${name}!`;
+      default:
+        return `Bem-vindo(a), ${name}!`;
+    }
+  };
 
-  if (isUserLoading || areBoardsLoading || areTasksLoading || !user) {
+  if (isUserLoading || areBoardsLoading || areTasksLoading || isProfileLoading || !user) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="h-10 w-10 animate-spin text-primary" />
@@ -112,7 +131,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <Header title={`Bem-vindo(a), ${user.displayName?.split(' ')[0] || 'Guerreiro(a)'}!`} />
+      <Header title={getGreeting()} />
 
       <div className="space-y-8">
         <WisdomNugget />
