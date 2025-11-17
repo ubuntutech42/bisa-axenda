@@ -1,65 +1,102 @@
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus, LayoutGrid } from 'lucide-react';
+import { Loader, Plus, LayoutGrid, Trash2, MoreVertical } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
-import type { KanbanBoard as KanbanBoardType } from '@/lib/types';
+import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { BoardGroupCard } from '@/components/board/BoardGroupCard';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { boardTemplates } from '@/components/kanban/board-templates';
-import { BoardContent } from './BoardContent';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import GroupSelector from '@/components/board/GroupSelector';
+import BoardCarousel from '@/components/board/BoardCarousel';
+import { KanbanBoard } from '@/components/kanban/KanbanBoard';
+import { TaskDialog } from '@/components/kanban/TaskDialog';
+
+const LAST_GROUP_ID_KEY = 'axenda-last-group-id-';
 
 export default function BoardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const firestore = useFirestore();
   const { toast } = useToast();
+
+  // Dialog states
   const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
-  const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+  const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [boardToDelete, setBoardToDelete] = useState<KanbanBoardType | null>(null);
 
-  const groupFilter = searchParams.get('group');
+  // Data states
+  const [activeGroup, setActiveGroup] = useState<string>('');
+  const [activeBoard, setActiveBoard] = useState<KanbanBoardType | null>(null);
+  const [allUserBoards, setAllUserBoards] = useState<KanbanBoardType[]>([]);
 
+  // Firebase Queries
   const boardsQuery = useMemoFirebase(() =>
     user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
     [firestore, user]
   );
-  const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoardType>(boardsQuery);
+  const { data: boardsData, isLoading: areBoardsLoading } = useCollection<KanbanBoardType>(boardsQuery);
+  
+  const listsQuery = useMemoFirebase(() => 
+    user && activeBoard ? query(collection(firestore, 'kanbanBoards', activeBoard.id, 'lists')) : null, 
+    [firestore, user, activeBoard]
+  );
+  const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
 
+
+  // Redirect unauthenticated users
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [isUserLoading, user, router]);
 
-  const boardGroups = useMemo(() => {
-    if (!boards) return {};
-    return boards.reduce((acc, board) => {
-      const groupName = board.group || 'Sem Grupo';
-      if (!acc[groupName]) {
-        acc[groupName] = [];
+  // Initialize and filter boards
+  useEffect(() => {
+    if (boardsData) {
+      setAllUserBoards(boardsData);
+      
+      if (activeGroup === '' && user) {
+        const lastGroupId = localStorage.getItem(`${LAST_GROUP_ID_KEY}${user.uid}`) || 'ungrouped';
+        const groups = [...new Set(boardsData.map(b => b.group || 'ungrouped'))];
+        setActiveGroup(groups.includes(lastGroupId) ? lastGroupId : 'ungrouped');
       }
-      acc[groupName].push(board);
-      return acc;
-    }, {} as Record<string, KanbanBoardType[]>);
-  }, [boards]);
+    }
+  }, [boardsData, user, activeGroup]);
 
-  const sortedGroupNames = useMemo(() => {
-    const groupNames = Object.keys(boardGroups);
-    return groupNames.sort((a, b) => {
-        if (a === 'Sem Grupo') return 1;
-        if (b === 'Sem Grupo') return -1;
-        return a.localeCompare(b);
-    });
-  }, [boardGroups]);
+  // Derived state for groups and filtered boards
+  const boardGroups = useMemo(() => {
+    const groups = new Set(allUserBoards.map(b => b.group || 'ungrouped'));
+    return ['ungrouped', ...Array.from(groups).filter(g => g !== 'ungrouped').sort()];
+  }, [allUserBoards]);
+
+  const boardsInGroup = useMemo(() => {
+    const filtered = allUserBoards.filter(b => (b.group || 'ungrouped') === activeGroup);
+    return filtered.sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+  }, [allUserBoards, activeGroup]);
+
+  // Effect to select active board
+  useEffect(() => {
+    if (boardsInGroup.length > 0 && !boardsInGroup.some(b => b.id === activeBoard?.id)) {
+        setActiveBoard(boardsInGroup[0]);
+    } else if (boardsInGroup.length === 0) {
+        setActiveBoard(null);
+    }
+  }, [boardsInGroup, activeBoard]);
+
+  // Handlers
+  const handleGroupChange = (newGroup: string) => {
+    setActiveGroup(newGroup);
+    setActiveBoard(null); // Reset board selection
+    if (user) {
+        localStorage.setItem(`${LAST_GROUP_ID_KEY}${user.uid}`, newGroup);
+    }
+  };
 
   const handleCreateBoard = async (name: string, type: KanbanBoardType['type'], group?: string) => {
     if (!user) return;
@@ -71,10 +108,8 @@ export default function BoardPage() {
         type,
         userId: user.uid,
         createdAt: serverTimestamp(),
+        group: group || activeGroup === 'ungrouped' ? undefined : activeGroup,
       };
-      if (group) {
-        boardData.group = group;
-      }
 
       const newBoardRef = await addDoc(boardsCollection, boardData);
   
@@ -94,11 +129,8 @@ export default function BoardPage() {
         title: 'Quadro criado!',
         description: `O quadro "${name}" foi criado com sucesso.`,
       });
-
       setIsCreateBoardDialogOpen(false);
-      // Navigate to the new board's group
-      const groupParam = group || 'ungrouped';
-      router.push(`/board?group=${encodeURIComponent(groupParam)}`);
+      if(group) handleGroupChange(group);
   
     } catch (error) {
       console.error('Error creating board:', error);
@@ -114,65 +146,61 @@ export default function BoardPage() {
     if (!firestore) return;
     const boardRef = doc(firestore, 'kanbanBoards', boardId);
 
-    // Delete tasks
     const tasksRef = collection(boardRef, 'tasks');
     const tasksSnap = await getDocs(tasksRef);
     const taskDeletes = tasksSnap.docs.map(doc => deleteDoc(doc.ref));
     
-    // Delete lists
     const listsRef = collection(boardRef, 'lists');
     const listsSnap = await getDocs(listsRef);
     const listDeletes = listsSnap.docs.map(doc => deleteDoc(doc.ref));
 
     await Promise.all([...taskDeletes, ...listDeletes]);
-
-    // Finally, delete the board itself
     await deleteDoc(boardRef);
   };
   
-  const handleDeleteGroup = async () => {
-    if (!groupToDelete || !firestore) return;
-
-    const boardsInGroup = boardGroups[groupToDelete] || [];
-    if (boardsInGroup.length === 0) return;
-
-    toast({ title: 'Excluindo grupo...', description: `Removendo "${groupToDelete}" e todos os seus quadros.` });
-    
+  const handleDeleteBoard = async () => {
+    if (!boardToDelete) return;
+    toast({ title: 'Excluindo quadro...', description: `Removendo "${boardToDelete.name}".`});
     try {
-      const deletePromises = boardsInGroup.map(board => deleteBoardAndSubcollections(board.id));
-      await Promise.all(deletePromises);
-
-      toast({ title: 'Grupo excluído!', description: `O grupo "${groupToDelete}" foi removido com sucesso.` });
+      await deleteBoardAndSubcollections(boardToDelete.id);
+      toast({ title: 'Quadro excluído!', description: 'O quadro foi removido com sucesso.' });
+      if (activeBoard?.id === boardToDelete.id) {
+          setActiveBoard(null);
+      }
     } catch (error) {
-      console.error('Error deleting group:', error);
-      toast({ variant: 'destructive', title: 'Erro ao excluir grupo', description: 'Não foi possível remover o grupo.' });
+      console.error('Error deleting board:', error);
+      toast({ variant: 'destructive', title: 'Erro ao excluir quadro', description: 'Não foi possível remover o quadro.'});
     } finally {
-      setGroupToDelete(null);
+      setBoardToDelete(null);
     }
   };
 
-  const handleUpdateGroupName = async (oldGroupName: string, newGroupName: string) => {
-    if (!firestore || oldGroupName === 'Sem Grupo' || !newGroupName.trim()) return;
-
-    const boardsToUpdate = boardGroups[oldGroupName] || [];
-    if (boardsToUpdate.length === 0) return;
-
-    toast({ title: 'Renomeando grupo...', description: `Alterando "${oldGroupName}" para "${newGroupName}".` });
-
+  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt' >) => {
+    if (!user || !activeBoard) return;
     try {
-      const batch = writeBatch(firestore);
-      boardsToUpdate.forEach(board => {
-        const boardRef = doc(firestore, 'kanbanBoards', board.id);
-        batch.update(boardRef, { group: newGroupName });
+      const tasksCollection = collection(firestore, 'kanbanBoards', activeBoard.id, 'tasks');
+      await addDoc(tasksCollection, {
+        ...newTaskData,
+        userId: user.uid,
+        timeSpent: 0,
+        createdAt: serverTimestamp(),
       });
-      await batch.commit();
-      toast({ title: 'Grupo renomeado!', description: 'O nome do grupo foi atualizado.' });
+      toast({
+        title: 'Tarefa criada!',
+        description: `A tarefa "${newTaskData.title}" foi adicionada ao seu quadro.`,
+      });
+      setIsNewTaskDialogOpen(false);
     } catch (error) {
-      console.error('Error updating group name:', error);
-      toast({ variant: 'destructive', title: 'Erro ao renomear', description: 'Não foi possível alterar o nome do grupo.' });
+      console.error('Error creating task:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar tarefa',
+        description: 'Não foi possível salvar a nova tarefa. Tente novamente.',
+      });
     }
   };
-  
+
+
   if (isUserLoading || areBoardsLoading || !user) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -181,68 +209,82 @@ export default function BoardPage() {
     );
   }
 
-  // If a group is selected, show the Kanban board view for that group
-  if (groupFilter) {
-    return <BoardContent />;
-  }
-
-  // Otherwise, show the board groups overview
   return (
     <div className="flex flex-col h-full w-full">
         <Header title="Meus Quadros">
-            <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Quadro
+          <div className="flex items-center gap-2">
+            <GroupSelector 
+              groups={boardGroups}
+              activeGroup={activeGroup}
+              onGroupChange={handleGroupChange}
+            />
+            <Button onClick={() => setIsNewTaskDialogOpen(true)} disabled={!activeBoard}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Tarefa
             </Button>
+          </div>
         </Header>
-        <div className="flex-1">
-            {boards && boards.length > 0 ? (
-                <ScrollArea className="w-full whitespace-nowrap h-full">
-                    <div className="flex gap-6 pb-4 p-2">
-                    {sortedGroupNames.map(groupName => (
-                        <BoardGroupCard 
-                            key={groupName}
-                            groupName={groupName}
-                            boards={boardGroups[groupName]}
-                            onDeleteGroup={() => setGroupToDelete(groupName)}
-                            onUpdateGroupName={handleUpdateGroupName}
-                        />
-                    ))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+        
+        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+            {boardsInGroup.length > 0 ? (
+                <BoardCarousel 
+                    boards={boardsInGroup}
+                    activeBoard={activeBoard}
+                    onSelectBoard={setActiveBoard}
+                    onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
+                    onDeleteBoard={setBoardToDelete}
+                />
             ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
-                    <LayoutGrid className="w-20 h-20 text-muted mb-4" />
-                    <h2 className="text-2xl font-semibold mb-2">Sua jornada começa aqui</h2>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">Crie seu primeiro quadro para organizar tarefas, projetos ou ideias.</p>
-                    <Button onClick={() => setIsCreateBoardDialogOpen(true)} size="lg">
+                <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-48">
+                    <LayoutGrid className="w-12 h-12 text-muted mb-4" />
+                    <h2 className="text-xl font-semibold mb-2">Sem quadros neste grupo</h2>
+                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">Crie seu primeiro quadro neste grupo para começar.</p>
+                    <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Criar Primeiro Quadro
+                        Criar Quadro
                     </Button>
                 </div>
             )}
+            
+            <div className="flex-1 overflow-hidden h-full">
+                {activeBoard && !areListsLoading && lists ? (
+                    <KanbanBoard boardId={activeBoard.id} lists={lists} />
+                ) : (
+                    <div className="flex items-center justify-center h-full">
+                        {areBoardsLoading ? <Loader className="h-8 w-8 animate-spin" /> : <p className="text-muted-foreground">Selecione um quadro acima para visualizar.</p>}
+                    </div>
+                )}
+            </div>
         </div>
+
         <CreateBoardDialog 
             isOpen={isCreateBoardDialogOpen}
             onClose={() => setIsCreateBoardDialogOpen(false)}
             onCreate={handleCreateBoard}
-            existingGroups={sortedGroupNames.filter(g => g !== 'Sem Grupo')}
+            existingGroups={boardGroups.filter(g => g !== 'ungrouped')}
         />
-         <AlertDialog open={!!groupToDelete} onOpenChange={(open) => !open && setGroupToDelete(null)}>
+
+         <AlertDialog open={!!boardToDelete} onOpenChange={(open) => !open && setBoardToDelete(null)}>
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        A exclusão do grupo "{groupToDelete}" é permanente. Todos os quadros, colunas e tarefas dentro dele serão apagados para sempre.
+                        A exclusão do quadro "{boardToDelete?.name}" é permanente. Todas as colunas e tarefas dentro dele serão apagadas para sempre.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setGroupToDelete(null)}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">Sim, excluir</AlertDialogAction>
+                    <AlertDialogCancel onClick={() => setBoardToDelete(null)}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive hover:bg-destructive/90">Sim, excluir</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+
+        {lists && activeBoard && <TaskDialog
+          isOpen={isNewTaskDialogOpen}
+          onClose={() => setIsNewTaskDialogOpen(false)}
+          onSave={handleCreateTask}
+          lists={lists}
+        />}
     </div>
   );
 }
