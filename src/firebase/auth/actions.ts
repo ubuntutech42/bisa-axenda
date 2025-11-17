@@ -8,20 +8,19 @@ import {
   sendPasswordResetEmail,
   updateProfile as updateAuthProfile,
 } from 'firebase/auth';
-import { getSdks } from '@/firebase';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { createUserProfile } from '@/lib/user';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '../errors';
-import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, setDoc } from 'firebase/firestore';
 
-// Helper to initialize and get services
+// Helper to initialize and get services securely on the server
 function getFirebaseServices() {
   const isInitialized = getApps().length > 0;
   const app = isInitialized ? getApps()[0] : initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const { firestore } = getSdks(app);
+  const firestore = getFirestore(app);
   return { auth, firestore };
 }
 
