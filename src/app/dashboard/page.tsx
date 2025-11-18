@@ -130,10 +130,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 md:gap-8">
       <Header title={getGreeting()} />
 
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
         <WisdomNugget />
 
         <div className="grid gap-4 md:grid-cols-3">

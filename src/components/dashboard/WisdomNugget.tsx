@@ -49,7 +49,7 @@ export function WisdomNugget() {
   }
 
   return (
-    <Card className="relative overflow-hidden group h-48 flex flex-col justify-end">
+    <Card className="relative overflow-hidden group h-40 md:h-48 flex flex-col justify-end">
         <div className="absolute inset-0">
             <Image
                 src={image.imageUrl}
@@ -62,12 +62,12 @@ export function WisdomNugget() {
             />
             <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition-colors" />
         </div>
-      <CardContent className="relative z-10 p-6">
-        <h3 className="mb-2 text-sm font-semibold text-primary">Frase do dia</h3>
-        <blockquote className="text-lg font-semibold text-primary-foreground italic border-l-4 border-primary pl-4">
+      <CardContent className="relative z-10 p-4 md:p-6">
+        <h3 className="mb-2 text-xs md:text-sm font-semibold text-primary">Frase do dia</h3>
+        <blockquote className="text-base md:text-lg font-semibold text-primary-foreground italic border-l-4 border-primary pl-3 md:pl-4">
           "{quote.text}"
         </blockquote>
-        <p className="text-right mt-2 text-sm text-muted-foreground">
+        <p className="text-right mt-2 text-xs md:text-sm text-muted-foreground">
             -{' '}
             <a
                 href={googleSearchUrl}
