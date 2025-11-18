@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { PomodoroProvider } from '@/context/PomodoroContext';
 import { AppContent } from './AppContent';
+import { FirebaseErrorListener } from './FirebaseErrorListener';
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
     return (
@@ -16,6 +17,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         >
             <FirebaseClientProvider>
               <PomodoroProvider>
+                <FirebaseErrorListener />
                 <AppContent>
                   {children}
                 </AppContent>
