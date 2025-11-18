@@ -11,8 +11,6 @@ import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { createUserProfile } from '@/lib/user';
 import { Loader } from 'lucide-react';
-import LandingLayout from '@/app/landing/layout';
-import LandingPage from '@/app/landing/page';
 import { cn } from '@/lib/utils';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
@@ -24,74 +22,64 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(true); // Placeholder state
 
-
-  const publicPaths = ['/login', '/register'];
-  const isPublicPath = publicPaths.includes(pathname);
-  const isLandingPage = pathname === '/';
-
+  const nonAppPaths = ['/', '/login', '/register'];
+  const isAppPath = !nonAppPaths.includes(pathname);
 
   useEffect(() => {
     if (isUserLoading) return;
 
     if (user) {
-      if (isPublicPath) {
+      // If user is logged in and on a non-app page (like landing or login), redirect to dashboard
+      if (!isAppPath) {
         router.replace('/dashboard');
         return;
       }
       
-      if (!firestore) return;
-
-      const userRef = doc(firestore, "users", user.uid);
-      const unsubscribe = onSnapshot(userRef, (userSnap) => {
-        if (!userSnap.exists()) {
-           // User doc doesn't exist, maybe it's being created.
-           // Let's not rush to create it again, just wait.
-           // It might be created by the login flow with Google data.
-        }
-      }, (error) => {
-        console.error("Error listening to user profile:", error);
-      });
-
-      // Simple one-time check to create profile if it's missing after a short delay
-      setTimeout(async () => {
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          console.log("User profile doesn't exist, creating one...");
+      // If user is logged in, ensure their profile exists
+      if (firestore) {
+        const userRef = doc(firestore, "users", user.uid);
+        
+        // Simple one-time check to create profile if it's missing after a short delay
+        const checkAndCreateProfile = async () => {
           try {
-            await createUserProfile(user, firestore);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) {
+              console.log("User profile doesn't exist, creating one...");
+              await createUserProfile(user, firestore);
+            }
           } catch (error) {
             console.error("Failed to create user profile on-demand:", error);
           }
-        }
-      }, 2000); // 2-second delay to allow login flow to complete
+        };
 
-      return () => unsubscribe();
+        const timeoutId = setTimeout(checkAndCreateProfile, 2000); // 2-second delay
+        return () => clearTimeout(timeoutId);
+      }
 
     } else {
-      if (!isPublicPath && !isLandingPage) {
-        router.replace('/login');
+      // If user is not logged in and tries to access an app page, redirect to landing
+      if (isAppPath) {
+        router.replace('/');
       }
     }
-  }, [user, isUserLoading, isPublicPath, isLandingPage, pathname, router, firestore]);
+  }, [user, isUserLoading, isAppPath, pathname, router, firestore]);
   
-  if (isUserLoading || (!user && !isPublicPath && !isLandingPage) || (user && isPublicPath)) {
+  // Show a global loader while checking auth state, or if a redirect is imminent
+  if (isUserLoading || (user && !isAppPath) || (!user && isAppPath)) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <Loader className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
-  
-  if(isLandingPage && !user) {
-    return (
-        <LandingLayout>
-            <LandingPage/>
-        </LandingLayout>
-    )
-  }
 
-  if (user) {
-    // For authenticated users, show the full app layout on non-public paths.
+  // If it's not an app path and user is not logged in, render the public page (e.g., landing, login)
+  if (!isAppPath && !user) {
+    return <>{children}</>;
+  }
+  
+  // If user is authenticated and it's an app path, show the full app layout
+  if (user && isAppPath) {
     return (
       <div className="flex h-screen w-full bg-background">
         <Sidebar 
@@ -113,16 +101,6 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If user is not authenticated, and it's a public path, show children
-  if (!user && isPublicPath) {
-    return <>{children}</>;
-  }
-
-
-  // Fallback just in case, though it should not be reached with the useEffect logic.
-  return (
-    <div className="flex items-center justify-center h-screen bg-background">
-      <Loader className="h-10 w-10 animate-spin text-primary" />
-    </div>
-  );
+  // Fallback for any other case (should not be reached)
+  return <>{children}</>;
 }

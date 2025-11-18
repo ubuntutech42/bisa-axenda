@@ -1,7 +1,13 @@
 
+import LandingLayout from "@/app/landing/layout";
+import LandingPage from "@/app/landing/page";
 
 export default function HomePage() {
-  // The logic to show landing vs dashboard is handled in AppContent based on user auth state.
-  // This page can return null because AppContent will render the correct component (Dashboard or Landing).
-  return null;
+  // This page will now directly render the landing page content.
+  // The AppContent component will handle redirects for authenticated users if they land here.
+  return (
+    <LandingLayout>
+        <LandingPage/>
+    </LandingLayout>
+  );
 }
