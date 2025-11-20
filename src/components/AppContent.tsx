@@ -137,7 +137,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
               size="icon"
               className={cn(
                 'absolute top-1/2 -translate-y-1/2 bg-card hover:bg-accent-hover border rounded-full h-8 w-8 z-40 transition-all duration-300 ease-in-out',
-                isSidebarCollapsed ? 'left-[72px]' : 'left-[248px]'
+                isSidebarCollapsed ? 'left-[68px]' : 'left-[244px]'
               )}
               onClick={() => setIsSidebarCollapsed(prev => !prev)}
             >
