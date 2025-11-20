@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskDialog } from './TaskDialog';
-import type { Task, KanbanList } from '@/lib/types';
+import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, serverTimestamp, addDoc } from 'firebase/firestore';
@@ -14,15 +14,16 @@ import { Button } from '../ui/button';
 import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 
 interface KanbanBoardProps {
-  boardId: string;
+  board: KanbanBoardType;
   lists: KanbanList[];
   onNewTaskClick: (listId: string) => void;
 }
 
-export function KanbanBoard({ boardId, lists, onNewTaskClick }: KanbanBoardProps) {
+export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { id: boardId, userId: ownerId } = board;
 
   const tasksQuery = useMemoFirebase(() => 
     user && boardId ? collection(firestore, 'kanbanBoards', boardId, 'tasks') : null, 

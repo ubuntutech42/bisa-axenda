@@ -125,7 +125,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "KanbanBoard",
       "type": "object",
-      "description": "Represents a board for organizing tasks or other items.",
+      "description": "Represents a board for organizing tasks or other items. Can be shared with multiple users.",
       "properties": {
         "id": {
           "type": "string",
@@ -152,9 +152,16 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of when the board was created."
+        },
+        "members": {
+          "type": "array",
+          "description": "A list of user IDs who have access to this board. The first member is the owner.",
+          "items": {
+            "type": "string"
+          }
         }
       },
-      "required": ["id", "userId", "name", "type", "createdAt"]
+      "required": ["id", "userId", "name", "type", "createdAt", "members"]
     },
     "KanbanList": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -535,7 +542,7 @@
       "schema": {
         "$ref": "#/entities/KanbanBoard"
       },
-      "description": "Stores all the boards for all users."
+      "description": "Stores all the boards for all users. Access is controlled by the 'members' array."
     },
     "/kanbanBoards/{boardId}/lists/{listId}": {
       "schema": {

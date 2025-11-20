@@ -4,19 +4,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
-import { Loader, Plus, ArrowLeft } from 'lucide-react';
-import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
+import { Loader, Plus, ArrowLeft, Users } from 'lucide-react';
 import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { boardTemplates } from '@/components/kanban/board-templates';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { BoardMembers } from '@/components/board/BoardMembers';
+import { ShareDialog } from '@/components/board/ShareDialog';
 
 
 export default function BoardPage() {
@@ -29,6 +27,7 @@ export default function BoardPage() {
   const boardId = searchParams.get('id');
 
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [initialListForNewTask, setInitialListForNewTask] = useState<string | undefined>();
 
 
@@ -40,7 +39,7 @@ export default function BoardPage() {
 
 
   const listsQuery = useMemoFirebase(() => 
-    user && activeBoard ? query(collection(firestore, 'kanbanBoards', activeBoard.id, 'lists')) : null, 
+    user && activeBoard ? collection(firestore, 'kanbanBoards', activeBoard.id, 'lists') : null, 
     [firestore, user, activeBoard]
   );
   const { data: lists, isLoading: areListsLoading } = useCollection<KanbanList>(listsQuery);
@@ -108,7 +107,7 @@ export default function BoardPage() {
       <div className="flex flex-col h-full w-full">
           <div className="flex-shrink-0">
             <Header>
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-2 flex-1 min-w-0'>
                  <Button variant="ghost" size="icon" asChild>
                   <Link href="/boards">
                     <ArrowLeft className="h-5 w-5" />
@@ -118,7 +117,12 @@ export default function BoardPage() {
                   {activeBoard?.name || 'Carregando...'}
                 </h1>
               </div>
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-4'>
+                {activeBoard && <BoardMembers memberIds={activeBoard.members} />}
+                <Button onClick={() => setIsShareDialogOpen(true)} variant="outline">
+                    <Users className="mr-2 h-4 w-4" />
+                    Compartilhar
+                </Button>
                 <Button onClick={() => handleOpenNewTaskDialog()} disabled={!activeBoard}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nova Tarefa
@@ -127,10 +131,10 @@ export default function BoardPage() {
             </Header>
           </div>
           
-          <div className="flex-1 -mr-6 pr-2 -ml-6 pl-6 overflow-auto">
+          <div className="flex-1 overflow-auto -mr-6 pr-2 -ml-6 pl-6">
               {activeBoard && !areListsLoading && lists ? (
                   <KanbanBoard 
-                    boardId={activeBoard.id} 
+                    board={activeBoard}
                     lists={lists} 
                     onNewTaskClick={handleOpenNewTaskDialog}
                   />
@@ -148,6 +152,12 @@ export default function BoardPage() {
         onSave={handleCreateTask}
         lists={lists}
         initialListId={initialListForNewTask}
+      />}
+      {activeBoard && user && <ShareDialog 
+        board={activeBoard}
+        currentUser={user}
+        isOpen={isShareDialogOpen}
+        onClose={() => setIsShareDialogOpen(false)}
       />}
     </>
   );

@@ -30,7 +30,7 @@ function BoardsPageContent() {
     const [boardToDelete, setBoardToDelete] = useState<KanbanBoardType | null>(null);
 
     const boardsQuery = useMemoFirebase(() =>
-        user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
+        user ? query(collection(firestore, 'kanbanBoards'), where('members', 'array-contains', user.uid)) : null,
         [firestore, user]
     );
     const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoardType>(boardsQuery);
@@ -68,12 +68,13 @@ function BoardsPageContent() {
     
         try {
           const boardsCollection = collection(firestore, 'kanbanBoards');
-          const boardData: Omit<KanbanBoardType, 'id' | 'createdAt'> & {createdAt: any} = {
+          const boardData: Omit<KanbanBoardType, 'id'> = {
             name,
             type,
             userId: user.uid,
-            createdAt: serverTimestamp(),
+            createdAt: serverTimestamp() as any,
             group: group,
+            members: [user.uid], // Start with the creator as a member
           };
     
           const newBoardRef = await addDoc(boardsCollection, boardData);
@@ -117,6 +118,9 @@ function BoardsPageContent() {
             const boardsInGroup = boards.filter(b => b.group === groupToDelete);
 
             for (const board of boardsInGroup) {
+                // Only allow deletion if the current user is the owner
+                if(board.userId !== user?.uid) continue;
+
                 const boardRef = doc(firestore, 'kanbanBoards', board.id);
 
                 const tasksRef = collection(boardRef, 'tasks');
@@ -129,7 +133,7 @@ function BoardsPageContent() {
             }
 
             await batch.commit();
-            toast({ title: 'Grupo excluído!', description: 'O grupo e todos os seus quadros foram removidos.' });
+            toast({ title: 'Grupo excluído!', description: 'Os quadros que você possui no grupo foram removidos.' });
         } catch (error) {
             console.error("Error deleting group:", error);
             toast({ variant: 'destructive', title: 'Erro ao excluir', description: 'Não foi possível remover o grupo.' });
@@ -139,7 +143,15 @@ function BoardsPageContent() {
     };
     
     const handleDeleteBoard = async () => {
-        if (!boardToDelete || !firestore) return;
+        if (!boardToDelete || !firestore || !user) return;
+        
+        // Security check: Only owner can delete
+        if(boardToDelete.userId !== user.uid) {
+            toast({ variant: 'destructive', title: 'Acesso Negado', description: 'Apenas o proprietário pode excluir este quadro.' });
+            setBoardToDelete(null);
+            return;
+        }
+
         toast({ title: 'Excluindo quadro...', description: `Removendo o quadro "${boardToDelete.name}".` });
 
         try {
@@ -166,13 +178,13 @@ function BoardsPageContent() {
     };
     
     const handleUpdateGroupName = async (oldGroupName: string, newGroupName: string) => {
-        if (!firestore || !boards || !newGroupName.trim()) return;
+        if (!firestore || !boards || !newGroupName.trim() || !user) return;
         
         toast({ title: 'Atualizando grupo...', description: `Renomeando "${oldGroupName}" para "${newGroupName}".`});
 
         try {
             const batch = writeBatch(firestore);
-            const boardsInGroup = boards.filter(b => (b.group || 'Sem Grupo') === oldGroupName);
+            const boardsInGroup = boards.filter(b => (b.group || 'Sem Grupo') === oldGroupName && b.userId === user.uid);
             
             boardsInGroup.forEach(board => {
                 const boardRef = doc(firestore, 'kanbanBoards', board.id);
@@ -180,7 +192,7 @@ function BoardsPageContent() {
             });
             
             await batch.commit();
-            toast({ title: 'Grupo atualizado!', description: 'O nome do grupo foi alterado.' });
+            toast({ title: 'Grupo atualizado!', description: 'O nome do grupo foi alterado nos quadros que você possui.' });
         } catch (error) {
             console.error("Error updating group name:", error);
             toast({ variant: 'destructive', title: 'Erro ao renomear', description: 'Não foi possível alterar o nome do grupo.' });
@@ -196,11 +208,12 @@ function BoardsPageContent() {
         );
     }
 
-    const hasContent = ungroupedBoards.length > 0 || sortedGroups.length > 0;
+    const hasContent = (boards && boards.length > 0);
 
     return (
         <div className="flex flex-col h-full w-full">
-            <Header title="Meus Quadros">
+            <Header>
+                <h1 className="text-3xl font-bold font-headline">Meus Quadros</h1>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button size="default" variant="default" aria-label="Criar novo item">
@@ -233,14 +246,14 @@ function BoardsPageContent() {
                                             <div className="group relative p-4 border rounded-lg h-full hover:shadow-lg transition-shadow bg-card">
                                                 <h3 className="font-semibold text-card-foreground truncate">{board.name}</h3>
                                                 <p className="text-sm text-muted-foreground">{boardTemplatesInfo.find(t => t.type === board.type)?.name || 'Quadro'}</p>
-                                                <Button 
+                                                {board.userId === user?.uid && <Button 
                                                     variant="ghost" 
                                                     size="icon" 
                                                     className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setBoardToDelete(board); }}
                                                 >
                                                     <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
+                                                </Button>}
                                             </div>
                                         </Link>
                                     ))}
@@ -261,6 +274,7 @@ function BoardsPageContent() {
                                             boards={groupedBoards[groupName]}
                                             onDeleteGroup={() => setGroupToDelete(groupName)}
                                             onUpdateGroupName={handleUpdateGroupName}
+                                            isOwner={groupedBoards[groupName].some(b => b.userId === user?.uid)}
                                         />
                                     ))}
                                 </div>
@@ -292,12 +306,12 @@ function BoardsPageContent() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Excluir o grupo "{groupToDelete}"?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta ação é permanente e <span className='font-bold'>excluirá todos os quadros</span>, colunas e tarefas dentro deste grupo. Você tem certeza?
+                            Esta ação é permanente e <span className='font-bold'>excluirá todos os quadros que você possui</span> dentro deste grupo. Quadros compartilhados com você não serão afetados. Você tem certeza?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">Sim, excluir tudo</AlertDialogAction>
+                        <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">Sim, excluir meus quadros</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -307,7 +321,7 @@ function BoardsPageContent() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Excluir o quadro "{boardToDelete?.name}"?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta ação é permanente e excluirá todas as colunas e tarefas dentro deste quadro. Você tem certeza?
+                            Esta ação é permanente e excluirá todas as colunas e tarefas dentro deste quadro. Apenas o proprietário pode fazer isso. Você tem certeza?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -327,7 +341,3 @@ export default function BoardsPage() {
         </Suspense>
     );
 }
-
-    
-
-    

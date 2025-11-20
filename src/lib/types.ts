@@ -36,11 +36,12 @@ export interface Task {
 
 export interface KanbanBoard {
   id: string;
-  userId: string;
+  userId: string; // The owner of the board
   name: string;
   group?: string;
   type: 'kanban' | 'swot' | 'business_canvas' | 'goal_setting' | 'custom' | 'weekly_reflection';
   createdAt: Timestamp;
+  members: string[]; // Array of user UIDs who have access
 }
 
 export interface KanbanList {

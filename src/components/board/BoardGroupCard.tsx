@@ -16,9 +16,10 @@ interface BoardGroupCardProps {
     boards: KanbanBoard[];
     onDeleteGroup: (groupName: string) => void;
     onUpdateGroupName: (oldGroupName: string, newGroupName: string) => void;
+    isOwner: boolean; // Is the current user an owner of at least one board in this group
 }
 
-export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroupName }: BoardGroupCardProps) {
+export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroupName, isOwner }: BoardGroupCardProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [currentGroupName, setCurrentGroupName] = useState(groupName);
 
@@ -60,7 +61,7 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                             {groupName}
                         </CardTitle>
                     )}
-                     <DropdownMenu>
+                    {isOwner && <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-7 w-7">
                                 <Settings className="w-4 h-4 text-muted-foreground hover:text-primary" />
@@ -79,7 +80,7 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                                 <span>Excluir Grupo</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
-                    </DropdownMenu>
+                    </DropdownMenu>}
                 </div>
                 <CardDescription>{boards.length} {boards.length === 1 ? 'quadro' : 'quadros'} neste grupo</CardDescription>
             </CardHeader>
@@ -111,5 +112,3 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
         </Card>
     );
 }
-
-    
