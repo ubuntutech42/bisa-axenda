@@ -14,7 +14,7 @@ import type { KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { BoardGroupCard } from '@/components/board/BoardGroupCard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { boardTemplates } from '@/components/kanban/board-templates';
+import { boardTemplates, boardTemplatesInfo } from '@/components/kanban/board-templates';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 
@@ -232,7 +232,7 @@ function BoardsPageContent() {
                                         <Link key={board.id} href={`/board?id=${board.id}`} className="block">
                                             <div className="group relative p-4 border rounded-lg h-full hover:shadow-lg transition-shadow bg-card">
                                                 <h3 className="font-semibold text-card-foreground truncate">{board.name}</h3>
-                                                <p className="text-sm text-muted-foreground">{boardTemplates.find(t => t.type === board.type)?.name || 'Quadro'}</p>
+                                                <p className="text-sm text-muted-foreground">{boardTemplatesInfo.find(t => t.type === board.type)?.name || 'Quadro'}</p>
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon" 
@@ -327,5 +327,7 @@ export default function BoardsPage() {
         </Suspense>
     );
 }
+
+    
 
     
