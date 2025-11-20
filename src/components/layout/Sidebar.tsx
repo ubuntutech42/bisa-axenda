@@ -47,7 +47,6 @@ const navItems = [
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
-  { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -56,85 +55,8 @@ interface SidebarProps {
   hasNotifications: boolean;
 }
 
-function NotificationsSheet({ isCollapsed }: { isCollapsed: boolean }) {
-  const { user } = useUser();
-  const firestore = useFirestore();
 
-  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: userProfile } = useDoc<UserType>(userDocRef);
-
-  const notificationsQuery = useMemoFirebase(
-    () => {
-        if (!firestore || !userProfile?.createdAt) return null;
-        return query(
-            collection(firestore, 'notifications'), 
-            where('createdAt', '>=', userProfile.createdAt),
-            orderBy('createdAt', 'desc'), 
-            limit(20)
-        );
-    },
-    [firestore, userProfile]
-  );
-  const { data: notifications, isLoading } = useCollection<NotificationType>(notificationsQuery);
-  const notificationCount = notifications?.length || 0;
-
-  return (
-    <Sheet>
-        <SheetTrigger asChild>
-            <Button variant="ghost" className={cn("relative", isCollapsed ? "w-12 h-12" : "w-full justify-start")}>
-                 <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className='relative flex items-center gap-3'>
-                                <Bell className="h-5 w-5 shrink-0" />
-                                <span className={cn(isCollapsed && 'sr-only')}>Notificações</span>
-                                {notificationCount > 0 && (
-                                <div className="absolute -top-1 left-3 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
-                                    {notificationCount}
-                                </div>
-                                )}
-                            </div>
-                        </TooltipTrigger>
-                        {isCollapsed && (
-                            <TooltipContent side="right">
-                                Notificações
-                            </TooltipContent>
-                        )}
-                    </Tooltip>
-                 </TooltipProvider>
-            </Button>
-        </SheetTrigger>
-        <SheetContent className="w-full sm:max-w-md" side="right">
-            <SheetHeader>
-                <SheetTitle>Notificações</SheetTitle>
-                <SheetDescription>Seus lembretes e avisos importantes.</SheetDescription>
-            </SheetHeader>
-            <div className="py-4 space-y-2">
-                {isLoading ? (
-                    <div className="flex justify-center items-center h-40"><Loader className="animate-spin" /></div>
-                ) : notifications && notifications.length > 0 ? (
-                    notifications.map(notification => (
-                        <div key={notification.id}>
-                            <div className="p-4 rounded-lg bg-muted/50">
-                                <h4 className="font-semibold">{notification.title}</h4>
-                                <p className="text-sm text-muted-foreground">{notification.message}</p>
-                                <p className="text-xs text-muted-foreground/80 mt-2">
-                                    {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
-                                </p>
-                            </div>
-                            <Separator className="last:hidden my-2"/>
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-center text-muted-foreground py-10">Nenhuma notificação nova.</p>
-                )}
-            </div>
-        </SheetContent>
-    </Sheet>
-  )
-}
-
-export function UserProfileButton() {
+function UserProfileButton() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const { setIsFloatingPomodoroOpen } = usePomodoro();
@@ -185,6 +107,74 @@ export function UserProfileButton() {
         </DropdownMenuContent>
       </DropdownMenu>
   );
+}
+
+function SidebarHeader({ isCollapsed }: { isCollapsed: boolean }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: userProfile } = useDoc<UserType>(userDocRef);
+
+    const notificationsQuery = useMemoFirebase(
+      () => {
+          if (!firestore || !userProfile?.createdAt) return null;
+          return query(
+              collection(firestore, 'notifications'), 
+              where('createdAt', '>=', userProfile.createdAt),
+              orderBy('createdAt', 'desc'), 
+              limit(20)
+          );
+      },
+      [firestore, userProfile]
+    );
+    const { data: notifications, isLoading } = useCollection<NotificationType>(notificationsQuery);
+    const notificationCount = notifications?.length || 0;
+
+    return (
+        <div className={cn("flex h-16 shrink-0 items-center justify-between border-b px-4", isCollapsed && "px-2 justify-center")}>
+            {!isCollapsed ? <Logo /> : <div className="w-9 h-9 bg-primary rounded-lg" />}
+
+            <Sheet>
+                <SheetTrigger asChild>
+                    <button className={cn("relative flex items-center gap-2 transition-all", isCollapsed && 'hidden')}>
+                        <UserProfileButton />
+                        {notificationCount > 0 && (
+                            <div className="absolute -top-0 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
+                                {notificationCount}
+                            </div>
+                        )}
+                    </button>
+                </SheetTrigger>
+                 <SheetContent className="w-full sm:max-w-md" side="right">
+                    <SheetHeader>
+                        <SheetTitle>Notificações</SheetTitle>
+                        <SheetDescription>Seus lembretes e avisos importantes.</SheetDescription>
+                    </SheetHeader>
+                    <div className="py-4 space-y-2">
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-40"><Loader className="animate-spin" /></div>
+                        ) : notifications && notifications.length > 0 ? (
+                            notifications.map(notification => (
+                                <div key={notification.id}>
+                                    <div className="p-4 rounded-lg bg-muted/50">
+                                        <h4 className="font-semibold">{notification.title}</h4>
+                                        <p className="text-sm text-muted-foreground">{notification.message}</p>
+                                        <p className="text-xs text-muted-foreground/80 mt-2">
+                                            {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
+                                        </p>
+                                    </div>
+                                    <Separator className="last:hidden my-2"/>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-center text-muted-foreground py-10">Nenhuma notificação nova.</p>
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </div>
+    )
 }
 
 function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
@@ -240,14 +230,24 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <div className={cn("flex h-16 shrink-0 items-center justify-between border-b px-4", isCollapsed && "px-2 justify-center")}>
-          {!isCollapsed ? <Logo /> : <div className="w-9 h-9 bg-primary rounded-lg" />}
-        </div>
+        <SidebarHeader isCollapsed={isCollapsed} />
         
         <NavContent isCollapsed={isCollapsed} />
         
         <div className="mt-auto border-t p-2">
-            <NotificationsSheet isCollapsed={isCollapsed} />
+            <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" className={cn("w-full justify-start", isCollapsed && "w-12 h-12 justify-center")} asChild>
+                            <Link href="/settings">
+                                <Settings className="h-5 w-5 shrink-0" />
+                                <span className={cn(isCollapsed && 'sr-only')}>Configurações</span>
+                            </Link>
+                        </Button>
+                    </TooltipTrigger>
+                    {isCollapsed && <TooltipContent side="right">Configurações</TooltipContent>}
+                </Tooltip>
+            </TooltipProvider>
         </div>
 
          <div className="border-t p-2">
@@ -259,3 +259,6 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
       </aside>
   );
 }
+
+// Keep UserProfileButton export for use in other potential places if needed, like mobile headers
+export { UserProfileButton };

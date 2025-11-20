@@ -11,7 +11,6 @@ import { AiInsights } from '@/components/reports/AiInsights';
 import { TimeDistributionChart } from '@/components/reports/TimeDistributionChart';
 import { Loader } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserProfileButton } from '@/components/layout/Sidebar';
 
 // Add boardId to the Task type for local use in this component
 type TaskWithBoardId = Task & { boardId: string };
@@ -115,7 +114,6 @@ export default function ReportsPage() {
                 </Select>
             )}
         </div>
-        <UserProfileButton />
       </Header>
       <div className="flex-1 overflow-y-auto -mr-6 pr-6">
         {tasks.length > 0 ? (

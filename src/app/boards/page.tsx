@@ -17,7 +17,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { boardTemplates, boardTemplatesInfo } from '@/components/kanban/board-templates';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { UserProfileButton } from '@/components/layout/Sidebar';
 
 function BoardsPageContent() {
     const router = useRouter();
@@ -234,7 +233,6 @@ function BoardsPageContent() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <UserProfileButton />
                 </div>
             </Header>
 
