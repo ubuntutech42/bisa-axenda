@@ -60,7 +60,7 @@ service cloud.firestore {
       }
       
       allow get: if isBoardMember();
-      allow list: if request.auth != null && request.query.filters['members'][0] == request.auth.uid;
+      allow list: if request.auth != null && request.query.where.size() == 1 && request.query.where[0].field == 'members' && request.query.where[0].operator == 'array-contains';
       allow create: if isCreatingOwner();
       
       // Only the board owner can change the members list or delete the board.
