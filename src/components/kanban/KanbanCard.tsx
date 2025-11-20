@@ -6,7 +6,7 @@ import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Clock, MessageSquare, CheckSquare } from 'lucide-react';
+import { Clock, MessageSquare, CheckSquare, AlignLeft } from 'lucide-react';
 import { Draggable } from 'react-beautiful-dnd';
 
 interface KanbanCardProps {
@@ -16,10 +16,10 @@ interface KanbanCardProps {
 }
 
 const priorityClasses: Record<Task['priority'], string> = {
-  Baixa: 'border-secondary',
-  Média: 'border-accent',
-  Alta: 'border-primary',
-  Urgente: 'border-destructive',
+  Baixa: 'bg-green-500',
+  Média: 'bg-yellow-500',
+  Alta: 'bg-orange-500',
+  Urgente: 'bg-red-500',
 };
 
 const categoryClasses: Record<Task['category'], string> = {
@@ -45,11 +45,7 @@ export function KanbanCard({ task, index, onClick }: KanbanCardProps) {
       }
       return `Vence em ${distanceText}`;
     }
-    const createdAtDate = task.createdAt?.toDate();
-    if(createdAtDate) {
-      return `Criada há ${formatDistanceToNowStrict(createdAtDate, { locale: ptBR })}`;
-    }
-    return '';
+    return null;
   };
   const timeText = getTimeText();
 
@@ -65,33 +61,37 @@ export function KanbanCard({ task, index, onClick }: KanbanCardProps) {
         >
             <Card
               className={cn(
-                'cursor-pointer hover:shadow-lg transition-shadow duration-200 border-l-4 bg-card',
-                priorityClasses[task.priority],
-                snapshot.isDragging && 'shadow-xl ring-2 ring-primary'
+                'cursor-pointer hover:border-blue-500 bg-white border-2 border-transparent text-gray-800',
+                snapshot.isDragging && 'shadow-xl ring-2 ring-blue-500'
               )}
             >
-              <CardContent className="p-3">
-                <p className="font-semibold mb-2 text-foreground">{task.title}</p>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <Badge variant="outline" className={cn(categoryClasses[task.category])}>
-                    {task.category}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{timeText}</span>
-                  </div>
+              <CardContent className="p-2 space-y-2">
+                {task.priority && (
+                  <div className={cn("h-1 w-8 rounded-full", priorityClasses[task.priority])}></div>
+                )}
+                <p className="font-medium text-sm text-gray-800">{task.title}</p>
+                
+                <div className="flex justify-between items-center text-xs text-gray-500">
                   <div className="flex items-center gap-3">
+                    {task.description && <AlignLeft className="w-4 h-4" />}
+
+                    {timeText && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{timeText}</span>
+                      </div>
+                    )}
+                    
                     {task.comments && task.comments.length > 0 && (
                       <div className="flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" />
+                        <MessageSquare className="w-4 h-4" />
                         <span>{task.comments.length}</span>
                       </div>
                     )}
+                    
                     {checklistTotal > 0 && (
-                      <div className="flex items-center gap-1">
-                        <CheckSquare className="w-3 h-3" />
+                      <div className={cn("flex items-center gap-1", checklistProgress === checklistTotal && "bg-green-200 text-green-800 px-1 rounded-sm")}>
+                        <CheckSquare className="w-4 h-4" />
                         <span>{checklistProgress}/{checklistTotal}</span>
                       </div>
                     )}

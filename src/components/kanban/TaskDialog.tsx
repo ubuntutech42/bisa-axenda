@@ -55,9 +55,10 @@ interface TaskDialogProps {
   onClose: () => void;
   onSave: (data: any) => void;
   lists: KanbanList[];
+  initialListId?: string;
 }
 
-export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDialogProps) {
+export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialListId }: TaskDialogProps) {
   const isEditing = !!task;
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<TaskFormData>({
@@ -81,13 +82,13 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [] }: TaskDi
           title: '',
           description: '',
           priority: 'Média',
-          // Default to the first list in order (e.g., Backlog or A Fazer)
-          listId: sortedLists[0]?.id || '',
+          // Use initialListId if provided, otherwise default to first list
+          listId: initialListId || sortedLists[0]?.id || '',
           deadline: undefined,
         });
       }
     }
-  }, [task, isOpen, reset, lists]);
+  }, [task, isOpen, reset, lists, initialListId]);
 
 
   const handleFormSubmit = (data: TaskFormData) => {

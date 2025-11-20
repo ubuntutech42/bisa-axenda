@@ -15,9 +15,10 @@ import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 interface KanbanBoardProps {
   boardId: string;
   lists: KanbanList[];
+  onNewTaskClick: (listId: string) => void;
 }
 
-export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
+export function KanbanBoard({ boardId, lists, onNewTaskClick }: KanbanBoardProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -148,7 +149,7 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
   }, [tasks, sortedLists]);
 
   if (areTasksLoading) {
-    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-white" /></div>;
   }
 
   return (
@@ -164,11 +165,12 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
                 tasks={columnTasks}
                 onCardClick={handleCardClick}
                 onUpdateListName={handleUpdateColumnName}
+                onNewTaskClick={() => onNewTaskClick(list.id)}
               />
             );
           })}
-          <div className="flex-shrink-0 w-72 md:w-80 pt-10">
-              <Button variant="outline" onClick={handleAddList} className="w-full">
+          <div className="flex-shrink-0 w-72 md:w-80">
+              <Button variant="ghost" onClick={handleAddList} className="w-full bg-white/10 hover:bg-white/20 text-white">
                   <Plus className="mr-2 h-4 w-4" />
                   Adicionar outra coluna
               </Button>
@@ -188,5 +190,3 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
     </DragDropContext>
   );
 }
-
-    
