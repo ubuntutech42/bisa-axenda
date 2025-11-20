@@ -76,8 +76,7 @@ service cloud.firestore {
       
       // Members who are not owners can update fields EXCEPT for the owner (userId) and the members list.
       allow update: if isBoardMember() && !isBoardOwner() 
-                     && !("userId" in request.resource.data.diff(resource.data))
-                     && !("members" in request.resource.data.diff(resource.data));
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'group', 'type']) == false;
 
       // Only the owner can delete the board.
       allow delete: if isBoardOwner();
