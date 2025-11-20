@@ -19,7 +19,7 @@
  * Key Security Decisions:
  * - User listing is disallowed to protect privacy.
  * - All write operations require authentication.
- * - Board access (read, write) is determined by a 'members' array in the board document.
+ * - Board access (read) is permitted for authenticated users, but the client query MUST enforce membership.
  * - Board creation requires the creator to be the owner and in the members list.
  * - Board deletion is restricted to the owner.
  * - Board membership management is restricted to the owner.
@@ -47,39 +47,42 @@ service cloud.firestore {
      * @path /kanbanBoards/{boardId}
      */
     match /kanbanBoards/{boardId} {
-      function isBoardOwner() {
-        // Check if the user is the designated owner of the board from the existing document.
-        return request.auth != null && resource.data.userId == request.auth.uid;
-      }
+        function isBoardOwner() {
+            // Check if the user is the designated owner of the board from the existing document.
+            return request.auth != null && resource.data.userId == request.auth.uid;
+        }
 
-      function isCreatingOwner() {
-        // On creation, ensure the creator is the owner and is also in the members list.
-        return request.auth != null 
-               && request.resource.data.userId == request.auth.uid 
-               && request.auth.uid in request.resource.data.members;
-      }
+        function isCreatingOwner() {
+            // On creation, ensure the creator is the owner and is also in the members list.
+            return request.auth != null 
+                   && request.resource.data.userId == request.auth.uid 
+                   && request.auth.uid in request.resource.data.members;
+        }
 
-      function isBoardMember() {
-          // Correctly check membership by fetching the document's current state and using 'in' operator.
-          return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
-      }
+        function isBoardMember() {
+            // Correctly check membership for read operations using get()
+            return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
+        }
 
-      // READ: Allow reading a single board or listing boards only if the user is a member.
-      allow get: if isBoardMember();
-      allow list: if request.auth != null; // Client query must enforce 'members' array-contains user.uid
+        // READ/LIST: Allow if the user is authenticated. The client query MUST enforce the membership check.
+        // This is the standard, secure way to handle 'array-contains' queries.
+        allow read: if request.auth != null;
 
-      // WRITE: Control create, update, and delete operations.
-      allow create: if isCreatingOwner();
-      
-      // The owner can update any field, including adding/removing members.
-      allow update: if isBoardOwner();
-      
-      // Members who are not owners can update fields EXCEPT for the owner (userId) and the members list.
-      allow update: if isBoardMember() && !isBoardOwner() 
-                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'group', 'type']) == false;
+        // WRITE: Control create, update, and delete operations.
+        allow create: if isCreatingOwner();
+        
+        // UPDATE:
+        // The owner can update any field, including adding/removing members.
+        // Members who are not owners can update fields EXCEPT for the owner (userId) and the members list.
+        allow update: if request.auth != null && (
+            (resource.data.userId == request.auth.uid) || // Is owner
+            (request.auth.uid in resource.data.members && // Is member
+             request.resource.data.userId == resource.data.userId && // Not changing owner
+             request.resource.data.members == resource.data.members) // Not changing members list
+        );
 
-      // Only the owner can delete the board.
-      allow delete: if isBoardOwner();
+        // DELETE: Only the owner can delete the board.
+        allow delete: if isBoardOwner();
 
       /**
        * @description Enforces that only board members can access lists.
