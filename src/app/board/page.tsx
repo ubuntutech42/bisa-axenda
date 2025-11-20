@@ -104,7 +104,7 @@ export default function BoardPage() {
   
   return (
     <>
-      <div className="flex flex-col h-full w-full bg-[#4a1d74] text-white">
+      <div className="flex flex-col h-full w-full bg-[#241b12] text-white">
           <div className="flex-shrink-0 px-4 py-2">
             <Header>
               <div className='flex items-center gap-2 flex-1'>
