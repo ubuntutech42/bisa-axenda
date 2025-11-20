@@ -131,14 +131,13 @@ export function AppContent({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full bg-background relative">
         <Sidebar 
           isCollapsed={isSidebarCollapsed} 
-          onToggle={() => setIsSidebarCollapsed(prev => !prev)}
           hasNotifications={hasNotifications}
         />
         <Button 
             variant="ghost" 
             size="icon" 
             className={cn(
-                "absolute top-1/2 -translate-y-1/2 bg-card hover:bg-muted border rounded-full h-8 w-8 z-40 transition-all duration-300 ease-in-out",
+                "absolute top-1/2 -translate-y-1/2 bg-card border rounded-full h-8 w-8 z-40 transition-all duration-300 ease-in-out",
                 isSidebarCollapsed ? "left-[72px]" : "left-[248px]"
             )}
             onClick={() => setIsSidebarCollapsed(prev => !prev)}
