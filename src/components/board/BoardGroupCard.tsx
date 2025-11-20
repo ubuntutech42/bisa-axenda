@@ -21,8 +21,6 @@ interface BoardGroupCardProps {
 export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroupName }: BoardGroupCardProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [currentGroupName, setCurrentGroupName] = useState(groupName);
-    const isDefaultGroup = groupName === 'Sem Grupo';
-
 
     const handleNameBlur = () => {
         setIsEditing(false);
@@ -69,14 +67,13 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isDefaultGroup || isEditing}>
+                            <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={isEditing}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 <span>Renomear Grupo</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                                 onClick={() => onDeleteGroup(groupName)}
                                 className="text-destructive focus:text-destructive"
-                                disabled={isDefaultGroup}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Excluir Grupo</span>
@@ -101,16 +98,18 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                     </div>
                 )}
             </CardContent>
-            <CardFooter>
-                {boards.length > 3 && (
+            {boards.length > 3 && (
+                <CardFooter>
                      <Button asChild className="w-full">
                         <Link href={`/boards`}>
                             Ver Todos os Quadros
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                     </Button>
-                )}
-            </CardFooter>
+                </CardFooter>
+            )}
         </Card>
     );
 }
+
+    

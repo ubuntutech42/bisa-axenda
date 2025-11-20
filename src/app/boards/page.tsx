@@ -3,11 +3,12 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, writeBatch, doc, getDocs, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus, LayoutGrid } from 'lucide-react';
+import { Loader, Plus, LayoutGrid, Trash2 } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
 import type { KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +16,7 @@ import { BoardGroupCard } from '@/components/board/BoardGroupCard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { boardTemplates } from '@/components/kanban/board-templates';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
 
 function BoardsPageContent() {
     const router = useRouter();
@@ -25,6 +27,7 @@ function BoardsPageContent() {
     const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
     const [createDialogMode, setCreateDialogMode] = useState<'board' | 'group'>('board');
     const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+    const [boardToDelete, setBoardToDelete] = useState<KanbanBoardType | null>(null);
 
     const boardsQuery = useMemoFirebase(() =>
         user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
@@ -38,25 +41,26 @@ function BoardsPageContent() {
         }
     }, [isUserLoading, user, router]);
 
-    const groupedBoards = useMemo(() => {
-        if (!boards) return {};
-        return boards.reduce((acc, board) => {
-            const group = board.group || 'Sem Grupo';
-            if (!acc[group]) {
-                acc[group] = [];
+    const { groupedBoards, ungroupedBoards } = useMemo(() => {
+        if (!boards) return { groupedBoards: {}, ungroupedBoards: [] };
+        
+        const grouped = boards.reduce((acc, board) => {
+            if (board.group) {
+                if (!acc[board.group]) {
+                    acc[board.group] = [];
+                }
+                acc[board.group].push(board);
             }
-            acc[group].push(board);
             return acc;
         }, {} as Record<string, KanbanBoardType[]>);
+
+        const ungrouped = boards.filter(board => !board.group);
+        
+        return { groupedBoards: grouped, ungroupedBoards: ungrouped };
     }, [boards]);
 
     const sortedGroups = useMemo(() => {
-        const groupNames = Object.keys(groupedBoards);
-        return groupNames.sort((a, b) => {
-            if (a === 'Sem Grupo') return 1;
-            if (b === 'Sem Grupo') return -1;
-            return a.localeCompare(b);
-        });
+        return Object.keys(groupedBoards).sort((a, b) => a.localeCompare(b));
     }, [groupedBoards]);
 
     const handleCreateBoard = async (name: string, type: KanbanBoardType['type'], group?: string) => {
@@ -110,19 +114,17 @@ function BoardsPageContent() {
         
         try {
             const batch = writeBatch(firestore);
-            const boardsInGroup = boards.filter(b => (b.group || 'Sem Grupo') === groupToDelete);
+            const boardsInGroup = boards.filter(b => b.group === groupToDelete);
 
             for (const board of boardsInGroup) {
                 const boardRef = doc(firestore, 'kanbanBoards', board.id);
 
-                // Delete subcollections (tasks and lists)
                 const tasksRef = collection(boardRef, 'tasks');
                 const listsRef = collection(boardRef, 'lists');
                 const [tasksSnap, listsSnap] = await Promise.all([getDocs(tasksRef), getDocs(listsRef)]);
                 tasksSnap.forEach(doc => batch.delete(doc.ref));
                 listsSnap.forEach(doc => batch.delete(doc.ref));
-
-                // Delete the board itself
+                
                 batch.delete(boardRef);
             }
 
@@ -136,8 +138,35 @@ function BoardsPageContent() {
         }
     };
     
+    const handleDeleteBoard = async () => {
+        if (!boardToDelete || !firestore) return;
+        toast({ title: 'Excluindo quadro...', description: `Removendo o quadro "${boardToDelete.name}".` });
+
+        try {
+            const batch = writeBatch(firestore);
+            const boardRef = doc(firestore, 'kanbanBoards', boardToDelete.id);
+
+            const tasksRef = collection(boardRef, 'tasks');
+            const listsRef = collection(boardRef, 'lists');
+            const [tasksSnap, listsSnap] = await Promise.all([getDocs(tasksRef), getDocs(listsRef)]);
+            tasksSnap.forEach(doc => batch.delete(doc.ref));
+            listsSnap.forEach(doc => batch.delete(doc.ref));
+
+            batch.delete(boardRef);
+
+            await batch.commit();
+            toast({ title: 'Quadro excluído!', description: 'O quadro foi removido.' });
+
+        } catch (error) {
+            console.error("Error deleting board:", error);
+            toast({ variant: 'destructive', title: 'Erro ao excluir', description: 'Não foi possível remover o quadro.' });
+        } finally {
+            setBoardToDelete(null);
+        }
+    };
+    
     const handleUpdateGroupName = async (oldGroupName: string, newGroupName: string) => {
-        if (!firestore || !boards || !newGroupName.trim() || oldGroupName === 'Sem Grupo') return;
+        if (!firestore || !boards || !newGroupName.trim()) return;
         
         toast({ title: 'Atualizando grupo...', description: `Renomeando "${oldGroupName}" para "${newGroupName}".`});
 
@@ -167,13 +196,16 @@ function BoardsPageContent() {
         );
     }
 
+    const hasContent = ungroupedBoards.length > 0 || sortedGroups.length > 0;
+
     return (
         <div className="flex flex-col h-full w-full">
             <Header title="Meus Quadros">
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="default" aria-label="Criar novo item">
-                            <Plus />
+                        <Button size="default" variant="default" aria-label="Criar novo item">
+                            <Plus className="mr-2 h-4 w-4" />
+                            <span>Criar</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -190,18 +222,50 @@ function BoardsPageContent() {
             </Header>
 
             <div className="flex-1 overflow-y-auto -mr-6 pr-6">
-                {sortedGroups.length > 0 && groupedBoards[sortedGroups[0]]?.length > 0 ? (
-                    <div className="flex flex-wrap gap-8 pb-8">
-                        {sortedGroups.map(groupName => (
-                            groupedBoards[groupName]?.length > 0 &&
-                            <BoardGroupCard
-                                key={groupName}
-                                groupName={groupName}
-                                boards={groupedBoards[groupName]}
-                                onDeleteGroup={() => setGroupToDelete(groupName)}
-                                onUpdateGroupName={handleUpdateGroupName}
-                            />
-                        ))}
+                {hasContent ? (
+                    <div className="space-y-8 pb-8">
+                         {ungroupedBoards.length > 0 && (
+                            <div>
+                                <h2 className="text-lg font-semibold text-foreground mb-4">Quadros Individuais</h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                     {ungroupedBoards.map(board => (
+                                        <Link key={board.id} href={`/board?id=${board.id}`} className="block">
+                                            <div className="group relative p-4 border rounded-lg h-full hover:shadow-lg transition-shadow bg-card">
+                                                <h3 className="font-semibold text-card-foreground truncate">{board.name}</h3>
+                                                <p className="text-sm text-muted-foreground">{boardTemplates.find(t => t.type === board.type)?.name || 'Quadro'}</p>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setBoardToDelete(board); }}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {ungroupedBoards.length > 0 && sortedGroups.length > 0 && <Separator />}
+
+                        {sortedGroups.length > 0 && (
+                             <div>
+                                <h2 className="text-lg font-semibold text-foreground mb-4">Grupos de Quadros</h2>
+                                <div className="flex flex-wrap gap-8">
+                                    {sortedGroups.map(groupName => (
+                                        <BoardGroupCard
+                                            key={groupName}
+                                            groupName={groupName}
+                                            boards={groupedBoards[groupName]}
+                                            onDeleteGroup={() => setGroupToDelete(groupName)}
+                                            onUpdateGroupName={handleUpdateGroupName}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-full">
@@ -219,7 +283,7 @@ function BoardsPageContent() {
                 isOpen={isCreateBoardDialogOpen}
                 onClose={() => setIsCreateBoardDialogOpen(false)}
                 onCreate={handleCreateBoard}
-                existingGroups={sortedGroups.filter(g => g !== 'Sem Grupo')}
+                existingGroups={sortedGroups}
                 initialFocus={createDialogMode}
             />
 
@@ -237,6 +301,21 @@ function BoardsPageContent() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            <AlertDialog open={!!boardToDelete} onOpenChange={(open) => !open && setBoardToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir o quadro "{boardToDelete?.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta ação é permanente e excluirá todas as colunas e tarefas dentro deste quadro. Você tem certeza?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive hover:bg-destructive/90">Sim, excluir quadro</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
@@ -248,3 +327,5 @@ export default function BoardsPage() {
         </Suspense>
     );
 }
+
+    
