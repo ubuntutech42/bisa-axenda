@@ -17,11 +17,6 @@
  * - `/culturalEvents/{eventId}`: Stores global cultural events, publicly readable, admin writable.
  * - `/quotes/{quoteId}`: Stores global quotes, publicly readable, admin writable.
  * - `/notifications/{notificationId}`: Stores global notifications, publicly readable, admin writable.
- *
- * Key Security Decisions:
- * - User listing is disallowed to protect privacy.
- * - Board access is controlled by membership.
- * - Global content (events, quotes, notifications) is publicly readable but only writable by admins.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -143,20 +138,20 @@ service cloud.firestore {
     }
 
     /**
-     * @description Publicly readable content, but only admin can write.
+     * @description Publicly readable content for authenticated users, but only admin can write.
      */
     match /culturalEvents/{culturalEventId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
 
     match /quotes/{quoteId} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
     
     match /notifications/{notificationId} {
-       allow read: if true;
+       allow read: if request.auth != null;
        allow write: if isAdmin();
     }
   }
