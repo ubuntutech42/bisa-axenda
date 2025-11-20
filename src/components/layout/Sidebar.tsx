@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -110,7 +109,7 @@ function UserProfileButton() {
   );
 }
 
-function SidebarHeader({ isCollapsed }: { isCollapsed: boolean }) {
+function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void; }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -133,8 +132,14 @@ function SidebarHeader({ isCollapsed }: { isCollapsed: boolean }) {
     const notificationCount = notifications?.length || 0;
 
     return (
-        <div className={cn("flex h-16 shrink-0 items-center justify-between border-b px-4", isCollapsed && "px-2 justify-center")}>
-            {!isCollapsed ? <Logo /> : <div className="w-9 h-9 bg-primary rounded-lg" />}
+        <div className={cn("flex h-16 shrink-0 items-center border-b px-4", isCollapsed ? "px-2 justify-center" : "justify-between")}>
+            <div className='flex items-center gap-2'>
+              {!isCollapsed && <Logo />}
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggle}>
+                  <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
+                  {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}
+              </Button>
+            </div>
 
             <Sheet>
                 <SheetTrigger asChild>
@@ -231,16 +236,8 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} />
-        
+        <SidebarHeader isCollapsed={isCollapsed} onToggle={onToggle} />
         <NavContent isCollapsed={isCollapsed} />
-        
-         <div className="mt-auto border-t p-2">
-            <Button variant="ghost" className="w-full justify-center" onClick={onToggle}>
-                <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
-                {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}
-            </Button>
-        </div>
       </aside>
   );
 }
