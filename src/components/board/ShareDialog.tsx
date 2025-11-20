@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -18,8 +18,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import type { KanbanBoard, User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Loader, Trash2, Crown } from 'lucide-react';
@@ -44,17 +44,45 @@ export function ShareDialog({ board, currentUser, isOpen, onClose }: ShareDialog
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isOwner = board.userId === currentUser.uid;
 
+  const [members, setMembers] = useState<User[]>([]);
+  const [areMembersLoading, setAreMembersLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!firestore || !board.members || board.members.length === 0) {
+        setMembers([]);
+        setAreMembersLoading(false);
+        return;
+      }
+
+      setAreMembersLoading(true);
+      try {
+        const memberPromises = board.members.map(id => getDoc(doc(firestore, 'users', id)));
+        const memberDocs = await Promise.all(memberPromises);
+        const memberData = memberDocs
+          .filter(docSnap => docSnap.exists())
+          .map(docSnap => ({...docSnap.data(), id: docSnap.id } as User));
+
+        setMembers(memberData.sort((a,b) => a.userName.localeCompare(b.userName)));
+      } catch (error) {
+        console.error("Error fetching board members:", error);
+        toast({ variant: 'destructive', title: 'Erro ao buscar membros' });
+        setMembers([]);
+      } finally {
+        setAreMembersLoading(false);
+      }
+    };
+    
+    if (isOpen) {
+        fetchMembers();
+    }
+
+  }, [firestore, board.members, isOpen, toast]);
+
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<InviteFormData>({
     resolver: zodResolver(inviteSchema),
   });
-
-  const membersQuery = useMemoFirebase(() => 
-    board.members && board.members.length > 0
-      ? query(collection(firestore, 'users'), where('id', 'in', board.members))
-      : null,
-    [firestore, board.members]
-  );
-  const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
 
   const onSubmit = async (data: InviteFormData) => {
     if (!isOwner) {
