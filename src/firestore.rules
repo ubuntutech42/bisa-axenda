@@ -58,16 +58,10 @@ service cloud.firestore {
                    && request.resource.data.userId == request.auth.uid 
                    && request.auth.uid in request.resource.data.members;
         }
-
-        function isBoardMember() {
-          return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
-        }
         
-        // GET: Allow if the user is a member of the board.
-        allow get: if isBoardMember();
-        
-        // LIST: Allow if the query is securely filtering by the user's UID in the 'members' array.
-        allow list: if request.auth != null;
+        // READ: Allow if the user is a member of the board. This covers both GET and LIST.
+        // For LIST operations, the client-side query MUST enforce security with a `where('members', 'array-contains', request.auth.uid)` clause.
+        allow read: if request.auth != null && request.auth.uid in resource.data.members;
 
         // CREATE: Only the creating user can be owner and must be in members list.
         allow create: if isCreatingOwner();
@@ -92,10 +86,10 @@ service cloud.firestore {
        * @path /kanbanBoards/{boardId}/tasks/{taskId}
        */
       match /lists/{listId} {
-        allow read, write: if isBoardMember();
+        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
       }
       match /tasks/{taskId} {
-        allow read, write: if isBoardMember();
+        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
       }
     }
 
@@ -165,3 +159,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
