@@ -1,13 +1,17 @@
 
-import LandingLayout from "@/app/landing/layout";
-import LandingPage from "@/app/landing/page";
+import { Hero } from '@/components/landing/Hero';
+import { Features } from '@/components/landing/Features';
+import { Inspiration } from '@/components/landing/Inspiration';
+import { CTA } from '@/components/landing/CTA';
+import LandingLayout from './landing/layout';
 
 export default function HomePage() {
-  // This page will now directly render the landing page content.
-  // The AppContent component will handle redirects for authenticated users if they land here.
   return (
     <LandingLayout>
-        <LandingPage/>
+      <Hero />
+      <Features />
+      <Inspiration />
+      <CTA />
     </LandingLayout>
   );
 }
