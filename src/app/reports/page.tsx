@@ -11,6 +11,7 @@ import { AiInsights } from '@/components/reports/AiInsights';
 import { TimeDistributionChart } from '@/components/reports/TimeDistributionChart';
 import { Loader } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 // Add boardId to the Task type for local use in this component
 type TaskWithBoardId = Task & { boardId: string };
@@ -98,20 +99,23 @@ export default function ReportsPage() {
   return (
     <div className="flex flex-col h-full w-full">
       <Header>
-        <h1 className="text-3xl font-bold font-headline">Relatórios & Insights</h1>
-        {boards && boards.length > 0 && (
-           <Select onValueChange={setSelectedBoardId} value={selectedBoardId}>
-              <SelectTrigger className="w-full sm:w-[220px]">
-                <SelectValue placeholder="Selecione um quadro" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Quadros</SelectItem>
-                {boards.map(board => (
-                  <SelectItem key={board.id} value={board.id}>{board.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-        )}
+        <div className='flex items-center gap-4 flex-1'>
+            <h1 className="text-3xl font-bold font-headline">Relatórios & Insights</h1>
+            {boards && boards.length > 0 && (
+            <Select onValueChange={setSelectedBoardId} value={selectedBoardId}>
+                <SelectTrigger className="w-full sm:w-[220px]">
+                    <SelectValue placeholder="Selecione um quadro" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">Todos os Quadros</SelectItem>
+                    {boards.map(board => (
+                    <SelectItem key={board.id} value={board.id}>{board.name}</SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+            )}
+        </div>
+        <UserProfileButton />
       </Header>
       <div className="flex-1 overflow-y-auto -mr-6 pr-6">
         {tasks.length > 0 ? (

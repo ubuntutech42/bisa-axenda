@@ -15,6 +15,7 @@ import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Button } from '@/components/ui/button';
 import { BoardMembers } from '@/components/board/BoardMembers';
 import { ShareDialog } from '@/components/board/ShareDialog';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 
 export default function BoardPage() {
@@ -127,6 +128,7 @@ export default function BoardPage() {
                     <Plus className="mr-2 h-4 w-4" />
                     Nova Tarefa
                 </Button>
+                <UserProfileButton />
               </div>
             </Header>
           </div>

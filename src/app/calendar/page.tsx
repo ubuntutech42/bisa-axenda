@@ -13,6 +13,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { CalendarEvent as CalendarEventType } from '@/lib/types';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 function CalendarPageContent() {
   const { user, isUserLoading } = useUser();
@@ -61,11 +62,15 @@ function CalendarPageContent() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <Header title="Calendário Ancestral">
-        <Button onClick={() => setIsCreateEventDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Criar Evento
-        </Button>
+      <Header>
+          <h1 className="text-3xl font-bold font-headline">Calendário Ancestral</h1>
+          <div className='flex items-center gap-4'>
+            <Button onClick={() => setIsCreateEventDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Evento
+            </Button>
+            <UserProfileButton />
+          </div>
       </Header>
       <div className="flex-1 overflow-y-auto -mr-6 pr-6">
         <EventCalendar />

@@ -18,6 +18,7 @@ import { usePomodoro } from '@/context/PomodoroContext';
 import PomodoroTimerDisplay from '@/components/pomodoro/PomodoroTimerDisplay';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { useToast } from '@/hooks/use-toast';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 
 export default function PomodoroPage() {
@@ -124,7 +125,10 @@ export default function PomodoroPage() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <Header title="Foco Pomodoro" />
+      <Header>
+          <h1 className="text-3xl font-bold font-headline">Foco Pomodoro</h1>
+          <UserProfileButton />
+      </Header>
       <div className="flex-1 overflow-y-auto -mr-6 pr-6">
         <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2">

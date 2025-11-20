@@ -26,6 +26,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ADMIN_UIDS } from '@/lib/admin';
 import { AdminPanel } from '@/components/admin/AdminPanel';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 const profileSchema = z.object({
     userName: z.string().min(2, { message: 'O nome de usuário deve ter pelo menos 2 caracteres.' }),
@@ -228,7 +229,10 @@ export default function SettingsPage() {
     
     return (
         <div className="flex flex-col h-full w-full">
-            <Header title="Configurações" />
+            <Header>
+                <h1 className="text-3xl font-bold font-headline">Configurações</h1>
+                <UserProfileButton />
+            </Header>
             <div className="flex-1 overflow-y-auto -mr-6 pr-6">
                 <div className="max-w-4xl mx-auto w-full">
                     <Tabs defaultValue="profile" className="w-full">

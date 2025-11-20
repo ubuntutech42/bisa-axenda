@@ -134,17 +134,13 @@ function NotificationsSheet({ isCollapsed }: { isCollapsed: boolean }) {
   )
 }
 
-function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, hasNotifications: boolean }) {
+export function UserProfileButton() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const { setIsFloatingPomodoroOpen } = usePomodoro();
 
-  if (isUserLoading) {
-    return <Loader className="h-6 w-6 animate-spin" />;
-  }
-
-  if (!user) {
-    return null;
+  if (isUserLoading || !user) {
+    return <Skeleton className="h-9 w-9 rounded-full" />;
   }
   
   const handleLogout = async () => {
@@ -152,25 +148,13 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
   };
 
   return (
-    <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className={cn(
-              "flex items-center gap-2 w-full h-auto p-2",
-              isCollapsed ? "w-12 h-12 justify-center p-0" : "justify-start"
-            )}>
-            <div className={cn("relative rounded-full", hasNotifications && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
+          <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
                 <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
                 <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col items-start truncate">
-                <span className="text-sm font-semibold truncate">{user.displayName}</span>
-                <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-              </div>
-            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -200,7 +184,6 @@ function UserProfile({ isCollapsed, hasNotifications }: { isCollapsed: boolean, 
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </>
   );
 }
 
@@ -263,12 +246,8 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
         
         <NavContent isCollapsed={isCollapsed} />
         
-        <div className={cn("px-2", isCollapsed ? "px-2" : "px-4")}>
-            <NotificationsSheet isCollapsed={isCollapsed} />
-        </div>
-        
         <div className="mt-auto border-t p-2">
-           <UserProfile isCollapsed={isCollapsed} hasNotifications={hasNotifications} />
+            <NotificationsSheet isCollapsed={isCollapsed} />
         </div>
 
          <div className="border-t p-2">

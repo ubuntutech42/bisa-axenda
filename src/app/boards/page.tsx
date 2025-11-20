@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { boardTemplates, boardTemplatesInfo } from '@/components/kanban/board-templates';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 function BoardsPageContent() {
     const router = useRouter();
@@ -214,24 +215,27 @@ function BoardsPageContent() {
         <div className="flex flex-col h-full w-full">
             <Header>
                 <h1 className="text-3xl font-bold font-headline">Meus Quadros</h1>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button size="default" variant="default" aria-label="Criar novo item">
-                            <Plus className="mr-2 h-4 w-4" />
-                            <span>Criar</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => { setCreateDialogMode('board'); setIsCreateBoardDialogOpen(true); }}>
-                            <LayoutGrid />
-                            <span>Novo Quadro</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => { setCreateDialogMode('group'); setIsCreateBoardDialogOpen(true); }}>
-                            <Plus />
-                            <span>Novo Grupo</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className='flex items-center gap-4'>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button size="default" variant="default" aria-label="Criar novo item">
+                                <Plus className="mr-2 h-4 w-4" />
+                                <span>Criar</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => { setCreateDialogMode('board'); setIsCreateBoardDialogOpen(true); }}>
+                                <LayoutGrid />
+                                <span>Novo Quadro</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { setCreateDialogMode('group'); setIsCreateBoardDialogOpen(true); }}>
+                                <Plus />
+                                <span>Novo Grupo</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <UserProfileButton />
+                </div>
             </Header>
 
             <div className="flex-1 overflow-y-auto -mr-6 pr-6">
