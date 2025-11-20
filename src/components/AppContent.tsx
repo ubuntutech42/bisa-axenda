@@ -11,7 +11,7 @@ import { usePomodoro } from '@/context/PomodoroContext';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import { doc, getDoc, collection, writeBatch } from 'firebase/firestore';
 import { createUserProfile } from '@/lib/user';
-import { Loader, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import HomePage from '@/app/page';
 import { culturalEvents, quotes } from '@/lib/data';
@@ -141,7 +141,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
               )}
               onClick={() => setIsSidebarCollapsed(prev => !prev)}
             >
-              {isSidebarCollapsed ? <ArrowRight /> : <ArrowLeft />}
+              {isSidebarCollapsed ? <ChevronRight /> : <ChevronLeft />}
               <span className="sr-only">{isSidebarCollapsed ? 'Expandir' : 'Recolher'} menu</span>
             </Button>
         </div>
