@@ -1,6 +1,6 @@
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 /**
  * Creates a user profile document in Firestore if it doesn't exist.
@@ -27,6 +27,7 @@ export const createUserProfile = async (user: User, firestore: Firestore, additi
       firstName: firstName,
       lastName: lastName,
       profileImageUrl: user.photoURL || '',
+      createdAt: serverTimestamp(),
       ...additionalData,
     };
     

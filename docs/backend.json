@@ -45,12 +45,18 @@
         "bio": {
             "type": "string",
             "description": "A short bio about the user."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when the user account was created."
         }
       },
       "required": [
         "id",
         "email",
-        "userName"
+        "userName",
+        "createdAt"
       ]
     },
     "Task": {
@@ -185,7 +191,7 @@
       "required": ["id", "name", "order"]
     },
     "KanbanCard": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
       "title": "KanbanCard",
       "type": "object",
       "description": "Represents a card within a Kanban list, representing a task.",
@@ -239,7 +245,7 @@
       ]
     },
     "Category": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
       "title": "Category",
       "type": "object",
       "description": "Represents a category for classifying Kanban cards.",
@@ -384,7 +390,7 @@
       ]
     },
     "Reminder": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
       "title": "Reminder",
       "type": "object",
       "description": "Represents a reminder for a Kanban card.",
@@ -505,7 +511,7 @@
           "description": "Unique identifier for the cultural event.",
           "format": "uuid"
         },
-        "name": {
+        "title": {
           "type": "string",
           "description": "Name of the cultural event (e.g., 'Juneteenth')."
         },
@@ -521,13 +527,18 @@
         "description": {
           "type": "string",
           "description": "Description of the cultural event."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
         }
       },
       "required": [
         "id",
-        "name",
+        "title",
         "date",
-        "type"
+        "type",
+        "createdAt"
       ]
     },
      "Quote": {

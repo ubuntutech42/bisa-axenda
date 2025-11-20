@@ -12,6 +12,7 @@ export interface User {
     age?: number;
     gender?: string;
     bio?: string;
+    createdAt: Timestamp;
 }
 
 export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pessoal';
@@ -56,6 +57,7 @@ export interface CulturalEvent {
   title: string;
   description: string;
   type: 'cultural' | 'comercial';
+  createdAt: Timestamp;
 }
 
 export interface Quote {

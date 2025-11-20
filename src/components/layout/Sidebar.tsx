@@ -17,7 +17,7 @@ import {
   Bell
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
@@ -36,8 +36,8 @@ import { usePomodoro } from '@/context/PomodoroContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '../ui/separator';
-import type { Notification as NotificationType } from '@/lib/types';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import type { Notification as NotificationType, User as UserType } from '@/lib/types';
+import { collection, query, orderBy, limit, where, doc } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -57,10 +57,23 @@ interface SidebarProps {
 }
 
 function NotificationsSheet({ isCollapsed }: { isCollapsed: boolean }) {
+  const { user } = useUser();
   const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userProfile } = useDoc<UserType>(userDocRef);
+
   const notificationsQuery = useMemoFirebase(
-    () => query(collection(firestore, 'notifications'), orderBy('createdAt', 'desc'), limit(10)),
-    [firestore]
+    () => {
+        if (!firestore || !userProfile?.createdAt) return null;
+        return query(
+            collection(firestore, 'notifications'), 
+            where('createdAt', '>=', userProfile.createdAt),
+            orderBy('createdAt', 'desc'), 
+            limit(20)
+        );
+    },
+    [firestore, userProfile]
   );
   const { data: notifications, isLoading } = useCollection<NotificationType>(notificationsQuery);
   const notificationCount = notifications?.length || 0;
