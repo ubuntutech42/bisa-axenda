@@ -1,7 +1,8 @@
+
 "use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -16,10 +17,10 @@ interface KanbanCardProps {
 }
 
 const priorityClasses: Record<Task['priority'], string> = {
-  Baixa: 'bg-green-500',
-  Média: 'bg-yellow-500',
-  Alta: 'bg-orange-500',
-  Urgente: 'bg-red-500',
+  Baixa: 'border-green-500',
+  Média: 'border-yellow-500',
+  Alta: 'border-orange-500',
+  Urgente: 'border-red-500',
 };
 
 const categoryClasses: Record<Task['category'], string> = {
@@ -57,47 +58,44 @@ export function KanbanCard({ task, index, onClick }: KanbanCardProps) {
             {...provided.draggableProps}
             {...provided.dragHandleProps}
             onClick={onClick}
-            className="mb-2"
+            className="mb-3"
         >
             <Card
               className={cn(
-                'cursor-pointer hover:border-blue-500 bg-white border-2 border-transparent text-gray-800',
-                snapshot.isDragging && 'shadow-xl ring-2 ring-blue-500'
+                'cursor-pointer border-l-4 hover:shadow-md transition-shadow',
+                priorityClasses[task.priority],
+                snapshot.isDragging && 'shadow-xl ring-2 ring-primary'
               )}
             >
-              <CardContent className="p-2 space-y-2">
-                {task.priority && (
-                  <div className={cn("h-1 w-8 rounded-full", priorityClasses[task.priority])}></div>
-                )}
-                <p className="font-medium text-sm text-gray-800">{task.title}</p>
-                
-                <div className="flex justify-between items-center text-xs text-gray-500">
-                  <div className="flex items-center gap-3">
-                    {task.description && <AlignLeft className="w-4 h-4" />}
-
-                    {timeText && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{timeText}</span>
-                      </div>
-                    )}
-                    
-                    {task.comments && task.comments.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <MessageSquare className="w-4 h-4" />
-                        <span>{task.comments.length}</span>
-                      </div>
-                    )}
-                    
-                    {checklistTotal > 0 && (
-                      <div className={cn("flex items-center gap-1", checklistProgress === checklistTotal && "bg-green-200 text-green-800 px-1 rounded-sm")}>
-                        <CheckSquare className="w-4 h-4" />
-                        <span>{checklistProgress}/{checklistTotal}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <CardHeader className="p-3">
+                <Badge variant="outline" className={cn("text-xs self-start", categoryClasses[task.category])}>{task.category}</Badge>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <p className="font-medium text-sm text-card-foreground">{task.title}</p>
               </CardContent>
+              <CardFooter className="p-3 pt-0 flex justify-between items-center text-xs text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  {task.description && <AlignLeft className="w-4 h-4" />}
+                  {task.comments && task.comments.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>{task.comments.length}</span>
+                    </div>
+                  )}
+                  {checklistTotal > 0 && (
+                    <div className={cn("flex items-center gap-1", checklistProgress === checklistTotal && "text-green-600")}>
+                      <CheckSquare className="w-4 h-4" />
+                      <span>{checklistProgress}/{checklistTotal}</span>
+                    </div>
+                  )}
+                </div>
+                {timeText && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>{timeText}</span>
+                  </div>
+                )}
+              </CardFooter>
             </Card>
         </div>
       )}

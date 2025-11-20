@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -149,13 +150,13 @@ export function KanbanBoard({ boardId, lists, onNewTaskClick }: KanbanBoardProps
   }, [tasks, sortedLists]);
 
   if (areTasksLoading) {
-    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin text-white" /></div>;
+    return <div className="flex items-center justify-center h-96"><Loader className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <ScrollArea className="w-full whitespace-nowrap h-full">
-        <div className="flex gap-4 p-4 items-start h-full">
+        <div className="flex gap-6 pb-6 items-start h-full">
           {sortedLists.map((list) => {
             const columnTasks = tasksByListId[list.id] || [];
             return (
@@ -169,8 +170,8 @@ export function KanbanBoard({ boardId, lists, onNewTaskClick }: KanbanBoardProps
               />
             );
           })}
-          <div className="flex-shrink-0 w-72 md:w-80">
-              <Button variant="ghost" onClick={handleAddList} className="w-full bg-white/10 hover:bg-white/20 text-white">
+          <div className="flex-shrink-0 w-72 md:w-80 pt-1">
+              <Button variant="outline" onClick={handleAddList} className="w-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Adicionar outra coluna
               </Button>
