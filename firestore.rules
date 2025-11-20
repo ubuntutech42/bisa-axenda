@@ -60,8 +60,8 @@ service cloud.firestore {
       }
 
       function isBoardMember() {
-          // Correctly check membership by fetching the document's current state.
-          return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members.hasAny([request.auth.uid]);
+          // Correctly check membership by fetching the document's current state and using 'in' operator.
+          return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
       }
 
       // READ: Allow reading a single board or listing boards only if the user is a member.
