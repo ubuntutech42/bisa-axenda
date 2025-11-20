@@ -60,11 +60,14 @@ service cloud.firestore {
         }
         
         allow read: if request.auth != null && request.auth.uid in resource.data.members;
+
         allow create: if isCreatingOwner();
+        
         allow update: if request.auth != null && (
             isBoardOwner() || 
             (request.auth.uid in resource.data.members && !( 'userId' in request.resource.data) && !('members' in request.resource.data) )
         );
+
         allow delete: if isBoardOwner();
 
       /**
