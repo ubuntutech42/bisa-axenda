@@ -60,14 +60,14 @@ function CalendarPageContent() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       <Header title="Calendário Ancestral">
         <Button onClick={() => setIsCreateEventDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Criar Evento
         </Button>
       </Header>
-      <div className="flex-1">
+      <div className="flex-1 overflow-y-auto -mr-6 pr-6">
         <EventCalendar />
       </div>
       <CreateEventDialog

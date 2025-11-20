@@ -91,7 +91,7 @@ function BoardsPageContent() {
             description: `O quadro "${name}" foi criado com sucesso.`,
           });
           setIsCreateBoardDialogOpen(false);
-          router.push(`/board?group=${group || 'Sem Grupo'}`);
+          router.push(`/board?group=${group || 'ungrouped'}`);
       
         } catch (error) {
           console.error('Error creating board:', error);
@@ -168,7 +168,7 @@ function BoardsPageContent() {
     }
 
     return (
-        <div className="flex flex-col gap-8 h-full">
+        <div className="flex flex-col h-full w-full">
             <Header title="Meus Quadros">
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -189,10 +189,11 @@ function BoardsPageContent() {
                 </DropdownMenu>
             </Header>
 
-            <div className="flex-1 overflow-y-auto">
-                {sortedGroups.length > 0 ? (
+            <div className="flex-1 overflow-y-auto -mr-6 pr-6">
+                {sortedGroups.length > 0 && groupedBoards[sortedGroups[0]]?.length > 0 ? (
                     <div className="flex flex-wrap gap-8 pb-8">
                         {sortedGroups.map(groupName => (
+                            groupedBoards[groupName]?.length > 0 &&
                             <BoardGroupCard
                                 key={groupName}
                                 groupName={groupName}

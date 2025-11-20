@@ -223,83 +223,85 @@ export default function SettingsPage() {
     }
     
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col h-full w-full">
             <Header title="Configurações" />
-            <div className="max-w-4xl mx-auto w-full">
-                <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="profile">Perfil</TabsTrigger>
-                        <TabsTrigger value="general">Geral</TabsTrigger>
-                        <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
-                        <TabsTrigger value="categories">Categorias</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="profile">
-                        <ProfileSettings />
-                    </TabsContent>
-                    <TabsContent value="general">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Aparência</CardTitle>
-                                <CardDescription>Personalize a aparência do aplicativo para o seu gosto.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="theme-select">Tema Visual</Label>
-                                  <Select value={theme} onValueChange={setTheme}>
-                                    <SelectTrigger id="theme-select" className="w-full md:w-1/2">
-                                      <SelectValue placeholder="Selecione um tema" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="light">Diurno</SelectItem>
-                                      <SelectItem value="dark">Noturno</SelectItem>
-                                      <SelectItem value="system">Padrão do Sistema</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="pomodoro">
-                        <form onSubmit={handleSubmit(onPomodoroSubmit)}>
+            <div className="flex-1 overflow-y-auto -mr-6 pr-6">
+                <div className="max-w-4xl mx-auto w-full">
+                    <Tabs defaultValue="profile" className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="profile">Perfil</TabsTrigger>
+                            <TabsTrigger value="general">Geral</TabsTrigger>
+                            <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
+                            <TabsTrigger value="categories">Categorias</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="profile">
+                            <ProfileSettings />
+                        </TabsContent>
+                        <TabsContent value="general">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Timer Pomodoro</CardTitle>
-                                    <CardDescription>Ajuste os tempos de foco e descanso para se adequar ao seu ritmo.</CardDescription>
+                                    <CardTitle>Aparência</CardTitle>
+                                    <CardDescription>Personalize a aparência do aplicativo para o seu gosto.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                      <div className="space-y-2">
-                                          <Label htmlFor="pomodoro">Foco (min)</Label>
-                                          <Input id="pomodoro" type="number" {...register('pomodoro', { valueAsNumber: true, min: 1 })} />
-                                      </div>
-                                      <div className="space-y-2">
-                                          <Label htmlFor="shortBreak">Pausa Curta (min)</Label>
-                                          <Input id="shortBreak" type="number" {...register('shortBreak', { valueAsNumber: true, min: 1 })} />
-                                      </div>
-                                      <div className="space-y-2">
-                                          <Label htmlFor="longBreak">Pausa Longa (min)</Label>
-                                          <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true, min: 1 })} />
-                                      </div>
-                                  </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="theme-select">Tema Visual</Label>
+                                      <Select value={theme} onValueChange={setTheme}>
+                                        <SelectTrigger id="theme-select" className="w-full md:w-1/2">
+                                          <SelectValue placeholder="Selecione um tema" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="light">Diurno</SelectItem>
+                                          <SelectItem value="dark">Noturno</SelectItem>
+                                          <SelectItem value="system">Padrão do Sistema</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
                                 </CardContent>
-                                <CardFooter>
-                                    <Button type="submit">Salvar Alterações</Button>
-                                </CardFooter>
                             </Card>
-                        </form>
-                    </TabsContent>
-                    <TabsContent value="categories">
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>Categorias de Eventos</CardTitle>
-                                <CardDescription>Gerencie as categorias para seus eventos no calendário. Defina nomes e cores.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <EventCategoryManager />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                        </TabsContent>
+                        <TabsContent value="pomodoro">
+                            <form onSubmit={handleSubmit(onPomodoroSubmit)}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Timer Pomodoro</CardTitle>
+                                        <CardDescription>Ajuste os tempos de foco e descanso para se adequar ao seu ritmo.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                          <div className="space-y-2">
+                                              <Label htmlFor="pomodoro">Foco (min)</Label>
+                                              <Input id="pomodoro" type="number" {...register('pomodoro', { valueAsNumber: true, min: 1 })} />
+                                          </div>
+                                          <div className="space-y-2">
+                                              <Label htmlFor="shortBreak">Pausa Curta (min)</Label>
+                                              <Input id="shortBreak" type="number" {...register('shortBreak', { valueAsNumber: true, min: 1 })} />
+                                          </div>
+                                          <div className="space-y-2">
+                                              <Label htmlFor="longBreak">Pausa Longa (min)</Label>
+                                              <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true, min: 1 })} />
+                                          </div>
+                                      </div>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Button type="submit">Salvar Alterações</Button>
+                                    </CardFooter>
+                                </Card>
+                            </form>
+                        </TabsContent>
+                        <TabsContent value="categories">
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle>Categorias de Eventos</CardTitle>
+                                    <CardDescription>Gerencie as categorias para seus eventos no calendário. Defina nomes e cores.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <EventCategoryManager />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
         </div>
     );

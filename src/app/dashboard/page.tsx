@@ -130,20 +130,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8">
-      <Header title={getGreeting()} />
+    <div className="flex flex-col h-full w-full">
+        <Header title={getGreeting()} />
+        <div className="flex-1 overflow-y-auto pr-2">
+            <div className="space-y-6 md:space-y-8">
+                <WisdomNugget />
 
-      <div className="space-y-6 md:space-y-8">
-        <WisdomNugget />
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <StatCard icon={CheckCircle} title="Tarefas Concluídas" value={stats.completedTasks.toString()} />
-          <StatCard icon={Clock} title="Horas de Foco" value={stats.totalTime.toString()} />
-          <StatCard icon={Coffee} title="Tarefas Ativas" value={stats.activeTasks.toString()} />
+                <div className="grid gap-4 md:grid-cols-3">
+                <StatCard icon={CheckCircle} title="Tarefas Concluídas" value={stats.completedTasks.toString()} />
+                <StatCard icon={Clock} title="Horas de Foco" value={stats.totalTime.toString()} />
+                <StatCard icon={Coffee} title="Tarefas Ativas" value={stats.activeTasks.toString()} />
+                </div>
+                
+                <TasksOverview tasks={allTasks} lists={allLists} />
+            </div>
         </div>
-        
-        <TasksOverview tasks={allTasks} lists={allLists} />
-      </div>
     </div>
   );
 }

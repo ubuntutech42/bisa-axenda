@@ -96,7 +96,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col h-full w-full">
       <Header title="Relatórios & Insights">
         {boards && boards.length > 0 && (
            <Select onValueChange={setSelectedBoardId} value={selectedBoardId}>
@@ -112,14 +112,16 @@ export default function ReportsPage() {
             </Select>
         )}
       </Header>
-      <div className="space-y-8">
+      <div className="flex-1 overflow-y-auto -mr-6 pr-6">
         {tasks.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            <TimeDistributionChart tasks={tasks} />
-            <AiInsights tasks={tasks} />
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <TimeDistributionChart tasks={tasks} />
+              <AiInsights tasks={tasks} />
+            </div>
           </div>
         ) : (
-          <div className="text-center py-10">
+          <div className="text-center py-10 h-full flex flex-col justify-center items-center">
               <h3 className="text-xl font-semibold">Sem dados para exibir</h3>
               <p className="text-muted-foreground">Comece a registrar o tempo em suas tarefas para ver os relatórios.</p>
           </div>
