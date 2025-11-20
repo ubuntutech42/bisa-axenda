@@ -24,7 +24,7 @@ export default function ReportsPage() {
   const [areTasksLoading, setAreTasksLoading] = useState(true);
 
   const boardsQuery = useMemoFirebase(() => 
-    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
+    user ? query(collection(firestore, 'kanbanBoards'), where('members', 'array-contains', user.uid)) : null,
     [firestore, user]
   );
   const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoard>(boardsQuery);
@@ -97,7 +97,8 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <Header title="Relatórios & Insights">
+      <Header>
+        <h1 className="text-3xl font-bold font-headline">Relatórios & Insights</h1>
         {boards && boards.length > 0 && (
            <Select onValueChange={setSelectedBoardId} value={selectedBoardId}>
               <SelectTrigger className="w-full sm:w-[220px]">

@@ -3,26 +3,26 @@
  * @fileoverview Firestore Security Rules for Axénda application.
  *
  * Core Philosophy:
- * This ruleset employs a strict user-ownership model for most data, ensuring users can only
- * access and modify their own resources. Public read access is granted to some collections
- * like `culturalEvents`, but write access is carefully controlled.
+ * This ruleset employs a user-ownership and membership model. Users can only access and modify
+ * their own resources or resources they are members of (like Kanban boards).
+ * Public read access is granted to some collections like `culturalEvents`, but write access
+ * is carefully controlled.
  *
  * Data Structure:
  * - `/users/{userId}`: Stores user profiles, accessible only to the owning user.
- * - `/kanbanBoards/{boardId}`: Stores Kanban boards, accessible to users in the 'members' array.
+ * - `/kanbanBoards/{boardId}`: Stores Kanban boards. Access is controlled by the `members` array.
  * - `/kanbanBoards/{boardId}/lists/{listId}`: Stores lists for a specific board.
  * - `/kanbanBoards/{boardId}/tasks/{taskId}`: Stores tasks for a specific board.
- * - `/users/{userId}/categories/{categoryId}`: Stores user-created categories.
- * - `/users/{userId}/pomodoroSessions/{pomodoroSessionId}`: Stores Pomodoro sessions for a user.
- * - `/users/{userId}/calendarEvents/{calendarEventId}`: Stores calendar events for a user.
- * - `/users/{userId}/eventCategories/{eventCategoryId}`: Stores event categories for a user.
+ * - `/users/{userId}/...`: Various user-specific subcollections.
  * - `/culturalEvents/{culturalEventId}`: Stores global cultural events, publicly readable.
  *
  * Key Security Decisions:
  * - User listing is disallowed to protect privacy.
  * - All write operations require authentication.
- * - Board access is determined by a 'members' array in the board document.
- * - Data validation is minimized in this prototype for rapid iteration.
+ * - Board access (read, write) is determined by a 'members' array in the board document.
+ * - Board creation requires the creator to be the owner and in the members list.
+ * - Board deletion is restricted to the owner.
+ * - Board membership management is restricted to the owner.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -47,40 +47,50 @@ service cloud.firestore {
      * @path /kanbanBoards/{boardId}
      */
     match /kanbanBoards/{boardId} {
+        // This function checks if the requesting user is in the board's 'members' array.
+        // It uses `get()` to read the document's data securely during rule evaluation.
         function isBoardMember() {
-            // Correctly fetch the document being requested to check the 'members' array.
             return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members.hasAny([request.auth.uid]);
         }
 
+        // This function checks if the requesting user is the owner of the board.
         function isBoardOwner() {
-            // Use `get` here as well for consistency and to read the stored data.
             return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
         }
 
+        // This function validates the data when a new board is being created.
         function isCreatingOwner() {
-            // For create operations, check the incoming data in request.resource.
-            return request.auth != null && request.resource.data.userId == request.auth.uid && request.resource.data.members.hasAny([request.auth.uid]);
+            return request.auth != null 
+                   && request.resource.data.userId == request.auth.uid 
+                   && request.resource.data.members.hasAny([request.auth.uid]);
         }
 
+        // Allow reading a single board document if the user is a member.
         allow get: if isBoardMember();
         
-        // Allow listing boards if the query filters by the user's membership.
+        // Allow listing boards only when the query explicitly filters for the user's membership.
         allow list: if request.auth != null;
         
+        // Allow creating a board if the user is authenticated and sets themselves as owner and member.
         allow create: if isCreatingOwner();
         
-        // Owner can update all fields, including the members array.
+        // The owner can update any field, including adding/removing members.
         allow update: if isBoardOwner();
         
-        // Members (who are not owners) can update fields EXCEPT userId and members.
-        allow update: if isBoardMember() && !isBoardOwner() && !("userId" in request.resource.data) && !("members" in request.resource.data);
+        // Members who are not owners can update fields EXCEPT for the owner (userId) and the members list.
+        allow update: if isBoardMember() 
+                       && !isBoardOwner() 
+                       && !("userId" in request.resource.data) 
+                       && !("members" in request.resource.data);
 
+        // Only the owner can delete the board.
         allow delete: if isBoardOwner();
     }
 
 
     /**
      * @description Enforces that only board members can access lists.
+     * Inherits board-level permissions.
      * @path /kanbanBoards/{boardId}/lists/{listId}
      */
     match /kanbanBoards/{boardId}/lists/{listId} {
@@ -93,6 +103,7 @@ service cloud.firestore {
 
     /**
      * @description Enforces that only board members can access tasks.
+     * Inherits board-level permissions.
      * @path /kanbanBoards/{boardId}/tasks/{taskId}
      */
     match /kanbanBoards/{boardId}/tasks/{taskId} {
@@ -100,7 +111,7 @@ service cloud.firestore {
         return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members.hasAny([request.auth.uid]);
       }
 
-      // Any board member can create/read/update/delete tasks
+      // Any board member can create, read, update, or delete tasks.
       allow read, write: if isBoardMember();
     }
 
