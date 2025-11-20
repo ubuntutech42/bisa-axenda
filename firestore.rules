@@ -19,7 +19,7 @@
  * Key Security Decisions:
  * - User listing is disallowed to protect privacy.
  * - All write operations require authentication.
- * - Board access (read) is permitted for authenticated users, but the client query MUST enforce membership.
+ * - Board access (read) is permitted for authenticated users who are members of the board.
  * - Board creation requires the creator to be the owner and in the members list.
  * - Board deletion is restricted to the owner.
  * - Board membership management is restricted to the owner.
@@ -58,15 +58,13 @@ service cloud.firestore {
                    && request.resource.data.userId == request.auth.uid 
                    && request.auth.uid in request.resource.data.members;
         }
-
+        
         function isBoardMember() {
-            // Correctly check membership for read operations using get()
-            return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
+            return request.auth != null && request.auth.uid in resource.data.members;
         }
-
-        // READ/LIST: Allow if the user is authenticated. The client query MUST enforce the membership check.
-        // This is the standard, secure way to handle 'array-contains' queries.
-        allow read: if request.auth != null;
+        
+        // READ/LIST: Allow if the user is a member of the board. The client query must enforce membership.
+        allow read: if isBoardMember();
 
         // WRITE: Control create, update, and delete operations.
         allow create: if isCreatingOwner();
@@ -86,20 +84,20 @@ service cloud.firestore {
 
       /**
        * @description Enforces that only board members can access lists.
-       * Inherits board-level permissions.
        * @path /kanbanBoards/{boardId}/lists/{listId}
        */
       match /lists/{listId} {
-        allow read, write: if isBoardMember();
+        // Allow if the user has read/write access to the parent board.
+        allow read, write: if exists(/databases/$(database)/documents/kanbanBoards/$(boardId));
       }
 
       /**
        * @description Enforces that only board members can access tasks.
-       * Inherits board-level permissions.
        * @path /kanbanBoards/{boardId}/tasks/{taskId}
        */
       match /tasks/{taskId} {
-        allow read, write: if isBoardMember();
+         // Allow if the user has read/write access to the parent board.
+        allow read, write: if exists(/databases/$(database)/documents/kanbanBoards/$(boardId));
       }
     }
 
