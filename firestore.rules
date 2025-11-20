@@ -149,7 +149,10 @@ service cloud.firestore {
     }
 
     match /quotes/{quoteId} {
-      allow read: if request.auth != null;
+      function isReadingOneRandomQuote() {
+        return request.query.limit == 1;
+      }
+      allow read: if request.auth != null && (isAdmin() || isReadingOneRandomQuote());
       allow write: if isAdmin();
     }
     

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -6,24 +5,60 @@ import Image from 'next/image';
 import type { Quote } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, query, limit, getDocs, startAt, orderBy, doc } from 'firebase/firestore';
 
 export function WisdomNugget() {
   const firestore = useFirestore();
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [googleSearchUrl, setGoogleSearchUrl] = useState('');
 
-  const quotesQuery = useMemoFirebase(() => query(collection(firestore, 'quotes')), [firestore]);
-  const { data: quotes, isLoading } = useCollection<Quote>(quotesQuery);
-
   useEffect(() => {
-    if (quotes && quotes.length > 0) {
-      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-      setQuote(randomQuote);
-      setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(randomQuote.author)}`);
-    }
-  }, [quotes]);
+    const fetchRandomQuote = async () => {
+      if (!firestore) return;
+      setIsLoading(true);
+
+      try {
+        // Generate a random ID to start the query from
+        const randomId = doc(collection(firestore, 'quotes')).id;
+        
+        const q = query(
+          collection(firestore, 'quotes'),
+          orderBy('__name__'), // Order by document ID
+          startAt(randomId),
+          limit(1)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const randomQuote = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as Quote;
+          setQuote(randomQuote);
+          setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(randomQuote.author)}`);
+        } else {
+          // If the first query is empty, try another one from the beginning of the collection
+          const secondQuery = query(collection(firestore, 'quotes'), limit(1));
+          const secondSnapshot = await getDocs(secondQuery);
+          if (!secondSnapshot.empty) {
+            const fallbackQuote = { id: secondSnapshot.docs[0].id, ...secondSnapshot.docs[0].data() } as Quote;
+            setQuote(fallbackQuote);
+            setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(fallbackQuote.author)}`);
+          } else {
+             setQuote(null); // No quotes in collection
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching random quote:", error);
+        setQuote(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRandomQuote();
+  }, [firestore]);
+
 
   if (isLoading || !quote) {
     return (
