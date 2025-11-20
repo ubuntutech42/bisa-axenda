@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -48,14 +49,21 @@ export function EventCalendar() {
 
   const { allCategories, categoriesMap, isLoading: areCategoriesLoading } = useCategories();
 
-  const boardsQuery = useMemoFirebase(() => 
-    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
-    [firestore, user]
-  );
-  const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoard>(boardsQuery);
-
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
+
+  const tasksWithDeadlineQuery = useMemoFirebase(() => 
+    user ? query(collection(firestore, `users/${user.uid}/tasks`), where('deadline', '!=', null)) : null,
+    [firestore, user]
+  );
+  const { data: tasks, isLoading: areTasksLoadingFromHook } = useCollection<Task>(tasksWithDeadlineQuery);
+
+  useEffect(() => {
+    setAllTasks(tasks || []);
+    setAreTasksLoading(areTasksLoadingFromHook);
+  }, [tasks, areTasksLoadingFromHook]);
+
+
   const [lunarData, setLunarData] = useState<Record<string, LunarPhase>>({});
   const [isLunarDataLoading, setIsLunarDataLoading] = useState(true);
 
@@ -103,52 +111,10 @@ export function EventCalendar() {
     fetchLunarDataForMonth(currentMonth);
   }, [currentMonth, fetchLunarDataForMonth]);
 
-
-  useEffect(() => {
-    if (areBoardsLoading || !firestore || !user) {
-        if(boards === null && user === null) {
-          setAreTasksLoading(false);
-        }
-        return;
-    };
-    if (boards === null) {
-      setAllTasks([]);
-      setAreTasksLoading(false);
-      return;
-    }
-
-    const fetchTasks = async () => {
-      setAreTasksLoading(true);
-      if (boards.length === 0) {
-        setAllTasks([]);
-        setAreTasksLoading(false);
-        return;
-      }
-
-      const tasksPromises = boards.map(board => 
-        getDocs(collection(firestore, 'kanbanBoards', board.id, 'tasks'))
-      );
-      
-      const snapshots = await Promise.all(tasksPromises);
-      const tasks: Task[] = [];
-      snapshots.forEach(snapshot => {
-        snapshot.forEach(doc => {
-          tasks.push({ id: doc.id, ...doc.data() } as Task);
-        });
-      });
-      setAllTasks(tasks);
-      setAreTasksLoading(false);
-    };
-
-    fetchTasks();
-  }, [boards, areBoardsLoading, firestore, user]);
-
-
   const allEvents: CombinedEvent[] = useMemo(() => {
     const eventList: CombinedEvent[] = [];
     if (activeCategories.task) {
-        const tasksWithDeadlines = allTasks.filter(t => t.deadline);
-        eventList.push(...tasksWithDeadlines.map(t => ({...t, type: 'task' as const })));
+        eventList.push(...allTasks.map(t => ({...t, type: 'task' as const })));
     }
     if (activeCategories.cultural) {
         eventList.push(...culturalEvents.filter(e => e.type === 'cultural').map(e => ({...e, id: e.title})));
@@ -227,7 +193,7 @@ export function EventCalendar() {
   }
 
 
-  if (areBoardsLoading || areTasksLoading || areUserEventsLoading || areCategoriesLoading) {
+  if (areTasksLoading || areUserEventsLoading || areCategoriesLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
   }
 

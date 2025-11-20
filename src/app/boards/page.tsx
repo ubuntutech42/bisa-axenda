@@ -53,8 +53,8 @@ function BoardsPageContent() {
     const sortedGroups = useMemo(() => {
         const groupNames = Object.keys(groupedBoards);
         return groupNames.sort((a, b) => {
-            if (a === 'Sem Grupo') return -1;
-            if (b === 'Sem Grupo') return 1;
+            if (a === 'Sem Grupo') return 1;
+            if (b === 'Sem Grupo') return -1;
             return a.localeCompare(b);
         });
     }, [groupedBoards]);
@@ -91,7 +91,7 @@ function BoardsPageContent() {
             description: `O quadro "${name}" foi criado com sucesso.`,
           });
           setIsCreateBoardDialogOpen(false);
-          router.push(`/board?group=${group || 'ungrouped'}`);
+          router.push(`/board?id=${newBoardRef.id}`);
       
         } catch (error) {
           console.error('Error creating board:', error);
