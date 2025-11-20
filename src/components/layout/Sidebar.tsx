@@ -47,6 +47,7 @@ const navItems = [
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
+  { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -62,7 +63,7 @@ function UserProfileButton() {
   const { setIsFloatingPomodoroOpen } = usePomodoro();
 
   if (isUserLoading || !user) {
-    return <Skeleton className="h-9 w-9 rounded-full" />;
+    return <div className="h-9 w-9 rounded-full bg-muted" />;
   }
   
   const handleLogout = async () => {
@@ -234,23 +235,7 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
         
         <NavContent isCollapsed={isCollapsed} />
         
-        <div className="mt-auto border-t p-2">
-            <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" className={cn("w-full justify-start", isCollapsed && "w-12 h-12 justify-center")} asChild>
-                            <Link href="/settings">
-                                <Settings className="h-5 w-5 shrink-0" />
-                                <span className={cn(isCollapsed && 'sr-only')}>Configurações</span>
-                            </Link>
-                        </Button>
-                    </TooltipTrigger>
-                    {isCollapsed && <TooltipContent side="right">Configurações</TooltipContent>}
-                </Tooltip>
-            </TooltipProvider>
-        </div>
-
-         <div className="border-t p-2">
+         <div className="mt-auto border-t p-2">
             <Button variant="ghost" className="w-full justify-center" onClick={onToggle}>
                 <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
                 {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}
