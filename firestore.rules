@@ -48,7 +48,7 @@ service cloud.firestore {
      */
     match /kanbanBoards/{boardId} {
       function isBoardOwner() {
-        // Check if the user is the designated owner of the board.
+        // Check if the user is the designated owner of the board from the existing document.
         return request.auth != null && resource.data.userId == request.auth.uid;
       }
 
@@ -59,9 +59,14 @@ service cloud.firestore {
                && request.auth.uid in request.resource.data.members;
       }
 
+      function isBoardMember() {
+          // Correctly check membership by fetching the document's current state.
+          return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members.hasAny([request.auth.uid]);
+      }
+
       // READ: Allow reading a single board or listing boards only if the user is a member.
-      allow get: if request.auth.uid in resource.data.members;
-      allow list: if request.auth != null; // List queries are secured by the 'where' clause in the client code
+      allow get: if isBoardMember();
+      allow list: if request.auth != null; // Client query must enforce 'members' array-contains user.uid
 
       // WRITE: Control create, update, and delete operations.
       allow create: if isCreatingOwner();
@@ -70,7 +75,7 @@ service cloud.firestore {
       allow update: if isBoardOwner();
       
       // Members who are not owners can update fields EXCEPT for the owner (userId) and the members list.
-      allow update: if request.auth.uid in resource.data.members && !isBoardOwner() 
+      allow update: if isBoardMember() && !isBoardOwner() 
                      && !("userId" in request.resource.data.diff(resource.data))
                      && !("members" in request.resource.data.diff(resource.data));
 
@@ -83,10 +88,6 @@ service cloud.firestore {
        * @path /kanbanBoards/{boardId}/lists/{listId}
        */
       match /lists/{listId} {
-        function isBoardMember() {
-          return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
-        }
-
         allow read, write: if isBoardMember();
       }
 
@@ -96,11 +97,6 @@ service cloud.firestore {
        * @path /kanbanBoards/{boardId}/tasks/{taskId}
        */
       match /tasks/{taskId} {
-         function isBoardMember() {
-          return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
-        }
-
-        // Any board member can create, read, update, or delete tasks.
         allow read, write: if isBoardMember();
       }
     }
