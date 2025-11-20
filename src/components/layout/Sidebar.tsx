@@ -12,9 +12,9 @@ import {
   LogOut,
   Settings,
   Timer,
-  PanelLeftClose,
-  PanelRightClose,
   Bell,
+  PanelLeftClose,
+  PanelRightClose
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
@@ -31,11 +31,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
-import { useState } from 'react';
 import { usePomodoro } from '@/context/PomodoroContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
-import { Separator } from '../ui/separator';
 import type { Notification as NotificationType, User as UserType } from '@/lib/types';
 import { collection, query, orderBy, limit, where, doc } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
@@ -52,8 +50,8 @@ const navItems = [
 
 interface SidebarProps {
   isCollapsed: boolean;
+  onToggle: () => void;
 }
-
 
 export function UserProfileButton() {
   const { user, isUserLoading } = useUser();
@@ -80,7 +78,7 @@ export function UserProfileButton() {
   const notificationCount = notifications?.length || 0;
 
   if (isUserLoading || !user) {
-    return <div className="h-9 w-9 rounded-full bg-muted" />;
+    return <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />;
   }
   
   const handleLogout = async () => {
@@ -97,7 +95,7 @@ export function UserProfileButton() {
                 <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
+                <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
                   {notificationCount}
                 </span>
               )}
@@ -142,20 +140,17 @@ export function UserProfileButton() {
               <SheetTitle>Notificações</SheetTitle>
               <SheetDescription>Seus lembretes e avisos importantes.</SheetDescription>
           </SheetHeader>
-          <div className="py-4 space-y-2">
+          <div className="py-4 space-y-4 -mr-2 pr-2 h-[calc(100%-80px)] overflow-y-auto">
               {isLoading ? (
                   <div className="flex justify-center items-center h-40"><Loader className="animate-spin" /></div>
               ) : notifications && notifications.length > 0 ? (
                   notifications.map(notification => (
-                      <div key={notification.id}>
-                          <div className="p-4 rounded-lg bg-muted/50">
-                              <h4 className="font-semibold">{notification.title}</h4>
-                              <p className="text-sm text-muted-foreground">{notification.message}</p>
-                              <p className="text-xs text-muted-foreground/80 mt-2">
-                                  {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
-                              </p>
-                          </div>
-                          <Separator className="last:hidden my-2"/>
+                      <div key={notification.id} className="p-3 rounded-lg bg-muted/50 border">
+                          <h4 className="font-semibold">{notification.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground/80 mt-2">
+                              {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
+                          </p>
                       </div>
                   ))
               ) : (
@@ -167,19 +162,23 @@ export function UserProfileButton() {
   );
 }
 
-function SidebarHeader({ isCollapsed }: { isCollapsed: boolean }) {
+
+function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean, onToggle: () => void }) {
     return (
-        <div className={cn("flex h-16 shrink-0 items-center border-b px-4", isCollapsed ? "px-2 justify-center" : "justify-between")}>
-            <div className='flex items-center gap-2'>
-              {!isCollapsed && <Logo />}
+        <div className={cn("flex h-16 shrink-0 items-center border-b px-4")}>
+            <div className='flex items-center gap-2 flex-1'>
+              <Logo isCollapsed={isCollapsed} />
             </div>
+             <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
+                {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}
+                <span className="sr-only">{isCollapsed ? 'Expandir' : 'Recolher'}</span>
+            </Button>
         </div>
     )
 }
 
 function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   const pathname = usePathname();
-
   const isBoardsActive = pathname.startsWith('/board');
 
   return (
@@ -220,7 +219,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   );
 }
 
-export function Sidebar({ isCollapsed }: SidebarProps) {
+export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { user } = useUser();
   const pathname = usePathname();
 
@@ -230,7 +229,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} />
+        <SidebarHeader isCollapsed={isCollapsed} onToggle={onToggle} />
         <NavContent isCollapsed={isCollapsed} />
       </aside>
   );

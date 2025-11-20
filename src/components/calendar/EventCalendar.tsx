@@ -56,13 +56,16 @@ export function EventCalendar() {
   const [areTasksLoading, setAreTasksLoading] = useState(true);
 
   const boardsQuery = useMemoFirebase(() =>
-    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
+    user ? query(collection(firestore, 'kanbanBoards'), where('members', 'array-contains', user.uid)) : null,
     [firestore, user]
   );
   const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoard>(boardsQuery);
 
   useEffect(() => {
-    if (!user || !firestore || areBoardsLoading || !boards) return;
+    if (!user || !firestore || areBoardsLoading || !boards) {
+        if (!areBoardsLoading) setAreTasksLoading(false);
+        return;
+    }
 
     const fetchTasksWithDeadline = async () => {
         setAreTasksLoading(true);
@@ -72,21 +75,27 @@ export function EventCalendar() {
             return;
         }
 
-        const tasksPromises = boards.map(board => 
-            getDocs(query(collection(firestore, 'kanbanBoards', board.id, 'tasks'), where('deadline', '!=', null)))
-        );
-
-        const taskSnapshots = await Promise.all(tasksPromises);
-        
-        const fetchedTasks: Task[] = [];
-        taskSnapshots.forEach(snapshot => {
-            snapshot.forEach(doc => {
-                fetchedTasks.push({ id: doc.id, ...doc.data() } as Task);
+        try {
+            const tasksPromises = boards.map(board => 
+                getDocs(query(collection(firestore, 'kanbanBoards', board.id, 'tasks'), where('deadline', '!=', null)))
+            );
+    
+            const taskSnapshots = await Promise.all(tasksPromises);
+            
+            const fetchedTasks: Task[] = [];
+            taskSnapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    fetchedTasks.push({ id: doc.id, ...doc.data() } as Task);
+                });
             });
-        });
-        
-        setAllTasks(fetchedTasks);
-        setAreTasksLoading(false);
+            
+            setAllTasks(fetchedTasks);
+        } catch (error) {
+            console.error("Failed to fetch tasks with deadline:", error);
+            setAllTasks([]);
+        } finally {
+            setAreTasksLoading(false);
+        }
     };
 
     fetchTasksWithDeadline();
@@ -108,32 +117,35 @@ export function EventCalendar() {
     const year = getYear(monthDate);
 
     const monthKey = format(monthDate, 'yyyy-MM');
-    // Check if data for this month is already fetched
     if (Object.keys(lunarData).some(key => key.startsWith(monthKey))) {
         setIsLunarDataLoading(false);
         return;
     }
     
-    const result = await getLunarDataForMonthAction(month, year);
-    
-    if (result.success && result.data) {
-      const newLunarData: Record<string, LunarPhase> = {};
-      for (const day in result.data.phase) {
-        const phaseInfo = result.data.phase[day];
-        const dateStr = format(new Date(year, month - 1, parseInt(day)), 'yyyy-MM-dd');
-        newLunarData[dateStr] = {
-          id: `lunar-${dateStr}`,
-          date: dateStr,
-          phaseName: phaseInfo.phaseName as LunarPhaseName,
-          description: phaseInfo.svgDescription,
-          svg: phaseInfo.svg,
-        };
-      }
-      setLunarData(prevData => ({ ...prevData, ...newLunarData }));
-    } else {
-      console.error("Failed to fetch lunar data:", result.error);
+    try {
+        const result = await getLunarDataForMonthAction(month, year);
+        if (result.success && result.data) {
+          const newLunarData: Record<string, LunarPhase> = {};
+          for (const day in result.data.phase) {
+            const phaseInfo = result.data.phase[day];
+            const dateStr = format(new Date(year, month - 1, parseInt(day)), 'yyyy-MM-dd');
+            newLunarData[dateStr] = {
+              id: `lunar-${dateStr}`,
+              date: dateStr,
+              phaseName: phaseInfo.phaseName as LunarPhaseName,
+              description: phaseInfo.svgDescription,
+              svg: phaseInfo.svg,
+            };
+          }
+          setLunarData(prevData => ({ ...prevData, ...newLunarData }));
+        } else {
+          console.error("Failed to fetch lunar data:", result.error);
+        }
+    } catch (error) {
+        console.error("Error in fetchLunarDataForMonth action:", error);
+    } finally {
+        setIsLunarDataLoading(false);
     }
-    setIsLunarDataLoading(false);
   }, [lunarData]);
 
   useEffect(() => {

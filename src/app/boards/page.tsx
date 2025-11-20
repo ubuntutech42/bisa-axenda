@@ -110,30 +110,36 @@ function BoardsPageContent() {
       };
 
     const handleDeleteGroup = async () => {
-        if (!groupToDelete || !firestore || !boards) return;
-
+        if (!groupToDelete || !firestore || !boards || !user) return;
+    
         toast({ title: 'Excluindo grupo...', description: `Removendo o grupo "${groupToDelete}" e todos os seus quadros.` });
-        
+    
         try {
-            const batch = writeBatch(firestore);
-            const boardsInGroup = boards.filter(b => b.group === groupToDelete);
-
-            for (const board of boardsInGroup) {
-                // Only allow deletion if the current user is the owner
-                if(board.userId !== user?.uid) continue;
-
+            const boardsInGroup = boards.filter(b => b.group === groupToDelete && b.userId === user.uid);
+    
+            if (boardsInGroup.length === 0) {
+                toast({ title: 'Nenhum quadro para excluir', description: 'Você não possui quadros neste grupo.' });
+                setGroupToDelete(null);
+                return;
+            }
+    
+            const deletePromises = boardsInGroup.map(async (board) => {
                 const boardRef = doc(firestore, 'kanbanBoards', board.id);
-
                 const tasksRef = collection(boardRef, 'tasks');
                 const listsRef = collection(boardRef, 'lists');
+                
                 const [tasksSnap, listsSnap] = await Promise.all([getDocs(tasksRef), getDocs(listsRef)]);
+                
+                const batch = writeBatch(firestore);
                 tasksSnap.forEach(doc => batch.delete(doc.ref));
                 listsSnap.forEach(doc => batch.delete(doc.ref));
-                
                 batch.delete(boardRef);
-            }
-
-            await batch.commit();
+    
+                return batch.commit();
+            });
+    
+            await Promise.all(deletePromises);
+    
             toast({ title: 'Grupo excluído!', description: 'Os quadros que você possui no grupo foram removidos.' });
         } catch (error) {
             console.error("Error deleting group:", error);
@@ -156,18 +162,20 @@ function BoardsPageContent() {
         toast({ title: 'Excluindo quadro...', description: `Removendo o quadro "${boardToDelete.name}".` });
 
         try {
-            const batch = writeBatch(firestore);
             const boardRef = doc(firestore, 'kanbanBoards', boardToDelete.id);
 
+            // Fetch and delete subcollections in parallel
             const tasksRef = collection(boardRef, 'tasks');
             const listsRef = collection(boardRef, 'lists');
             const [tasksSnap, listsSnap] = await Promise.all([getDocs(tasksRef), getDocs(listsRef)]);
+            
+            const batch = writeBatch(firestore);
             tasksSnap.forEach(doc => batch.delete(doc.ref));
             listsSnap.forEach(doc => batch.delete(doc.ref));
-
             batch.delete(boardRef);
 
             await batch.commit();
+            
             toast({ title: 'Quadro excluído!', description: 'O quadro foi removido.' });
 
         } catch (error) {
@@ -184,10 +192,11 @@ function BoardsPageContent() {
         toast({ title: 'Atualizando grupo...', description: `Renomeando "${oldGroupName}" para "${newGroupName}".`});
 
         try {
+            const boardsToUpdate = boards.filter(b => (b.group || 'Sem Grupo') === oldGroupName && b.userId === user.uid);
+            if (boardsToUpdate.length === 0) return;
+
             const batch = writeBatch(firestore);
-            const boardsInGroup = boards.filter(b => (b.group || 'Sem Grupo') === oldGroupName && b.userId === user.uid);
-            
-            boardsInGroup.forEach(board => {
+            boardsToUpdate.forEach(board => {
                 const boardRef = doc(firestore, 'kanbanBoards', board.id);
                 batch.update(boardRef, { group: newGroupName });
             });
