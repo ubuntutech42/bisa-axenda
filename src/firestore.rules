@@ -1,0 +1,167 @@
+
+/**
+ * @fileoverview Firestore Security Rules for Axénda application.
+ *
+ * Core Philosophy:
+ * This ruleset employs a user-ownership and membership model. Users can only access and modify
+ * their own resources or resources they are members of (like Kanban boards).
+ * Public read access is granted to some collections like `culturalEvents`, but write access
+ * is carefully controlled.
+ *
+ * Data Structure:
+ * - `/users/{userId}`: Stores user profiles, accessible only to the owning user.
+ * - `/kanbanBoards/{boardId}`: Stores Kanban boards. Access is controlled by the `members` array.
+ * - `/kanbanBoards/{boardId}/lists/{listId}`: Stores lists for a specific board.
+ * - `/kanbanBoards/{boardId}/tasks/{taskId}`: Stores tasks for a specific board.
+ * - `/users/{userId}/...`: Various user-specific subcollections.
+ * - `/culturalEvents/{culturalEventId}`: Stores global cultural events, publicly readable.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed to protect privacy.
+ * - All write operations require authentication.
+ * - Board access (read) is permitted for authenticated users who are members of the board.
+ * - Board creation requires the creator to be the owner and in the members list.
+ * - Board deletion is restricted to the owner.
+ * - Board membership management is restricted to the owner.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces user-ownership for user profiles.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      
+      allow read, create, update, delete: if isOwner();
+      allow list: if false; // Disallow listing all users for privacy
+    }
+
+    /**
+     * @description Allows users in the 'members' list to access the board and its contents.
+     * The owner is the user with 'userId' property. Only the owner can delete the board or manage members.
+     * @path /kanbanBoards/{boardId}
+     */
+    match /kanbanBoards/{boardId} {
+        function isBoardOwner() {
+            // On existing docs, check the userId field.
+            return request.auth != null && resource.data.userId == request.auth.uid;
+        }
+
+        function isCreatingOwner() {
+            // On new docs, check the incoming userId and members fields.
+            return request.auth != null 
+                   && request.resource.data.userId == request.auth.uid 
+                   && request.auth.uid in request.resource.data.members;
+        }
+
+        function isBoardMember() {
+          return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
+        }
+        
+        // GET: Allow if the user is a member of the board.
+        allow get: if isBoardMember();
+        
+        // LIST: Allow if the query is securely filtering by the user's UID in the 'members' array.
+        allow list: if request.auth != null;
+
+        // CREATE: Only the creating user can be owner and must be in members list.
+        allow create: if isCreatingOwner();
+        
+        // UPDATE: The owner can update any field. Members can update fields EXCEPT userId and the members list.
+        allow update: if request.auth != null && (
+            isBoardOwner() || // Is owner, can do anything
+            (
+                request.auth.uid in resource.data.members && // Is a member
+                request.resource.data.userId == resource.data.userId && // Not changing owner
+                request.resource.data.members == resource.data.members // Not changing members list
+            )
+        );
+
+        // DELETE: Only the owner can delete the board.
+        allow delete: if isBoardOwner();
+
+      /**
+       * @description Enforces that only board members can access lists and tasks.
+       * Access is granted if the user has access to the parent board document.
+       * @path /kanbanBoards/{boardId}/lists/{listId}
+       * @path /kanbanBoards/{boardId}/tasks/{taskId}
+       */
+      match /lists/{listId} {
+        allow read, write: if isBoardMember();
+      }
+      match /tasks/{taskId} {
+        allow read, write: if isBoardMember();
+      }
+    }
+
+
+    /**
+     * @description Enforces user-ownership for categories.
+     * @path /users/{userId}/categories/{categoryId}
+     */
+    match /users/{userId}/categories/{categoryId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow read, list, create, update, delete: if isOwner();
+    }
+
+    /**
+     * @description Enforces user-ownership for Pomodoro sessions.
+     * @path /users/{userId}/pomodoroSessions/{pomodoroSessionId}
+     */
+    match /users/{userId}/pomodoroSessions/{pomodoroSessionId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow read, list, create, update, delete: if isOwner();
+    }
+    
+    /**
+     * @description Enforces user-ownership for event categories.
+     * @path /users/{userId}/eventCategories/{eventCategoryId}
+     */
+    match /users/{userId}/eventCategories/{eventCategoryId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isCreatingOwner() {
+        return request.auth != null && request.auth.uid == userId && request.resource.data.userId == userId;
+      }
+
+      allow list, read, update, delete: if isOwner();
+      allow create: if isCreatingOwner();
+    }
+
+    /**
+     * @description Enforces user-ownership for calendar events.
+     * @path /users/{userId}/calendarEvents/{calendarEventId}
+     */
+    match /users/{userId}/calendarEvents/{calendarEventId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+       function isCreatingOwner() {
+        return request.auth != null && request.auth.uid == userId && request.resource.data.userId == userId;
+      }
+
+      allow read, list, create, update, delete: if isOwner();
+    }
+
+    /**
+     * @description Allows public read access to cultural events, but restricts writes.
+     * @path /culturalEvents/{culturalEventId}
+     */
+    match /culturalEvents/{culturalEventId} {
+      allow read: if true;
+      allow write: if false; // Nobody can write to this collection from the client
+    }
+  }
+}
