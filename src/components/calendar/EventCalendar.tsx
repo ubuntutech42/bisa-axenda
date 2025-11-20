@@ -52,16 +52,42 @@ export function EventCalendar() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
 
-  const tasksWithDeadlineQuery = useMemoFirebase(() => 
-    user ? query(collection(firestore, `users/${user.uid}/tasks`), where('deadline', '!=', null)) : null,
+  const boardsQuery = useMemoFirebase(() =>
+    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
     [firestore, user]
   );
-  const { data: tasks, isLoading: areTasksLoadingFromHook } = useCollection<Task>(tasksWithDeadlineQuery);
+  const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoard>(boardsQuery);
 
   useEffect(() => {
-    setAllTasks(tasks || []);
-    setAreTasksLoading(areTasksLoadingFromHook);
-  }, [tasks, areTasksLoadingFromHook]);
+    if (!user || !firestore || areBoardsLoading || !boards) return;
+
+    const fetchTasksWithDeadline = async () => {
+        setAreTasksLoading(true);
+        if (boards.length === 0) {
+            setAllTasks([]);
+            setAreTasksLoading(false);
+            return;
+        }
+
+        const tasksPromises = boards.map(board => 
+            getDocs(query(collection(firestore, 'kanbanBoards', board.id, 'tasks'), where('deadline', '!=', null)))
+        );
+
+        const taskSnapshots = await Promise.all(tasksPromises);
+        
+        const fetchedTasks: Task[] = [];
+        taskSnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                fetchedTasks.push({ id: doc.id, ...doc.data() } as Task);
+            });
+        });
+        
+        setAllTasks(fetchedTasks);
+        setAreTasksLoading(false);
+    };
+
+    fetchTasksWithDeadline();
+  }, [user, firestore, boards, areBoardsLoading]);
 
 
   const [lunarData, setLunarData] = useState<Record<string, LunarPhase>>({});
@@ -397,3 +423,5 @@ export function EventCalendar() {
     </>
   );
 }
+
+    
