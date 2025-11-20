@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Loader, Plus, ArrowLeft, Users } from 'lucide-react';
