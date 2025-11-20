@@ -3,6 +3,8 @@
 import type { LunarPhaseName } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+// This component is kept for potential fallback use, but the main calendar now uses API SVGs.
+
 interface LunarIconProps {
   phaseName: LunarPhaseName;
   className?: string;

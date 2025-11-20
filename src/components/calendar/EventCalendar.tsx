@@ -28,6 +28,12 @@ import { buttonVariants } from '@/components/ui/button';
 
 type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' | 'comercial' }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
+const processSvg = (svgString: string) => {
+    if (!svgString) return '';
+    // Remove width and height attributes to allow Tailwind to control the size
+    return svgString.replace(/width="[^"]*"/g, '').replace(/height="[^"]*"/g, '');
+};
+
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -297,7 +303,10 @@ export function EventCalendar() {
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <LunarIcon phaseName={dayLunarData.phaseName} className="absolute top-1 right-1 w-4 h-4" />
+                      <div 
+                        className="absolute top-1 right-1 w-4 h-4 text-foreground"
+                        dangerouslySetInnerHTML={{ __html: processSvg(dayLunarData.svg) }}
+                      />
                     )}
                     <span className="relative">{format(date, 'd')}</span>
                     {dayEvents.length > 0 && (
@@ -406,7 +415,7 @@ export function EventCalendar() {
                         <>
                           <div className="flex justify-between items-start">
                              <div className='flex items-center gap-2'>
-                                <LunarIcon phaseName={event.phaseName} className="w-5 h-5" />
+                                <div className="w-5 h-5 text-foreground" dangerouslySetInnerHTML={{ __html: processSvg(event.svg) }} />
                                 <p className="font-semibold">{event.phaseName}</p>
                              </div>
                              <Badge variant="outline">Lua</Badge>
