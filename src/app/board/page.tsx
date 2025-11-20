@@ -3,20 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
-import { Button } from '@/components/ui/button';
-import { Loader, Plus, Trash2 } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
 import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { boardTemplates } from '@/components/kanban/board-templates';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import GroupSelector from '@/components/board/GroupSelector';
-import BoardSelector from '@/components/kanban/BoardSelector';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
-import Link from 'next/link';
+import { NoBoardsSplash } from '@/components/board/NoBoardsSplash';
+import { ActionsBar } from '@/components/board/ActionsBar';
 
 export default function BoardPage() {
   const { user, isUserLoading } = useUser();
@@ -201,83 +199,68 @@ export default function BoardPage() {
     );
   }
   
-  const displayGroup = activeGroup === 'ungrouped' ? 'Sem Grupo' : activeGroup;
-
   return (
-    <div className="flex flex-col h-full w-full">
-        <Header title={activeBoard?.name || 'Carregando...'}>
-          <div className="flex items-center gap-2">
-            <GroupSelector 
-              groups={boardGroups}
-              activeGroup={activeGroup}
-              onGroupChange={handleGroupChange}
-            />
-            <BoardSelector 
-              boards={boardsInGroup}
-              activeBoard={activeBoard}
-              setActiveBoard={setActiveBoard}
-              onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
-            />
-            <Button onClick={() => setIsNewTaskDialogOpen(true)} disabled={!activeBoard}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Tarefa
-            </Button>
+    <>
+      <div className="flex flex-col h-full w-full">
+          <Header title={activeBoard?.name || 'Carregando...'} />
+          
+          <div className="flex-1 overflow-hidden h-full">
+              {activeBoard && !areListsLoading && lists ? (
+                  <KanbanBoard boardId={activeBoard.id} lists={lists} />
+              ) : boardsInGroup.length === 0 ? (
+                  <NoBoardsSplash 
+                      groupName={activeGroup} 
+                      onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
+                  />
+              ) : (
+                  <div className="flex items-center justify-center h-full">
+                      <Loader className="h-8 w-8 animate-spin" />
+                  </div>
+              )}
           </div>
-        </Header>
-        
-        <div className="flex-1 overflow-hidden h-full">
-            {activeBoard && !areListsLoading && lists ? (
-                <KanbanBoard boardId={activeBoard.id} lists={lists} />
-            ) : boardsInGroup.length === 0 ? (
-                <div className="text-center p-8 border-2 border-dashed rounded-lg h-full flex flex-col justify-center items-center">
-                    <h2 className="text-xl font-semibold mb-2">Nenhum quadro em "{displayGroup}"</h2>
-                    <p className="text-muted-foreground mb-4 max-w-md mx-auto">Crie seu primeiro quadro neste grupo para começar.</p>
-                    <div className='flex gap-4'>
-                        <Button onClick={() => setIsCreateBoardDialogOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Criar Quadro
-                        </Button>
-                        <Button variant="outline" asChild>
-                           <Link href="/boards">Ver todos os grupos</Link>
-                        </Button>
-                    </div>
-                </div>
-            ) : (
-                <div className="flex items-center justify-center h-full">
-                    <Loader className="h-8 w-8 animate-spin" />
-                </div>
-            )}
-        </div>
+      </div>
 
-        <CreateBoardDialog 
-            isOpen={isCreateBoardDialogOpen}
-            onClose={() => setIsCreateBoardDialogOpen(false)}
-            onCreate={handleCreateBoard}
-            existingGroups={boardGroups.filter(g => g !== 'ungrouped')}
-            currentGroup={activeGroup}
-        />
+      <ActionsBar
+        groups={boardGroups}
+        activeGroup={activeGroup}
+        onGroupChange={handleGroupChange}
+        boards={boardsInGroup}
+        activeBoard={activeBoard}
+        setActiveBoard={setActiveBoard}
+        onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
+        onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
+        isNewTaskDisabled={!activeBoard}
+      />
 
-         <AlertDialog open={!!boardToDelete} onOpenChange={(open) => !open && setBoardToDelete(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        A exclusão do quadro "{boardToDelete?.name}" é permanente. Todas as colunas e tarefas dentro dele serão apagadas para sempre.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setBoardToDelete(null)}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive hover:bg-destructive/90">Sim, excluir</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+      <CreateBoardDialog 
+          isOpen={isCreateBoardDialogOpen}
+          onClose={() => setIsCreateBoardDialogOpen(false)}
+          onCreate={handleCreateBoard}
+          existingGroups={boardGroups.filter(g => g !== 'ungrouped')}
+          currentGroup={activeGroup}
+      />
 
-        {lists && activeBoard && <TaskDialog
-          isOpen={isNewTaskDialogOpen}
-          onClose={() => setIsNewTaskDialogOpen(false)}
-          onSave={handleCreateTask}
-          lists={lists}
-        />}
-    </div>
+      <AlertDialog open={!!boardToDelete} onOpenChange={(open) => !open && setBoardToDelete(null)}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      A exclusão do quadro "{boardToDelete?.name}" é permanente. Todas as colunas e tarefas dentro dele serão apagadas para sempre.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setBoardToDelete(null)}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive hover:bg-destructive/90">Sim, excluir</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
+
+      {lists && activeBoard && <TaskDialog
+        isOpen={isNewTaskDialogOpen}
+        onClose={() => setIsNewTaskDialogOpen(false)}
+        onSave={handleCreateTask}
+        lists={lists}
+      />}
+    </>
   );
 }

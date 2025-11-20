@@ -153,8 +153,8 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-4 pb-4 items-start">
+      <ScrollArea className="w-full whitespace-nowrap h-full">
+        <div className="flex gap-4 p-4 items-start h-full">
           {sortedLists.map((list) => {
             const columnTasks = tasksByListId[list.id] || [];
             return (
