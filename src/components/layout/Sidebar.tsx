@@ -241,7 +241,7 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
         <Button 
             variant="ghost" 
             size="icon" 
-            className="absolute top-1/2 -right-4 -translate-y-1/2 bg-card hover:bg-muted border rounded-full h-8 w-8 z-50"
+            className="absolute top-1/2 -right-4 -translate-y-1/2 bg-card hover:bg-muted border rounded-full h-8 w-8 z-40"
             onClick={onToggle}
         >
             <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
