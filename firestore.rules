@@ -75,16 +75,15 @@ service cloud.firestore {
         return request.auth != null;
       }
       function isOwner(boardId) {
-        return request.auth != null && request.auth.uid == resource.data.userId;
+        return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
       }
-      function isExistingOwner(boardId) {
-        return request.auth != null && request.auth.uid == resource.data.userId;
+      function isCreatingOwner() {
+        return isSignedIn() && request.auth.uid == request.resource.data.userId;
       }
 
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
-      allow update: if isExistingOwner(boardId);
-      allow delete: if isExistingOwner(boardId);
+      allow get, list: if isOwner(boardId);
+      allow create: if isCreatingOwner();
+      allow update, delete: if isOwner(boardId);
     }
 
     /**
@@ -98,23 +97,11 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /kanbanBoards/{boardId}/lists/{listId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-       function isBoardOwner(boardId) {
-        return get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
-      }
-      function isOwner(boardId) {
-        return request.auth != null && isBoardOwner(boardId);
-      }
-      function isExistingOwner(boardId) {
-        return request.auth != null && isBoardOwner(boardId);
+      function isBoardOwner(boardId) {
+        return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
       }
 
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn() && isOwner(boardId);
-      allow update: if isExistingOwner(boardId);
-      allow delete: if isExistingOwner(boardId);
+      allow read, write: if isBoardOwner(boardId);
     }
 
     /**
@@ -128,23 +115,15 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /kanbanBoards/{boardId}/tasks/{taskId} {
-      function isSignedIn() {
-        return request.auth != null;
+       function isBoardOwner(boardId) {
+        return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
       }
-      function isBoardOwner(boardId) {
-        return get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
-      }
-       function isOwner(boardId) {
-        return request.auth != null && isBoardOwner(boardId);
-      }
-      function isExistingOwner(boardId) {
-        return request.auth != null && isBoardOwner(boardId);
+      function isCreatingTaskOwner(boardId) {
+        return isBoardOwner(boardId) && request.auth.uid == request.resource.data.userId;
       }
 
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn() && isOwner(boardId);
-      allow update: if isExistingOwner(boardId);
-      allow delete: if isExistingOwner(boardId);
+      allow read, update, delete: if isBoardOwner(boardId);
+      allow create: if isCreatingTaskOwner(boardId);
     }
 
     /**
@@ -259,3 +238,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

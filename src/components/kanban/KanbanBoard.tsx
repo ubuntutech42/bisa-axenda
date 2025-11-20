@@ -176,13 +176,17 @@ export function KanbanBoard({ boardId, lists }: KanbanBoardProps) {
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-      <TaskDialog 
-        task={activeTask} 
-        isOpen={!!activeTask} 
-        onClose={handleCloseDialog}
-        onSave={handleSaveTask}
-        lists={sortedLists}
-      />
+      {activeTask && lists && (
+          <TaskDialog 
+            task={activeTask} 
+            isOpen={!!activeTask} 
+            onClose={handleCloseDialog}
+            onSave={handleSaveTask}
+            lists={sortedLists}
+          />
+      )}
     </DragDropContext>
   );
 }
+
+    

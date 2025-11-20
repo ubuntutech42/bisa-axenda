@@ -33,7 +33,7 @@ export default function BoardPage() {
     user && boardId ? doc(firestore, 'kanbanBoards', boardId) : null,
     [firestore, user, boardId]
   );
-  const { data: activeBoard, isLoading: isBoardLoading } = useDoc<KanbanBoardType>(boardRef);
+  const { data: activeBoard, isLoading: isBoardLoading, error: boardError } = useDoc<KanbanBoardType>(boardRef);
 
 
   const listsQuery = useMemoFirebase(() => 
@@ -50,17 +50,18 @@ export default function BoardPage() {
 
   // Redirect if board is not found or doesn't belong to the user
   useEffect(() => {
+      if (boardError) {
+          toast({ variant: 'destructive', title: 'Acesso Negado', description: 'Você não tem permissão para ver este quadro.' });
+          router.push('/boards');
+          return;
+      }
       if (!isBoardLoading && user && activeBoard === null && boardId) {
           toast({ variant: 'destructive', title: 'Quadro não encontrado' });
           router.push('/boards');
       }
-      if (activeBoard && user && activeBoard.userId !== user.uid) {
-        toast({ variant: 'destructive', title: 'Acesso Negado', description: 'Você não tem permissão para ver este quadro.' });
-        router.push('/boards');
-      }
-  }, [activeBoard, isBoardLoading, user, router, boardId, toast]);
+  }, [activeBoard, isBoardLoading, user, router, boardId, toast, boardError]);
 
-  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt' >) => {
+  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'timeSpent' | 'createdAt' >) => {
     if (!user || !activeBoard) return;
     try {
       const tasksCollection = collection(firestore, 'kanbanBoards', activeBoard.id, 'tasks');
@@ -138,3 +139,5 @@ export default function BoardPage() {
     </>
   );
 }
+
+    
