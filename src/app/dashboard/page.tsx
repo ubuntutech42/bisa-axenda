@@ -11,6 +11,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { WisdomNugget } from '@/components/dashboard/WisdomNugget';
 import { TasksOverview } from '@/components/dashboard/TasksOverview';
 import { CheckCircle, Clock, Coffee, Loader } from 'lucide-react';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 type TaskWithBoardId = Task & { boardId: string };
 
@@ -133,6 +134,7 @@ export default function DashboardPage() {
     <div className="flex flex-col h-full w-full">
         <Header>
           <h1 className="text-3xl font-bold font-headline">{getGreeting()}</h1>
+          <UserProfileButton />
         </Header>
         <div className="flex-1 overflow-y-auto pr-2">
             <div className="space-y-6 md:space-y-8">

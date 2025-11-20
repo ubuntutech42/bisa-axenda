@@ -1,5 +1,6 @@
 
 import type { FC, ReactNode } from 'react';
+import { UserProfileButton } from './Sidebar';
 
 interface HeaderProps {
   children?: ReactNode;
@@ -17,6 +18,7 @@ export const Header: FC<HeaderProps> = ({ children, title }) => {
   return (
     <div className="flex flex-row items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold font-headline">{title}</h1>
+        <UserProfileButton />
     </div>
   );
 };

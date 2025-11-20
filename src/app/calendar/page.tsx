@@ -13,6 +13,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { CalendarEvent as CalendarEventType } from '@/lib/types';
+import { UserProfileButton } from '@/components/layout/Sidebar';
 
 function CalendarPageContent() {
   const { user, isUserLoading } = useUser();
@@ -68,6 +69,7 @@ function CalendarPageContent() {
               <Plus className="mr-2 h-4 w-4" />
               Criar Evento
             </Button>
+            <UserProfileButton />
           </div>
       </Header>
       <div className="flex-1 overflow-y-auto -mr-6 pr-6">
