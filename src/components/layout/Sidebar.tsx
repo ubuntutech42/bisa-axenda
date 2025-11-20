@@ -50,7 +50,6 @@ const navItems = [
 
 interface SidebarProps {
   isCollapsed: boolean;
-  onToggle: () => void;
 }
 
 export function UserProfileButton() {
@@ -163,16 +162,12 @@ export function UserProfileButton() {
 }
 
 
-function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean, onToggle: () => void }) {
+function SidebarHeader({ isCollapsed }: { isCollapsed: boolean }) {
     return (
         <div className={cn("flex h-16 shrink-0 items-center border-b px-4")}>
             <div className='flex items-center gap-2 flex-1'>
               <Logo isCollapsed={isCollapsed} />
             </div>
-             <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
-                {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}
-                <span className="sr-only">{isCollapsed ? 'Expandir' : 'Recolher'}</span>
-            </Button>
         </div>
     )
 }
@@ -219,7 +214,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   );
 }
 
-export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+export function Sidebar({ isCollapsed }: SidebarProps) {
   const { user } = useUser();
   const pathname = usePathname();
 
@@ -229,7 +224,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} onToggle={onToggle} />
+        <SidebarHeader isCollapsed={isCollapsed} />
         <NavContent isCollapsed={isCollapsed} />
       </aside>
   );
