@@ -408,9 +408,7 @@ export function EventCalendar() {
                         <>
                           <div className="flex justify-between items-start">
                              <div className='flex items-center gap-2'>
-                                <div className="w-5 h-5">
-                                    <LunarIcon phaseName={event.phaseName} className="w-full h-full" />
-                                </div>
+                                <div className="w-5 h-5 text-foreground" dangerouslySetInnerHTML={{ __html: event.svg }} />
                                 <p className="font-semibold">{event.phaseName}</p>
                              </div>
                              <Badge variant="outline">Lua</Badge>
