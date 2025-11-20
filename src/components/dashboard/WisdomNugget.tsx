@@ -1,40 +1,31 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { quotes } from '@/lib/data';
-import type { Quote, ImagePlaceholder } from '@/lib/types';
-import { imageCatalog } from '@/lib/placeholder-images';
+import type { Quote } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
-
-const selectImageForQuote = (quote: Quote): ImagePlaceholder => {
-  const authorImages = imageCatalog.authors[quote.author];
-  if (authorImages && authorImages.length > 0) {
-    // Return a random image for that author
-    return authorImages[Math.floor(Math.random() * authorImages.length)];
-  }
-  
-  // Return a random image from the inspirational fallbacks
-  return imageCatalog.inspirational[Math.floor(Math.random() * imageCatalog.inspirational.length)];
-}
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 export function WisdomNugget() {
+  const firestore = useFirestore();
   const [quote, setQuote] = useState<Quote | null>(null);
-  const [image, setImage] = useState<ImagePlaceholder | null>(null);
   const [googleSearchUrl, setGoogleSearchUrl] = useState('');
 
-  useEffect(() => {
-    // This logic runs only on the client to prevent hydration mismatch
-    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-    const selectedImage = selectImageForQuote(randomQuote);
-    setQuote(randomQuote);
-    setImage(selectedImage);
-    setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(randomQuote.author)}`);
-  }, []);
+  const quotesQuery = useMemoFirebase(() => query(collection(firestore, 'quotes')), [firestore]);
+  const { data: quotes, isLoading } = useCollection<Quote>(quotesQuery);
 
-  if (!quote || !image) {
+  useEffect(() => {
+    if (quotes && quotes.length > 0) {
+      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+      setQuote(randomQuote);
+      setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(randomQuote.author)}`);
+    }
+  }, [quotes]);
+
+  if (isLoading || !quote) {
     return (
         <Card>
             <CardContent className="p-6">
@@ -52,12 +43,11 @@ export function WisdomNugget() {
     <Card className="relative overflow-hidden group h-40 md:h-48 flex flex-col justify-end">
         <div className="absolute inset-0">
             <Image
-                src={image.imageUrl}
+                src={quote.imageUrl}
                 alt={`Imagem de ${quote.author}`}
                 fill
                 sizes="100vw"
                 className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                data-ai-hint={image.imageHint}
                 unoptimized
             />
             <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition-colors" />

@@ -4,7 +4,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { culturalEvents } from '@/lib/data';
 import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName, CalendarEventCategory } from '@/lib/types';
 import { format, isSameDay, parseISO, getMonth, getYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -26,7 +25,7 @@ import { addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { buttonVariants } from '@/components/ui/button';
 
-type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { id: string; }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
+type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' | 'comercial' }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
 
 export function EventCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -48,6 +47,10 @@ export function EventCalendar() {
   const { toast } = useToast();
 
   const { allCategories, categoriesMap, isLoading: areCategoriesLoading } = useCategories();
+  
+  const culturalEventsQuery = useMemoFirebase(() => query(collection(firestore, 'culturalEvents')), [firestore]);
+  const { data: culturalEvents, isLoading: areCulturalEventsLoading } = useCollection<CulturalEvent>(culturalEventsQuery);
+
 
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [areTasksLoading, setAreTasksLoading] = useState(true);
@@ -142,11 +145,11 @@ export function EventCalendar() {
     if (activeCategories.task) {
         eventList.push(...allTasks.map(t => ({...t, type: 'task' as const })));
     }
-    if (activeCategories.cultural) {
-        eventList.push(...culturalEvents.filter(e => e.type === 'cultural').map(e => ({...e, id: e.title})));
+    if (activeCategories.cultural && culturalEvents) {
+        eventList.push(...culturalEvents.filter(e => e.type === 'cultural').map(e => ({...e})));
     }
-    if (activeCategories.comercial) {
-        eventList.push(...culturalEvents.filter(e => e.type === 'comercial').map(e => ({...e, id: e.title})));
+    if (activeCategories.comercial && culturalEvents) {
+        eventList.push(...culturalEvents.filter(e => e.type === 'comercial').map(e => ({...e})));
     }
     if (activeCategories.userEvent && userEvents) {
       eventList.push(...userEvents.map(e => ({...e, type: 'userEvent' as const })));
@@ -156,7 +159,7 @@ export function EventCalendar() {
         eventList.push(...lunarEvents);
     }
     return eventList;
-  }, [allTasks, userEvents, activeCategories, lunarData]);
+  }, [allTasks, userEvents, culturalEvents, activeCategories, lunarData]);
 
   const selectedDayEvents = date ? allEvents.filter(event => {
     const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
@@ -219,7 +222,7 @@ export function EventCalendar() {
   }
 
 
-  if (areTasksLoading || areUserEventsLoading || areCategoriesLoading) {
+  if (areTasksLoading || areUserEventsLoading || areCategoriesLoading || areCulturalEventsLoading) {
     return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
   }
 
@@ -423,5 +426,3 @@ export function EventCalendar() {
     </>
   );
 }
-
-    

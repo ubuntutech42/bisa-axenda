@@ -5,8 +5,8 @@
  * Core Philosophy:
  * This ruleset employs a user-ownership and membership model. Users can only access and modify
  * their own resources or resources they are members of (like Kanban boards).
- * Public read access is granted to some collections like `culturalEvents`, but write access
- * is carefully controlled.
+ * Public read access is granted to some collections, but write access is carefully controlled.
+ * Admin-only write access is implemented for global content collections.
  *
  * Data Structure:
  * - `/users/{userId}`: Stores user profiles, accessible only to the owning user.
@@ -14,19 +14,24 @@
  * - `/kanbanBoards/{boardId}/lists/{listId}`: Stores lists for a specific board.
  * - `/kanbanBoards/{boardId}/tasks/{taskId}`: Stores tasks for a specific board.
  * - `/users/{userId}/...`: Various user-specific subcollections.
- * - `/culturalEvents/{culturalEventId}`: Stores global cultural events, publicly readable.
+ * - `/culturalEvents/{eventId}`: Stores global cultural events, publicly readable, admin writable.
+ * - `/quotes/{quoteId}`: Stores global quotes, publicly readable, admin writable.
+ * - `/notifications/{notificationId}`: Stores global notifications, publicly readable, admin writable.
  *
  * Key Security Decisions:
  * - User listing is disallowed to protect privacy.
- * - All write operations require authentication.
- * - Board access (read) is permitted for authenticated users who are members of the board.
- * - Board creation requires the creator to be the owner and in the members list.
- * - Board deletion is restricted to the owner.
- * - Board membership management is restricted to the owner.
+ * - Board access is controlled by membership.
+ * - Global content (events, quotes, notifications) is publicly readable but only writable by admins.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // --- Admin Function ---
+    function isAdmin() {
+      // UID do administrador - substitua pelo UID real do admin no seu projeto
+      return request.auth.uid == 'FyF8IhsagahHEamM0YGWPffSsXD3';
+    }
 
     /**
      * @description Enforces user-ownership for user profiles.
@@ -59,28 +64,12 @@ service cloud.firestore {
                    && request.auth.uid in request.resource.data.members;
         }
         
-        // READ (get, list): Allow if user is authenticated. 
-        // The actual documents returned are controlled by the client-side query.
-        // A direct get is allowed if the user is a member.
-        allow read: if request.auth != null && (
-            (resource == null && request.query.where.size() > 0) || // Allows list queries based on client-side constraints
-            (resource != null && request.auth.uid in resource.data.members) // Allows direct gets for members
-        );
-
-        // CREATE: Only the creating user can be owner and must be in members list.
+        allow read: if request.auth != null && request.auth.uid in resource.data.members;
         allow create: if isCreatingOwner();
-        
-        // UPDATE: The owner can update any field. Members can update fields EXCEPT userId and the members list.
         allow update: if request.auth != null && (
-            isBoardOwner() || // Is owner, can do anything
-            (
-                request.auth.uid in resource.data.members && // Is a member
-                request.resource.data.userId == resource.data.userId && // Not changing owner
-                request.resource.data.members == resource.data.members // Not changing members list
-            )
+            isBoardOwner() || 
+            (request.auth.uid in resource.data.members && !( 'userId' in request.resource.data) && !('members' in request.resource.data) )
         );
-
-        // DELETE: Only the owner can delete the board.
         allow delete: if isBoardOwner();
 
       /**
@@ -90,10 +79,10 @@ service cloud.firestore {
        * @path /kanbanBoards/{boardId}/tasks/{taskId}
        */
       match /lists/{listId} {
-        allow read, write: if exists(/databases/$(database)/documents/kanbanBoards/$(boardId));
+        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
       }
       match /tasks/{taskId} {
-        allow read, write: if exists(/databases/$(database)/documents/kanbanBoards/$(boardId));
+        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
       }
     }
 
@@ -154,12 +143,21 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to cultural events, but restricts writes.
-     * @path /culturalEvents/{culturalEventId}
+     * @description Publicly readable content, but only admin can write.
      */
     match /culturalEvents/{culturalEventId} {
       allow read: if true;
-      allow write: if false; // Nobody can write to this collection from the client
+      allow write: if isAdmin();
+    }
+
+    match /quotes/{quoteId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /notifications/{notificationId} {
+       allow read: if true;
+       allow write: if isAdmin();
     }
   }
 }

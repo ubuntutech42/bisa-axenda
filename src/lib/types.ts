@@ -51,6 +51,7 @@ export interface KanbanList {
 }
 
 export interface CulturalEvent {
+  id: string;
   date: string; // YYYY-MM-DD
   title: string;
   description: string;
@@ -58,9 +59,21 @@ export interface CulturalEvent {
 }
 
 export interface Quote {
+  id: string;
   text: string;
   author: string;
+  imageUrl: string;
+  createdAt: Timestamp;
 }
+
+export interface Notification {
+    id: string;
+    title: string;
+    message: string;
+    type: 'info' | 'promo' | 'warning';
+    createdAt: Timestamp;
+}
+
 
 export interface ImagePlaceholder {
   id: string;

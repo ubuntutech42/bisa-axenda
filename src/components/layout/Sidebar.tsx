@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -16,7 +17,7 @@ import {
   Bell
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
@@ -35,7 +36,10 @@ import { usePomodoro } from '@/context/PomodoroContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '../ui/separator';
-
+import type { Notification as NotificationType } from '@/lib/types';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const navItems = [
   { href: '/dashboard', label: 'Painel', icon: Home },
@@ -53,7 +57,13 @@ interface SidebarProps {
 }
 
 function NotificationsSheet({ isCollapsed }: { isCollapsed: boolean }) {
-  const notificationCount = 1;
+  const firestore = useFirestore();
+  const notificationsQuery = useMemoFirebase(
+    () => query(collection(firestore, 'notifications'), orderBy('createdAt', 'desc'), limit(10)),
+    [firestore]
+  );
+  const { data: notifications, isLoading } = useCollection<NotificationType>(notificationsQuery);
+  const notificationCount = notifications?.length || 0;
 
   return (
     <Sheet>
@@ -65,8 +75,11 @@ function NotificationsSheet({ isCollapsed }: { isCollapsed: boolean }) {
                             <div className='relative flex items-center gap-3'>
                                 <Bell className="h-5 w-5 shrink-0" />
                                 <span className={cn(isCollapsed && 'sr-only')}>Notificações</span>
+                                {notificationCount > 0 && (
                                 <div className="absolute -top-1 left-3 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
+                                    {notificationCount}
                                 </div>
+                                )}
                             </div>
                         </TooltipTrigger>
                         {isCollapsed && (
@@ -83,19 +96,25 @@ function NotificationsSheet({ isCollapsed }: { isCollapsed: boolean }) {
                 <SheetTitle>Notificações</SheetTitle>
                 <SheetDescription>Seus lembretes e avisos importantes.</SheetDescription>
             </SheetHeader>
-            <div className="py-4 space-y-4">
-                {/* Placeholder Content */}
-                <div className="p-4 rounded-lg bg-muted">
-                    <h4 className="font-semibold">Reflexão Semanal</h4>
-                    <p className="text-sm text-muted-foreground">Não se esqueça de preencher sua reflexão da semana hoje à noite!</p>
-                    <Button variant="link" className="p-0 h-auto mt-2">Ver tarefa</Button>
-                </div>
-                <Separator />
-                <div className="p-4 rounded-lg">
-                    <h4 className="font-semibold">Tarefa Urgente: Preparar Apresentação</h4>
-                    <p className="text-sm text-muted-foreground">O prazo para esta tarefa é amanhã.</p>
-                    <Button variant="link" className="p-0 h-auto mt-2">Ver tarefa</Button>
-                </div>
+            <div className="py-4 space-y-2">
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-40"><Loader className="animate-spin" /></div>
+                ) : notifications && notifications.length > 0 ? (
+                    notifications.map(notification => (
+                        <div key={notification.id}>
+                            <div className="p-4 rounded-lg bg-muted/50">
+                                <h4 className="font-semibold">{notification.title}</h4>
+                                <p className="text-sm text-muted-foreground">{notification.message}</p>
+                                <p className="text-xs text-muted-foreground/80 mt-2">
+                                    {formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
+                                </p>
+                            </div>
+                            <Separator className="last:hidden my-2"/>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-10">Nenhuma notificação nova.</p>
+                )}
             </div>
         </SheetContent>
     </Sheet>
@@ -232,7 +251,7 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
         <NavContent isCollapsed={isCollapsed} />
         
         <div className={cn("px-2", isCollapsed ? "px-2" : "px-4")}>
-            {hasNotifications && <NotificationsSheet isCollapsed={isCollapsed} />}
+            <NotificationsSheet isCollapsed={isCollapsed} />
         </div>
         
         <div className="mt-auto border-t p-2">

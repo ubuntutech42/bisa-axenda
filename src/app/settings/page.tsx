@@ -24,6 +24,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ADMIN_UIDS } from '@/lib/admin';
+import { AdminPanel } from '@/components/admin/AdminPanel';
 
 const profileSchema = z.object({
     userName: z.string().min(2, { message: 'O nome de usuário deve ter pelo menos 2 caracteres.' }),
@@ -203,6 +205,8 @@ export default function SettingsPage() {
         defaultValues: settings,
     });
 
+    const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+
     const onPomodoroSubmit = (data: typeof settings) => {
         updateSettings(data);
         toast({ title: "Configurações salvas!", description: "Suas preferências de Pomodoro foram atualizadas." });
@@ -228,11 +232,12 @@ export default function SettingsPage() {
             <div className="flex-1 overflow-y-auto -mr-6 pr-6">
                 <div className="max-w-4xl mx-auto w-full">
                     <Tabs defaultValue="profile" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
+                        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'}`}>
                             <TabsTrigger value="profile">Perfil</TabsTrigger>
                             <TabsTrigger value="general">Geral</TabsTrigger>
                             <TabsTrigger value="pomodoro">Pomodoro</TabsTrigger>
                             <TabsTrigger value="categories">Categorias</TabsTrigger>
+                            {isAdmin && <TabsTrigger value="admin">Admin</TabsTrigger>}
                         </TabsList>
                         <TabsContent value="profile">
                             <ProfileSettings />
@@ -300,6 +305,11 @@ export default function SettingsPage() {
                                 </CardContent>
                             </Card>
                         </TabsContent>
+                         {isAdmin && (
+                            <TabsContent value="admin">
+                                <AdminPanel />
+                            </TabsContent>
+                        )}
                     </Tabs>
                 </div>
             </div>
