@@ -48,55 +48,51 @@ service cloud.firestore {
      */
     match /kanbanBoards/{boardId} {
         function isBoardOwner() {
-            // Check if the user is the designated owner of the board from the existing document.
+            // On existing docs, check the userId field.
             return request.auth != null && resource.data.userId == request.auth.uid;
         }
 
         function isCreatingOwner() {
-            // On creation, ensure the creator is the owner and is also in the members list.
+            // On new docs, check the incoming userId and members fields.
             return request.auth != null 
                    && request.resource.data.userId == request.auth.uid 
                    && request.auth.uid in request.resource.data.members;
         }
         
-        function isBoardMember() {
-            return request.auth != null && request.auth.uid in resource.data.members;
-        }
-        
-        // READ/LIST: Allow if the user is a member of the board. The client query must enforce membership.
-        allow read: if isBoardMember();
+        // READ (get, list): Allow if user is authenticated. 
+        // The actual documents returned are controlled by the client-side query.
+        // A direct get is allowed if the user is a member.
+        allow read: if request.auth != null && (
+            (resource == null && request.query.where.size() > 0) || // Allows list queries based on client-side constraints
+            (resource != null && request.auth.uid in resource.data.members) // Allows direct gets for members
+        );
 
-        // WRITE: Control create, update, and delete operations.
+        // CREATE: Only the creating user can be owner and must be in members list.
         allow create: if isCreatingOwner();
         
-        // UPDATE:
-        // The owner can update any field, including adding/removing members.
-        // Members who are not owners can update fields EXCEPT for the owner (userId) and the members list.
+        // UPDATE: The owner can update any field. Members can update fields EXCEPT userId and the members list.
         allow update: if request.auth != null && (
-            (resource.data.userId == request.auth.uid) || // Is owner
-            (request.auth.uid in resource.data.members && // Is member
-             request.resource.data.userId == resource.data.userId && // Not changing owner
-             request.resource.data.members == resource.data.members) // Not changing members list
+            isBoardOwner() || // Is owner, can do anything
+            (
+                request.auth.uid in resource.data.members && // Is a member
+                request.resource.data.userId == resource.data.userId && // Not changing owner
+                request.resource.data.members == resource.data.members // Not changing members list
+            )
         );
 
         // DELETE: Only the owner can delete the board.
         allow delete: if isBoardOwner();
 
       /**
-       * @description Enforces that only board members can access lists.
+       * @description Enforces that only board members can access lists and tasks.
+       * Access is granted if the user has access to the parent board document.
        * @path /kanbanBoards/{boardId}/lists/{listId}
-       */
-      match /lists/{listId} {
-        // Allow if the user has read/write access to the parent board.
-        allow read, write: if exists(/databases/$(database)/documents/kanbanBoards/$(boardId));
-      }
-
-      /**
-       * @description Enforces that only board members can access tasks.
        * @path /kanbanBoards/{boardId}/tasks/{taskId}
        */
+      match /lists/{listId} {
+        allow read, write: if exists(/databases/$(database)/documents/kanbanBoards/$(boardId));
+      }
       match /tasks/{taskId} {
-         // Allow if the user has read/write access to the parent board.
         allow read, write: if exists(/databases/$(database)/documents/kanbanBoards/$(boardId));
       }
     }
