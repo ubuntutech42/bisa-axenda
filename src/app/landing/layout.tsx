@@ -1,17 +1,10 @@
 
-import { LandingHeader } from '@/components/landing/LandingHeader';
-import { Footer } from '@/components/landing/Footer';
-
+// This file is no longer needed as the landing page structure has been simplified.
+// The content is now directly in src/app/page.tsx.
 export default function LandingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <LandingHeader />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
-  );
+  return <>{children}</>;
 }
