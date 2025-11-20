@@ -67,7 +67,7 @@ export default function PomodoroPage() {
   }, [boards, currentBoardId, setCurrentBoardId]);
 
   const pomodoroQuery = useMemoFirebase(() =>
-    user ? query(collection(firestore, 'users', user.uid, 'pomodoroSessions'), {__memo: true}) : null,
+    user ? query(collection(firestore, 'users', user.uid, 'pomodoroSessions')) : null,
     [firestore, user]
   );
   const { data: pomodoroHistory, isLoading: isHistoryLoading } = useCollection<PomodoroSession>(pomodoroQuery);
@@ -130,11 +130,11 @@ export default function PomodoroPage() {
           <UserProfileButton />
       </Header>
       <div className="flex-1 overflow-y-auto -mr-6 pr-6">
-        <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+            <div className="w-full lg:flex-1">
                 <Card>
-                    <CardContent className="p-6 flex flex-col items-center justify-center gap-6">
-                        <div className="flex gap-2">
+                    <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-6">
+                        <div className="flex flex-wrap justify-center gap-2">
                             <Button variant={mode === 'pomodoro' ? 'default' : 'outline'} onClick={() => setMode('pomodoro')}>Pomodoro</Button>
                             <Button variant={mode === 'shortBreak' ? 'default' : 'outline'} onClick={() => setMode('shortBreak')}>Pausa Curta</Button>
                             <Button variant={mode === 'longBreak' ? 'default' : 'outline'} onClick={() => setMode('longBreak')}>Pausa Longa</Button>
@@ -195,14 +195,14 @@ export default function PomodoroPage() {
                     </CardContent>
                 </Card>
             </div>
-            <div className="md:col-span-1">
+            <div className="w-full lg:w-96">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><History className='w-5 h-5 shrink-0' /> Histórico de Foco</CardTitle>
                         <CardDescription>Suas sessões de Pomodoro concluídas.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-96">
+                        <ScrollArea className="h-96 lg:h-[30rem]">
                           <div className="space-y-4">
                             {sortedHistory.length > 0 ? (
                                 sortedHistory.map((session) => {
