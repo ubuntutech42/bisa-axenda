@@ -9,11 +9,12 @@ import { useUser, useFirestore } from '@/firebase';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { usePomodoro } from '@/context/PomodoroContext';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, writeBatch } from 'firebase/firestore';
 import { createUserProfile } from '@/lib/user';
 import { Loader } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import HomePage from '@/app/page';
+import { culturalEvents, quotes } from '@/lib/data';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,6 +26,50 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const [hasNotifications, setHasNotifications] = useState(true); // Placeholder state
 
   const isAppPath = pathname !== '/';
+
+  // One-time data migration
+  useEffect(() => {
+    if (firestore && user) {
+      const runMigration = async () => {
+        const migrationStatus = localStorage.getItem('axenda_migration_v1');
+        if (migrationStatus === 'completed') {
+          return;
+        }
+
+        console.log('Running one-time data migration...');
+        const batch = writeBatch(firestore);
+
+        // Migrate quotes if they exist in the data file
+        if (quotes && quotes.length > 0) {
+          const quotesCol = collection(firestore, 'quotes');
+          quotes.forEach(quote => {
+            const docRef = doc(quotesCol);
+            batch.set(docRef, { ...quote, createdAt: new Date() });
+          });
+        }
+        
+        // Migrate cultural events if they exist
+        if (culturalEvents && culturalEvents.length > 0) {
+            const eventsCol = collection(firestore, 'culturalEvents');
+            culturalEvents.forEach(event => {
+                const docRef = doc(eventsCol);
+                batch.set(docRef, { ...event, createdAt: new Date() });
+            });
+        }
+
+        try {
+          await batch.commit();
+          console.log('Migration completed successfully.');
+          localStorage.setItem('axenda_migration_v1', 'completed');
+        } catch (error) {
+          console.error('Error during data migration:', error);
+        }
+      };
+
+      runMigration();
+    }
+  }, [firestore, user]);
+
 
   useEffect(() => {
     if (isUserLoading) return;
