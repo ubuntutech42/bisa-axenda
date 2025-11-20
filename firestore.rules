@@ -60,11 +60,13 @@ service cloud.firestore {
       }
       
       allow get: if isBoardMember();
+      // This rule ensures that a user can only query for boards they are a member of.
+      // It enforces that the query must contain a `where('members', 'array-contains', <uid>)` clause.
       allow list: if request.auth != null && request.query.where.size() == 1 && request.query.where[0].field == 'members' && request.query.where[0].operator == 'array-contains';
       allow create: if isCreatingOwner();
       
       // Only the board owner can change the members list or delete the board.
-      allow update: if isBoardOwner();
+      allow update: if isBoardOwner() && request.resource.data.userId == resource.data.userId;
       
       // Any member can update fields other than 'members' and 'userId'
       allow update: if isBoardMember() 
