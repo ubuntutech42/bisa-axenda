@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, addDoc, serverTimestamp, writeBatch, doc, getDocs, deleteDoc } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
-import { Loader } from 'lucide-react';
+import { Loader, Plus } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
 import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -14,7 +14,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { NoBoardsSplash } from '@/components/board/NoBoardsSplash';
-import { ActionsBar } from '@/components/board/ActionsBar';
+import GroupSelector from '@/components/board/GroupSelector';
+import BoardSelector from '@/components/kanban/BoardSelector';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+
 
 export default function BoardPage() {
   const { user, isUserLoading } = useUser();
@@ -202,9 +206,49 @@ export default function BoardPage() {
   return (
     <>
       <div className="flex flex-col h-full w-full">
-          <Header title={activeBoard?.name || 'Carregando...'} />
+          <div className="flex-shrink-0">
+            <Header title={activeBoard?.name || 'Carregando...'}>
+              <div className='hidden md:flex items-center gap-2'>
+                <GroupSelector 
+                    groups={boardGroups}
+                    activeGroup={activeGroup}
+                    onGroupChange={handleGroupChange}
+                />
+                <BoardSelector 
+                    boards={boardsInGroup}
+                    activeBoard={activeBoard}
+                    setActiveBoard={setActiveBoard}
+                    onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
+                />
+                <Button onClick={() => setIsNewTaskDialogOpen(true)} disabled={!activeBoard}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nova Tarefa
+                </Button>
+              </div>
+            </Header>
+             <div className='md:hidden flex flex-col gap-2 mb-4'>
+                <div className='flex gap-2'>
+                    <GroupSelector 
+                        groups={boardGroups}
+                        activeGroup={activeGroup}
+                        onGroupChange={handleGroupChange}
+                    />
+                    <BoardSelector 
+                        boards={boardsInGroup}
+                        activeBoard={activeBoard}
+                        setActiveBoard={setActiveBoard}
+                        onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
+                    />
+                </div>
+                <Button onClick={() => setIsNewTaskDialogOpen(true)} disabled={!activeBoard}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nova Tarefa
+                </Button>
+             </div>
+            <Separator className="mb-4" />
+          </div>
           
-          <div className="flex-1 overflow-hidden h-full">
+          <div className="flex-1 overflow-auto h-full">
               {activeBoard && !areListsLoading && lists ? (
                   <KanbanBoard boardId={activeBoard.id} lists={lists} />
               ) : boardsInGroup.length === 0 ? (
@@ -219,18 +263,6 @@ export default function BoardPage() {
               )}
           </div>
       </div>
-
-      <ActionsBar
-        groups={boardGroups}
-        activeGroup={activeGroup}
-        onGroupChange={handleGroupChange}
-        boards={boardsInGroup}
-        activeBoard={activeBoard}
-        setActiveBoard={setActiveBoard}
-        onNewBoardClick={() => setIsCreateBoardDialogOpen(true)}
-        onNewTaskClick={() => setIsNewTaskDialogOpen(true)}
-        isNewTaskDisabled={!activeBoard}
-      />
 
       <CreateBoardDialog 
           isOpen={isCreateBoardDialogOpen}

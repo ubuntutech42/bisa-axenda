@@ -18,6 +18,8 @@ interface ActionsBarProps {
     isNewTaskDisabled: boolean;
 }
 
+// This component is no longer used.
+// The controls have been moved to a fixed header in the main board page.
 export function ActionsBar({
     groups,
     activeGroup,
@@ -29,23 +31,5 @@ export function ActionsBar({
     onNewTaskClick,
     isNewTaskDisabled
 }: ActionsBarProps) {
-  return (
-    <aside className="fixed top-1/2 right-4 -translate-y-1/2 z-40 bg-card/80 backdrop-blur-sm p-3 rounded-lg border shadow-lg flex flex-col gap-3">
-        <GroupSelector 
-            groups={groups}
-            activeGroup={activeGroup}
-            onGroupChange={onGroupChange}
-        />
-        <BoardSelector 
-            boards={boards}
-            activeBoard={activeBoard}
-            setActiveBoard={setActiveBoard}
-            onNewBoardClick={onNewBoardClick}
-        />
-        <Button onClick={onNewTaskClick} disabled={isNewTaskDisabled}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Tarefa
-        </Button>
-    </aside>
-  );
+  return null;
 }
