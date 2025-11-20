@@ -47,11 +47,11 @@ const navItems = [
   { href: '/calendar', label: 'Calendário', icon: CalendarDays },
   { href: '/pomodoro', label: 'Pomodoro', icon: Timer },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
+  { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
 interface SidebarProps {
   isCollapsed: boolean;
-  onToggleCollapse: () => void;
 }
 
 
@@ -167,16 +167,12 @@ export function UserProfileButton() {
   );
 }
 
-function SidebarHeader({ isCollapsed, onToggleCollapse }: SidebarProps) {
+function SidebarHeader({ isCollapsed }: { isCollapsed: boolean }) {
     return (
         <div className={cn("flex h-16 shrink-0 items-center border-b px-4", isCollapsed ? "px-2 justify-center" : "justify-between")}>
             <div className='flex items-center gap-2'>
               {!isCollapsed && <Logo />}
             </div>
-             <Button variant="ghost" size="icon" onClick={onToggleCollapse}>
-                {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}
-                <span className="sr-only">Toggle sidebar</span>
-            </Button>
         </div>
     )
 }
@@ -224,7 +220,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   );
 }
 
-export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({ isCollapsed }: SidebarProps) {
   const { user } = useUser();
   const pathname = usePathname();
 
@@ -234,16 +230,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} onToggleCollapse={onToggleCollapse} />
+        <SidebarHeader isCollapsed={isCollapsed} />
         <NavContent isCollapsed={isCollapsed} />
-        <div className={cn('mt-auto flex items-center border-t p-2')}>
-           <Button variant="ghost" asChild className={cn('w-full justify-start', isCollapsed && 'justify-center')}>
-              <Link href="/settings">
-                <Settings className="h-5 w-5 shrink-0" />
-                <span className={cn('ml-3', isCollapsed && 'sr-only')}>Configurações</span>
-              </Link>
-           </Button>
-        </div>
       </aside>
   );
 }
