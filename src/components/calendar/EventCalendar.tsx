@@ -297,10 +297,7 @@ export function EventCalendar() {
                 return (
                   <div className="relative flex flex-col items-center justify-center h-full w-full">
                     {dayLunarData && (
-                      <div 
-                        className="absolute top-1 right-1 w-4 h-4 text-foreground"
-                        dangerouslySetInnerHTML={{ __html: dayLunarData.svg }}
-                      />
+                      <LunarIcon phaseName={dayLunarData.phaseName} className="absolute top-1 right-1 w-4 h-4" />
                     )}
                     <span className="relative">{format(date, 'd')}</span>
                     {dayEvents.length > 0 && (
@@ -409,7 +406,7 @@ export function EventCalendar() {
                         <>
                           <div className="flex justify-between items-start">
                              <div className='flex items-center gap-2'>
-                                <div className="w-5 h-5 text-foreground" dangerouslySetInnerHTML={{ __html: event.svg }} />
+                                <LunarIcon phaseName={event.phaseName} className="w-5 h-5" />
                                 <p className="font-semibold">{event.phaseName}</p>
                              </div>
                              <Badge variant="outline">Lua</Badge>
