@@ -50,7 +50,7 @@ export default function BoardPage() {
     }
   }, [isUserLoading, user, router]);
 
-  // Redirect if board is not found or doesn't belong to the user
+  // Redirect if board is not found or user doesn't have permission
   useEffect(() => {
       if (boardError) {
           toast({ variant: 'destructive', title: 'Acesso Negado', description: 'Você não tem permissão para ver este quadro.' });
