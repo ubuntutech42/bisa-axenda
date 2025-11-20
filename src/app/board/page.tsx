@@ -97,14 +97,17 @@ export default function BoardPage() {
     <>
       <div className="flex flex-col h-full w-full">
           <div className="flex-shrink-0">
-            <Header title={activeBoard?.name || 'Carregando...'}>
-              <div className='flex items-center gap-2'>
-                <Button variant="outline" asChild>
-                    <Link href="/boards">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Voltar
-                    </Link>
+            <Header 
+              title={activeBoard?.name || 'Carregando...'}
+              backButton={
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="/boards">
+                    <ArrowLeft className="h-5 w-5 text-foreground" />
+                  </Link>
                 </Button>
+              }
+            >
+              <div className='flex items-center gap-2'>
                 <Button onClick={() => setIsNewTaskDialogOpen(true)} disabled={!activeBoard}>
                     <Plus className="mr-2 h-4 w-4" />
                     Nova Tarefa
