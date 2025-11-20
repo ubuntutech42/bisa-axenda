@@ -3,7 +3,7 @@
 
 import { useTheme } from 'next-themes';
 import { Header } from '@/components/layout/Header';
-import { useUser, useFirestore, useDoc, useAuth }from '@/firebase';
+import { useUser, useFirestore, useDoc, useAuth, useMemoFirebase }from '@/firebase';
 import { Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -43,7 +43,7 @@ function ProfileSettings() {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const userDocRef = useMemo(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserType>(userDocRef);
 
     const { register, handleSubmit, reset, control, formState: { errors, isDirty } } = useForm<ProfileFormData>({
