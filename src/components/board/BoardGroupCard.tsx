@@ -19,7 +19,6 @@ interface BoardGroupCardProps {
 }
 
 export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroupName }: BoardGroupCardProps) {
-    const groupSlug = groupName === 'Sem Grupo' ? 'ungrouped' : encodeURIComponent(groupName);
     const [isEditing, setIsEditing] = useState(false);
     const [currentGroupName, setCurrentGroupName] = useState(groupName);
     const isDefaultGroup = groupName === 'Sem Grupo';
@@ -89,10 +88,12 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
             </CardHeader>
             <CardContent className="flex-1 space-y-2 overflow-hidden">
                  {boards.slice(0, 3).map(board => (
-                    <div key={board.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                        <FileStack className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium truncate text-foreground">{board.name}</span>
-                    </div>
+                    <Link key={board.id} href={`/board?id=${board.id}`}>
+                        <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                            <FileStack className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium truncate text-foreground">{board.name}</span>
+                        </div>
+                    </Link>
                 ))}
                 {boards.length > 3 && (
                      <div className="text-sm text-muted-foreground text-center pt-2">
@@ -101,12 +102,14 @@ export function BoardGroupCard({ groupName, boards, onDeleteGroup, onUpdateGroup
                 )}
             </CardContent>
             <CardFooter>
-                 <Button asChild className="w-full">
-                    <Link href={`/board?group=${groupSlug}`}>
-                        Ver Grupo
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
+                {boards.length > 3 && (
+                     <Button asChild className="w-full">
+                        <Link href={`/boards`}>
+                            Ver Todos os Quadros
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     );
