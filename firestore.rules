@@ -63,7 +63,8 @@ service cloud.firestore {
     /**
      * @description Allows users to read Kanban boards, but enforces ownership for writes.
      * @path /kanbanBoards/{boardId}
-     * @allow (get,list) - Any authenticated user can list or get a KanbanBoard.
+     * @allow (get) - User can get their own board.
+     * @allow (list) - User can list boards they own via a query.
      * @allow (create) - User with UID 'user123' can create a KanbanBoard with userId 'user123'.
      * @allow (update,delete) - User with UID 'user123' can update/delete their KanbanBoard.
      * @deny (create) - User with UID 'user456' cannot create a KanbanBoard with userId 'user123'.
@@ -71,19 +72,17 @@ service cloud.firestore {
      * @principle Public read, owner-only writes.
      */
     match /kanbanBoards/{boardId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(boardId) {
-        return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
+      function isOwner() {
+        return request.auth != null && resource.data.userId == request.auth.uid;
       }
       function isCreatingOwner() {
-        return isSignedIn() && request.auth.uid == request.resource.data.userId;
+        return request.auth != null && request.resource.data.userId == request.auth.uid;
       }
 
-      allow get, list: if isOwner(boardId);
+      allow get: if isOwner();
+      allow list: if request.auth != null && request.auth.uid == request.query.filters.userId;
       allow create: if isCreatingOwner();
-      allow update, delete: if isOwner(boardId);
+      allow update, delete: if isOwner();
     }
 
     /**
