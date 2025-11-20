@@ -1,9 +1,8 @@
-
 'use client';
 
-import { useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { User } from '@/lib/types';
@@ -15,33 +14,49 @@ interface BoardMembersProps {
 
 export function BoardMembers({ memberIds }: BoardMembersProps) {
   const firestore = useFirestore();
-  
-  const membersQuery = useMemoFirebase(() => 
-    memberIds && memberIds.length > 0
-      ? query(collection(firestore, 'users'), where('id', 'in', memberIds))
-      : null,
-    [firestore, memberIds]
-  );
-  const { data: members, isLoading } = useCollection<User>(membersQuery);
+  const [members, setMembers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const sortedMembers = useMemo(() => {
-    if (!members) return [];
-    return [...members].sort((a, b) => {
-        // Simple sort to have some consistency, could be improved
-        return a.userName.localeCompare(b.userName);
-    });
-  }, [members]);
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!firestore || !memberIds || memberIds.length === 0) {
+        setMembers([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const memberPromises = memberIds.map(id => getDoc(doc(firestore, 'users', id)));
+        const memberDocs = await Promise.all(memberPromises);
+        const memberData = memberDocs
+          .filter(docSnap => docSnap.exists())
+          .map(docSnap => docSnap.data() as User);
+          
+        const sorted = memberData.sort((a, b) => a.userName.localeCompare(b.userName));
+        setMembers(sorted);
+      } catch (error) {
+        console.error("Error fetching board members:", error);
+        setMembers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMembers();
+  }, [firestore, memberIds]);
+
 
   if (isLoading) {
     return <Loader className="w-5 h-5 animate-spin" />;
   }
 
-  if (!sortedMembers || sortedMembers.length === 0) {
+  if (!members || members.length === 0) {
     return null;
   }
   
-  const visibleMembers = sortedMembers.slice(0, 3);
-  const hiddenMembersCount = sortedMembers.length - visibleMembers.length;
+  const visibleMembers = members.slice(0, 3);
+  const hiddenMembersCount = members.length - visibleMembers.length;
 
   return (
     <div className="flex items-center -space-x-2">
