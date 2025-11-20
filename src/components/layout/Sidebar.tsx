@@ -51,7 +51,6 @@ const navItems = [
 
 interface SidebarProps {
   isCollapsed: boolean;
-  onToggle: () => void;
   hasNotifications: boolean;
 }
 
@@ -109,7 +108,7 @@ export function UserProfileButton() {
   );
 }
 
-function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void; }) {
+function SidebarHeader({ isCollapsed }: { isCollapsed: boolean; }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -140,9 +139,9 @@ function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onTogg
             <Sheet>
                 <SheetTrigger asChild>
                     <button className={cn("relative flex items-center gap-2 transition-all", isCollapsed && 'hidden')}>
-                        <UserProfileButton />
+                        <Bell className="h-5 w-5" />
                         {notificationCount > 0 && (
-                            <div className="absolute -top-0 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
+                            <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground border-2 border-card">
                                 {notificationCount}
                             </div>
                         )}
@@ -222,7 +221,7 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   );
 }
 
-export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProps) {
+export function Sidebar({ isCollapsed, hasNotifications }: SidebarProps) {
   const { user } = useUser();
   const pathname = usePathname();
 
@@ -232,8 +231,11 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} onToggle={onToggle} />
+        <SidebarHeader isCollapsed={isCollapsed} />
         <NavContent isCollapsed={isCollapsed} />
+        <div className={cn('mt-auto flex items-center border-t p-2', isCollapsed ? 'justify-center' : 'justify-between')}>
+          {!isCollapsed && <UserProfileButton />}
+        </div>
       </aside>
   );
 }
