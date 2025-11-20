@@ -11,10 +11,11 @@ import { usePomodoro } from '@/context/PomodoroContext';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
 import { doc, getDoc, collection, writeBatch } from 'firebase/firestore';
 import { createUserProfile } from '@/lib/user';
-import { Loader } from 'lucide-react';
+import { Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import HomePage from '@/app/page';
 import { culturalEvents, quotes } from '@/lib/data';
+import { Button } from './ui/button';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -133,6 +134,18 @@ export function AppContent({ children }: { children: React.ReactNode }) {
           onToggle={() => setIsSidebarCollapsed(prev => !prev)}
           hasNotifications={hasNotifications}
         />
+        <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+                "absolute top-1/2 -translate-y-1/2 bg-card hover:bg-muted border rounded-full h-8 w-8 z-40 transition-all duration-300 ease-in-out",
+                isSidebarCollapsed ? "left-[72px]" : "left-[248px]"
+            )}
+            onClick={() => setIsSidebarCollapsed(prev => !prev)}
+        >
+            <span className="sr-only">{isSidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
+            {isSidebarCollapsed ? <ChevronRight /> : <ChevronLeft />}
+        </Button>
         <div className={cn("flex flex-col flex-1 transition-all duration-300 ease-in-out", 
             isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
         )}>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -15,8 +14,6 @@ import {
   PanelLeftClose,
   PanelRightClose,
   Bell,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
@@ -59,7 +56,7 @@ interface SidebarProps {
 }
 
 
-function UserProfileButton() {
+export function UserProfileButton() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const { setIsFloatingPomodoroOpen } = usePomodoro();
@@ -112,7 +109,7 @@ function UserProfileButton() {
   );
 }
 
-function SidebarHeader({ isCollapsed }: { isCollapsed: boolean; }) {
+function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void; }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -235,21 +232,8 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} />
+        <SidebarHeader isCollapsed={isCollapsed} onToggle={onToggle} />
         <NavContent isCollapsed={isCollapsed} />
-        
-        <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute top-1/2 -right-4 -translate-y-1/2 bg-card hover:bg-muted border rounded-full h-8 w-8 z-40"
-            onClick={onToggle}
-        >
-            <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
-            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
-        </Button>
       </aside>
   );
 }
-
-// Keep UserProfileButton export for use in other potential places if needed, like mobile headers
-export { UserProfileButton };
