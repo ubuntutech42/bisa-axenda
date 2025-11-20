@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,7 +14,9 @@ import {
   Timer,
   PanelLeftClose,
   PanelRightClose,
-  Bell
+  Bell,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth, useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
@@ -109,7 +112,7 @@ function UserProfileButton() {
   );
 }
 
-function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void; }) {
+function SidebarHeader({ isCollapsed }: { isCollapsed: boolean; }) {
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -135,10 +138,6 @@ function SidebarHeader({ isCollapsed, onToggle }: { isCollapsed: boolean; onTogg
         <div className={cn("flex h-16 shrink-0 items-center border-b px-4", isCollapsed ? "px-2 justify-center" : "justify-between")}>
             <div className='flex items-center gap-2'>
               {!isCollapsed && <Logo />}
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggle}>
-                  <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
-                  {isCollapsed ? <PanelRightClose /> : <PanelLeftClose />}
-              </Button>
             </div>
 
             <Sheet>
@@ -236,8 +235,18 @@ export function Sidebar({ isCollapsed, onToggle, hasNotifications }: SidebarProp
   
   return (
       <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} onToggle={onToggle} />
+        <SidebarHeader isCollapsed={isCollapsed} />
         <NavContent isCollapsed={isCollapsed} />
+        
+        <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute top-1/2 -right-4 -translate-y-1/2 bg-card hover:bg-muted border rounded-full h-8 w-8 z-50"
+            onClick={onToggle}
+        >
+            <span className="sr-only">{isCollapsed ? 'Expandir menu' : 'Recolher menu'}</span>
+            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+        </Button>
       </aside>
   );
 }

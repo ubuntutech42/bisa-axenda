@@ -127,7 +127,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   // Authenticated user on app paths
   if (user && isAppPath) {
     return (
-      <div className="flex h-screen w-full bg-background">
+      <div className="flex h-screen w-full bg-background relative">
         <Sidebar 
           isCollapsed={isSidebarCollapsed} 
           onToggle={() => setIsSidebarCollapsed(prev => !prev)}
