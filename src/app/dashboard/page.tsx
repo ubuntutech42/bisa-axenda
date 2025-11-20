@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserType>(userDocRef);
 
   const boardsQuery = useMemoFirebase(() =>
-    user ? query(collection(firestore, 'kanbanBoards'), where('userId', '==', user.uid)) : null,
+    user ? query(collection(firestore, 'kanbanBoards'), where('members', 'array-contains', user.uid)) : null,
     [firestore, user]
   );
   const { data: boards, isLoading: areBoardsLoading } = useCollection<KanbanBoardType>(boardsQuery);
