@@ -48,32 +48,36 @@ service cloud.firestore {
      */
     match /kanbanBoards/{boardId} {
         function isBoardMember() {
-            return request.auth != null && resource.data.members.hasAny([request.auth.uid]);
+            // Correctly fetch the document being requested to check the 'members' array.
+            return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members.hasAny([request.auth.uid]);
         }
 
         function isBoardOwner() {
-            return request.auth != null && resource.data.userId == request.auth.uid;
+            // Use `get` here as well for consistency and to read the stored data.
+            return request.auth != null && get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.userId == request.auth.uid;
         }
 
         function isCreatingOwner() {
+            // For create operations, check the incoming data in request.resource.
             return request.auth != null && request.resource.data.userId == request.auth.uid && request.resource.data.members.hasAny([request.auth.uid]);
         }
 
         allow get: if isBoardMember();
         
-        // Allow listing boards if the query filters by the user's membership
+        // Allow listing boards if the query filters by the user's membership.
         allow list: if request.auth != null;
         
         allow create: if isCreatingOwner();
         
-        // Owner can update all fields, including members
+        // Owner can update all fields, including the members array.
         allow update: if isBoardOwner();
         
-        // Members can update fields EXCEPT userId and members
-        allow update: if isBoardMember() && !("userId" in request.resource.data) && !("members" in request.resource.data);
+        // Members (who are not owners) can update fields EXCEPT userId and members.
+        allow update: if isBoardMember() && !isBoardOwner() && !("userId" in request.resource.data) && !("members" in request.resource.data);
 
         allow delete: if isBoardOwner();
     }
+
 
     /**
      * @description Enforces that only board members can access lists.
