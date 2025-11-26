@@ -13,7 +13,6 @@ import { doc, getDoc, collection, writeBatch } from 'firebase/firestore';
 import { createUserProfile } from '@/lib/user';
 import { Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import HomePage from '@/app/page';
 import { culturalEvents, quotes } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 
@@ -25,7 +24,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const isAppPath = pathname !== '/';
+  const isAppRoute = !['/', '/login', '/register'].includes(pathname);
+  const isAuthRoute = ['/login', '/register'].includes(pathname);
 
   // One-time data migration
   useEffect(() => {
@@ -75,7 +75,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     if (isUserLoading) return;
 
     if (user) {
-      if (pathname === '/') {
+      // If user is logged in, redirect away from public-only pages
+      if (pathname === '/' || isAuthRoute) {
         router.replace('/dashboard');
         return;
       }
@@ -94,43 +95,33 @@ export function AppContent({ children }: { children: React.ReactNode }) {
             console.error("Failed to create user profile on-demand:", error);
           }
         };
-
+        // Delay to avoid race conditions on first login
         const timeoutId = setTimeout(checkAndCreateProfile, 2000);
         return () => clearTimeout(timeoutId);
       }
 
     } else {
       // If user is not logged in and tries to access an app page, redirect to landing
-      if (isAppPath && pathname !== '/login' && pathname !== '/register') {
+      if (isAppRoute) {
         router.replace('/');
       }
     }
-  }, [user, isUserLoading, isAppPath, pathname, router, firestore]);
+  }, [user, isUserLoading, pathname, isAppRoute, isAuthRoute, router, firestore]);
   
-  // Global loader
-  if (isUserLoading || (user && pathname === '/')) {
+  // Global loader: show on initial load or when redirecting a logged-in user from a public page
+  if (isUserLoading || (user && (pathname === '/' || isAuthRoute))) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <Loader className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
-
-  // Unauthenticated user on public paths
-  if (!user) {
-    if (pathname === '/') {
-       return <HomePage />;
-    }
-    return <>{children}</>;
-  }
   
-  // Authenticated user on app paths
-  if (user && isAppPath) {
+  // If user is logged in and on an app route, show the full app layout
+  if (user && isAppRoute) {
     return (
       <div className="flex h-screen w-full bg-background relative">
-        <Sidebar 
-          isCollapsed={isSidebarCollapsed} 
-        />
+        <Sidebar isCollapsed={isSidebarCollapsed} />
         <div className="hidden md:block">
            <Button
               variant="ghost"
@@ -159,6 +150,11 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Fallback for any other case
+  // If user is not logged in, just show the public page content (landing, login, register)
+  if (!user && !isAppRoute) {
+    return <>{children}</>;
+  }
+
+  // Fallback for any other case (shouldn't happen)
   return null;
 }
