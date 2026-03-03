@@ -9,12 +9,13 @@ import { useUser, useFirestore } from '@/firebase';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { usePomodoro } from '@/context/PomodoroContext';
 import { FloatingPomodoro } from '@/components/pomodoro/FloatingPomodoro';
-import { doc, getDoc, collection, writeBatch } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { createUserProfile } from '@/lib/user';
 import { Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { culturalEvents, quotes } from '@/lib/data';
 import { Button } from '@/components/ui/button';
+import { isAppRoute as checkAppRoute, isAuthRoute as checkAuthRoute, ROUTES } from '@/lib/routes';
+import { DataMigration } from '@/components/DataMigration';
 
 export function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,60 +25,15 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const isAppRoute = !['/', '/login', '/register'].includes(pathname);
-  const isAuthRoute = ['/login', '/register'].includes(pathname);
-
-  // One-time data migration
-  useEffect(() => {
-    if (firestore && user) {
-      const runMigration = async () => {
-        const migrationStatus = localStorage.getItem('axenda_migration_v1');
-        if (migrationStatus === 'completed') {
-          return;
-        }
-
-        console.log('Running one-time data migration...');
-        const batch = writeBatch(firestore);
-
-        // Migrate quotes if they exist in the data file
-        if (quotes && quotes.length > 0) {
-          const quotesCol = collection(firestore, 'quotes');
-          quotes.forEach(quote => {
-            const docRef = doc(quotesCol);
-            batch.set(docRef, { ...quote, createdAt: new Date() });
-          });
-        }
-        
-        // Migrate cultural events if they exist
-        if (culturalEvents && culturalEvents.length > 0) {
-            const eventsCol = collection(firestore, 'culturalEvents');
-            culturalEvents.forEach(event => {
-                const docRef = doc(eventsCol);
-                batch.set(docRef, { ...event, createdAt: new Date() });
-            });
-        }
-
-        try {
-          await batch.commit();
-          console.log('Migration completed successfully.');
-          localStorage.setItem('axenda_migration_v1', 'completed');
-        } catch (error) {
-          console.error('Error during data migration:', error);
-        }
-      };
-
-      runMigration();
-    }
-  }, [firestore, user]);
-
+  const isAppRoute = checkAppRoute(pathname);
+  const isAuthRoute = checkAuthRoute(pathname);
 
   useEffect(() => {
     if (isUserLoading) return;
 
     if (user) {
-      // If user is logged in, redirect away from public-only pages
-      if (pathname === '/' || isAuthRoute) {
-        router.replace('/dashboard');
+      if (pathname === ROUTES.HOME || isAuthRoute) {
+        router.replace(ROUTES.DASHBOARD);
         return;
       }
       
@@ -101,15 +57,13 @@ export function AppContent({ children }: { children: React.ReactNode }) {
       }
 
     } else {
-      // If user is not logged in and tries to access an app page, redirect to landing
       if (isAppRoute) {
-        router.replace('/');
+        router.replace(ROUTES.HOME);
       }
     }
   }, [user, isUserLoading, pathname, isAppRoute, isAuthRoute, router, firestore]);
-  
-  // Global loader: show on initial load or when redirecting a logged-in user from a public page
-  if (isUserLoading || (user && (pathname === '/' || isAuthRoute))) {
+
+  if (isUserLoading || (user && (pathname === ROUTES.HOME || isAuthRoute))) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <Loader className="h-10 w-10 animate-spin text-primary" />
@@ -121,6 +75,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   if (user && isAppRoute) {
     return (
       <div className="flex h-screen w-full bg-background relative">
+        <DataMigration firestore={firestore} userId={user?.uid ?? null} />
         <Sidebar isCollapsed={isSidebarCollapsed} />
         <div className="hidden md:block">
            <Button

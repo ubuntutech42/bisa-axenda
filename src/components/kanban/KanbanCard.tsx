@@ -1,8 +1,9 @@
 
 "use client";
 
+import React from 'react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import type { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -32,7 +33,7 @@ const categoryClasses: Record<Task['category'], string> = {
 };
 
 
-export function KanbanCard({ task, index, onClick }: KanbanCardProps) {
+function KanbanCardInner({ task, index, onClick }: KanbanCardProps) {
   const checklistProgress = task.checklist ? task.checklist.filter(item => item.completed).length : 0;
   const checklistTotal = task.checklist ? task.checklist.length : 0;
 
@@ -102,3 +103,5 @@ export function KanbanCard({ task, index, onClick }: KanbanCardProps) {
     </Draggable>
   );
 }
+
+export const KanbanCard = React.memo(KanbanCardInner);

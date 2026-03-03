@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs, doc } from 'firebase/firestore';
 import type { KanbanBoard as KanbanBoardType, Task, KanbanList, User as UserType } from '@/lib/types';
+import { ROUTES } from '@/lib/routes';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { WisdomNugget } from '@/components/dashboard/WisdomNugget';
@@ -36,7 +37,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isUserLoading) return;
     if (!user) {
-      router.push('/'); // Redirect to landing if not logged in
+      router.push(ROUTES.HOME);
       return;
     }
   }, [user, router, isUserLoading]);
@@ -106,8 +107,8 @@ export default function DashboardPage() {
       activeTasks: activeTasks,
     };
   }, [allTasks, allLists]);
-  
-  const getGreeting = () => {
+
+  const greeting = useMemo(() => {
     const name = userProfile?.firstName || user?.displayName?.split(' ')[0] || 'Guerreiro(a)';
     switch (userProfile?.gender) {
       case 'Mulher':
@@ -120,7 +121,7 @@ export default function DashboardPage() {
       default:
         return `Bem-vindo(a), ${name}!`;
     }
-  };
+  }, [userProfile?.firstName, userProfile?.gender, user?.displayName]);
 
   if (isUserLoading || areBoardsLoading || areTasksLoading || isProfileLoading || !user) {
     return (
@@ -133,7 +134,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col h-full w-full">
         <Header>
-          <h1 className="text-3xl font-bold font-headline">{getGreeting()}</h1>
+          <h1 className="text-3xl font-bold font-headline">{greeting}</h1>
           <UserProfileButton />
         </Header>
         <div className="flex-1 overflow-y-auto pr-2">

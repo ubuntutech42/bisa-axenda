@@ -1,13 +1,14 @@
 
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
 import { Header } from '@/components/layout/Header';
-import { useUser, useFirestore, useDoc, useAuth, useMemoFirebase }from '@/firebase';
+import { useUser, useFirestore, useDoc, useAuth, useMemoFirebase } from '@/firebase';
 import { Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +17,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { EventCategoryManager } from '@/components/layout/EventCategoryManager';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile as updateAuthProfile } from 'firebase/auth';
 import type { User as UserType } from '@/lib/types';
@@ -25,8 +25,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ADMIN_UIDS } from '@/lib/admin';
-import { AdminPanel } from '@/components/admin/AdminPanel';
 import { UserProfileButton } from '@/components/layout/Sidebar';
+import { ROUTES } from '@/lib/routes';
+
+const EventCategoryManager = dynamic(
+  () => import('@/components/layout/EventCategoryManager').then((m) => m.EventCategoryManager),
+  { ssr: false }
+);
+
+const AdminPanel = dynamic(
+  () => import('@/components/admin/AdminPanel').then((m) => m.AdminPanel),
+  { ssr: false }
+);
 
 const profileSchema = z.object({
     userName: z.string().min(2, { message: 'O nome de usuário deve ter pelo menos 2 caracteres.' }),
@@ -215,7 +225,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!isUserLoading && !user) {
-            router.push('/login');
+            router.push(ROUTES.LOGIN);
         }
     }, [isUserLoading, user, router]);
 

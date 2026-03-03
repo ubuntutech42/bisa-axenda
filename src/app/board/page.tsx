@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
@@ -10,8 +11,13 @@ import { Header } from '@/components/layout/Header';
 import { Loader, Plus, ArrowLeft, Users } from 'lucide-react';
 import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { ROUTES } from '@/lib/routes';
+
+const KanbanBoard = dynamic(
+  () => import('@/components/kanban/KanbanBoard').then((m) => m.KanbanBoard),
+  { ssr: false, loading: () => <div className="flex items-center justify-center flex-1"><Loader className="h-8 w-8 animate-spin" /></div> }
+);
 import { Button } from '@/components/ui/button';
 import { BoardMembers } from '@/components/board/BoardMembers';
 import { ShareDialog } from '@/components/board/ShareDialog';
@@ -47,7 +53,7 @@ export default function BoardPage() {
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/login');
+      router.push(ROUTES.LOGIN);
     }
   }, [isUserLoading, user, router]);
 
@@ -55,12 +61,12 @@ export default function BoardPage() {
   useEffect(() => {
       if (boardError) {
           toast({ variant: 'destructive', title: 'Acesso Negado', description: 'Você não tem permissão para ver este quadro.' });
-          router.push('/boards');
+          router.push(ROUTES.BOARDS);
           return;
       }
       if (!isBoardLoading && user && activeBoard === null && boardId) {
           toast({ variant: 'destructive', title: 'Quadro não encontrado' });
-          router.push('/boards');
+          router.push(ROUTES.BOARDS);
       }
   }, [activeBoard, isBoardLoading, user, router, boardId, toast, boardError]);
 
@@ -110,7 +116,7 @@ export default function BoardPage() {
             <Header>
               <div className='flex items-center gap-2 flex-1 min-w-0'>
                  <Button variant="ghost" size="icon" asChild>
-                  <Link href="/boards">
+                  <Link href={ROUTES.BOARDS}>
                     <ArrowLeft className="h-5 w-5" />
                   </Link>
                 </Button>

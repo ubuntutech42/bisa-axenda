@@ -1,15 +1,25 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { Task, KanbanBoard } from '@/lib/types';
 import { Header } from '@/components/layout/Header';
-import { AiInsights } from '@/components/reports/AiInsights';
-import { TimeDistributionChart } from '@/components/reports/TimeDistributionChart';
 import { Loader } from 'lucide-react';
+import { ROUTES } from '@/lib/routes';
+
+const TimeDistributionChart = dynamic(
+  () => import('@/components/reports/TimeDistributionChart').then((m) => m.TimeDistributionChart),
+  { ssr: false }
+);
+
+const AiInsights = dynamic(
+  () => import('@/components/reports/AiInsights').then((m) => m.AiInsights),
+  { ssr: false }
+);
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserProfileButton } from '@/components/layout/Sidebar';
 
@@ -33,7 +43,7 @@ export default function ReportsPage() {
   useEffect(() => {
     if (isUserLoading) return;
     if (!user) {
-      router.push('/login');
+      router.push(ROUTES.LOGIN);
       return;
     }
   }, [isUserLoading, user, router]);

@@ -1,8 +1,7 @@
-
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ['firebase'],
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -30,9 +29,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       }
     ],
-  },
-  experimental: {
-    // allowedDevOrigins has been moved to the root level
   },
   allowedDevOrigins: [
     "https://6000-firebase-studio-1759897343276.cluster-zhw3w37rxzgkutusbbhib6qhra.cloudworkstations.dev",
