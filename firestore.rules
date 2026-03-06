@@ -1,0 +1,165 @@
+
+/**
+ * @fileoverview Firestore Security Rules for Axénda application.
+ *
+ * Core Philosophy:
+ * This ruleset employs a user-ownership and membership model. Users can only access and modify
+ * their own resources or resources they are members of (like Kanban boards).
+ * Public read access is granted to some collections, but write access is carefully controlled.
+ * Admin-only write access is implemented for global content collections.
+ *
+ * Data Structure:
+ * - `/users/{userId}`: Stores user profiles, accessible only to the owning user.
+ * - `/kanbanBoards/{boardId}`: Stores Kanban boards. Access is controlled by the `members` array.
+ * - `/kanbanBoards/{boardId}/lists/{listId}`: Stores lists for a specific board.
+ * - `/kanbanBoards/{boardId}/tasks/{taskId}`: Stores tasks for a specific board.
+ * - `/users/{userId}/...`: Various user-specific subcollections.
+ * - `/culturalEvents/{eventId}`: Stores global cultural events, publicly readable, admin writable.
+ * - `/quotes/{quoteId}`: Stores global quotes, publicly readable, admin writable.
+ * - `/notifications/{notificationId}`: Stores global notifications, publicly readable, admin writable.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Admin Function ---
+    function isAdmin() {
+      // UID do administrador - substitua pelo UID real do admin no seu projeto
+      return request.auth.uid == 'FyF8IhsagahHEamM0YGWPffSsXD3';
+    }
+
+    /**
+     * @description Enforces user-ownership for user profiles.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      
+      allow read, create, update, delete: if isOwner();
+      allow list: if false; // Disallow listing all users for privacy
+    }
+
+    /**
+     * @description Allows users in the 'members' list to access the board and its contents.
+     * The owner is the user with 'userId' property. Only the owner can delete the board or manage members.
+     * @path /kanbanBoards/{boardId}
+     */
+    match /kanbanBoards/{boardId} {
+        function isBoardOwner() {
+            // On existing docs, check the userId field.
+            return request.auth != null && resource.data.userId == request.auth.uid;
+        }
+
+        function isCreatingOwner() {
+            // On new docs, check the incoming userId and members fields.
+            return request.auth != null 
+                   && request.resource.data.userId == request.auth.uid 
+                   && request.auth.uid in request.resource.data.members;
+        }
+        
+        allow get: if request.auth != null && request.auth.uid in resource.data.members;
+        allow list: if request.auth != null;
+
+        allow create: if isCreatingOwner();
+        
+        allow update: if request.auth != null && (
+            isBoardOwner() || 
+            (request.auth.uid in resource.data.members && !( 'userId' in request.resource.data) && !('members' in request.resource.data) )
+        );
+
+        allow delete: if isBoardOwner();
+
+      /**
+       * @description Enforces that only board members can access lists and tasks.
+       * Access is granted if the user has access to the parent board document.
+       * @path /kanbanBoards/{boardId}/lists/{listId}
+       * @path /kanbanBoards/{boardId}/tasks/{taskId}
+       */
+      match /lists/{listId} {
+        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
+      }
+      match /tasks/{taskId} {
+        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/kanbanBoards/$(boardId)).data.members;
+      }
+    }
+
+
+    /**
+     * @description Enforces user-ownership for categories.
+     * @path /users/{userId}/categories/{categoryId}
+     */
+    match /users/{userId}/categories/{categoryId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow read, list, create, update, delete: if isOwner();
+    }
+
+    /**
+     * @description Enforces user-ownership for Pomodoro sessions.
+     * @path /users/{userId}/pomodoroSessions/{pomodoroSessionId}
+     */
+    match /users/{userId}/pomodoroSessions/{pomodoroSessionId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow read, list, create, update, delete: if isOwner();
+    }
+    
+    /**
+     * @description Enforces user-ownership for event categories.
+     * @path /users/{userId}/eventCategories/{eventCategoryId}
+     */
+    match /users/{userId}/eventCategories/{eventCategoryId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isCreatingOwner() {
+        return request.auth != null && request.auth.uid == userId && request.resource.data.userId == userId;
+      }
+
+      allow list, read, update, delete: if isOwner();
+      allow create: if isCreatingOwner();
+    }
+
+    /**
+     * @description Enforces user-ownership for calendar events.
+     * @path /users/{userId}/calendarEvents/{calendarEventId}
+     */
+    match /users/{userId}/calendarEvents/{calendarEventId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+       function isCreatingOwner() {
+        return request.auth != null && request.auth.uid == userId && request.resource.data.userId == userId;
+      }
+
+      allow read, list, create, update, delete: if isOwner();
+    }
+
+    /**
+     * @description Publicly readable content for authenticated users, but only admin can write.
+     */
+    match /culturalEvents/{culturalEventId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /quotes/{quoteId} {
+      function isReadingOneRandomQuote() {
+        return request.query.limit == 1;
+      }
+      allow read: if request.auth != null && (isAdmin() || isReadingOneRandomQuote());
+      allow write: if isAdmin();
+    }
+    
+    match /notifications/{notificationId} {
+       allow read: if request.auth != null;
+       allow write: if isAdmin();
+    }
+  }
+}
