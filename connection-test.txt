@@ -1,0 +1,3 @@
+Ponte de axé — teste de sincronia Local ↔ Firebase Studio
+Gerado em: 2025-03-07
+Se este arquivo aparecer no Firebase Studio, a comunicação bidirecional está OK.
