@@ -5,12 +5,14 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, writeBatch, doc, getDocs, deleteDoc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, writeBatch, doc, getDocs, deleteDoc, updateDoc, addDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Loader, Plus, LayoutGrid, Trash2 } from 'lucide-react';
+import { Loader, Plus, LayoutGrid, Trash2, Download } from 'lucide-react';
 import { CreateBoardDialog } from '@/components/kanban/CreateBoardDialog';
+import { ImportBoardDialog } from '@/components/kanban/ImportBoardDialog';
 import type { KanbanBoard as KanbanBoardType } from '@/lib/types';
+import type { TrelloParsedBoard } from '@/lib/import-trello';
 import { useToast } from '@/hooks/use-toast';
 import { BoardGroupCard } from '@/components/board/BoardGroupCard';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -26,6 +28,7 @@ function BoardsPageContent() {
     const { toast } = useToast();
 
     const [isCreateBoardDialogOpen, setIsCreateBoardDialogOpen] = useState(false);
+    const [isImportBoardDialogOpen, setIsImportBoardDialogOpen] = useState(false);
     const [createDialogMode, setCreateDialogMode] = useState<'board' | 'group'>('board');
     const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
     const [boardToDelete, setBoardToDelete] = useState<KanbanBoardType | null>(null);
@@ -108,6 +111,57 @@ function BoardsPageContent() {
           });
         }
       };
+
+    const handleImportTrello = async (parsed: TrelloParsedBoard) => {
+        if (!user) return;
+        try {
+            const boardsCollection = collection(firestore, 'kanbanBoards');
+            const boardData: Omit<KanbanBoardType, 'id'> = {
+                name: parsed.boardName,
+                type: 'kanban',
+                userId: user.uid,
+                createdAt: serverTimestamp() as any,
+                members: [user.uid],
+            };
+            const newBoardRef = await addDoc(boardsCollection, boardData);
+            const listsCollection = collection(firestore, 'kanbanBoards', newBoardRef.id, 'lists');
+            const listIds: string[] = [];
+            for (let i = 0; i < parsed.lists.length; i++) {
+                const listRef = doc(listsCollection);
+                await setDoc(listRef, { name: parsed.lists[i].name, order: i });
+                listIds.push(listRef.id);
+            }
+            const tasksCollection = collection(firestore, 'kanbanBoards', newBoardRef.id, 'tasks');
+            for (const t of parsed.tasks) {
+                const listId = listIds[t.listIndex] ?? listIds[0];
+                await addDoc(tasksCollection, {
+                    userId: user.uid,
+                    listId,
+                    title: t.title,
+                    description: t.description ?? undefined,
+                    category: 'Pessoal',
+                    priority: 'Média',
+                    deadline: t.deadline ?? undefined,
+                    coverImageUrl: t.coverImageUrl ?? undefined,
+                    timeSpent: 0,
+                    createdAt: serverTimestamp(),
+                });
+            }
+            toast({
+                title: 'Quadro importado!',
+                description: `"${parsed.boardName}" foi criado com ${parsed.lists.length} coluna(s) e ${parsed.tasks.length} tarefa(s).`,
+            });
+            setIsImportBoardDialogOpen(false);
+            router.push(`/board?id=${newBoardRef.id}`);
+        } catch (error) {
+            console.error('Error importing Trello board:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao importar',
+                description: 'Não foi possível criar o quadro a partir do arquivo. Tente novamente.',
+            });
+        }
+    };
 
     const handleDeleteGroup = async () => {
         if (!groupToDelete || !firestore || !boards || !user) return;
@@ -241,6 +295,10 @@ function BoardsPageContent() {
                                 <Plus />
                                 <span>Novo Grupo</span>
                             </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setIsImportBoardDialogOpen(true)}>
+                                <Download />
+                                <span>Importar quadro (Trello / Notion)</span>
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     <UserProfileButton />
@@ -312,6 +370,11 @@ function BoardsPageContent() {
                 onCreate={handleCreateBoard}
                 existingGroups={sortedGroups}
                 initialFocus={createDialogMode}
+            />
+            <ImportBoardDialog
+                isOpen={isImportBoardDialogOpen}
+                onClose={() => setIsImportBoardDialogOpen(false)}
+                onImportTrello={handleImportTrello}
             />
 
             <AlertDialog open={!!groupToDelete} onOpenChange={(open) => !open && setGroupToDelete(null)}>
