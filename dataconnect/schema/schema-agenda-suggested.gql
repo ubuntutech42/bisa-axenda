@@ -1,0 +1,38 @@
+# Esquema sugerido para Axénda (agenda): Usuários, Agendamentos, Tarefas.
+# Substituir ou integrar ao schema.gql conforme decisão do Tech Lead.
+# Após alterar, rodar: firebase dataconnect:sdk:generate (ou equivalente) e atualizar queries/mutations.
+
+# Usuário: chave por Firebase Auth UID (alinhado ao Auth).
+type User @table {
+  id: String! @default(expr: "auth.uid")
+  email: String @col(dataType: "varchar(255)")
+  displayName: String @col(dataType: "varchar(100)")
+  createdAt: Date! @default(expr: "request.time")
+  # Relações geradas: agendamentos_on_user, tarefas_on_user
+}
+
+# Agendamento: eventos/compromissos na agenda.
+type Agendamento @table {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User!
+  title: String!
+  startAt: Timestamp!
+  endAt: Timestamp!
+  allDay: Boolean @default(value: false)
+  description: String
+  location: String
+  createdAt: Date! @default(expr: "request.time")
+  updatedAt: Date! @default(expr: "request.time")
+}
+
+# Tarefa: itens de lista (todo), opcionalmente ligados a um agendamento.
+type Tarefa @table {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User!
+  title: String!
+  completed: Boolean @default(value: false)
+  dueDate: Date
+  agendamento: Agendamento
+  createdAt: Date! @default(expr: "request.time")
+  updatedAt: Date! @default(expr: "request.time")
+}

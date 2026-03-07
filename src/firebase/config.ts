@@ -1,8 +1,15 @@
+const required = (name: string) => {
+  const value = process.env[name];
+  if (!value) throw new Error(`Variável de ambiente ausente: ${name}`);
+  return value;
+};
+
 export const firebaseConfig = {
-  "projectId": "studio-5218947261-40112",
-  "appId": "1:1024578928137:web:fe7aac529e5cb95c3e42d8",
-  "apiKey": "AIzaSyAwxxaRi4oDKrCvNHO8SxPN6Yh9oF7U6U8",
-  "authDomain": "studio-5218947261-40112.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "1024578928137"
+  projectId: required("NEXT_PUBLIC_FIREBASE_PROJECT_ID"),
+  appId: required("NEXT_PUBLIC_FIREBASE_APP_ID"),
+  apiKey: required("NEXT_PUBLIC_FIREBASE_API_KEY"),
+  authDomain: required("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"),
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? "",
+  messagingSenderId: required("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
 };
