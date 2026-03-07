@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { Task, Priority, Category, KanbanList } from '@/lib/types';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,11 +28,12 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, ImagePlus, X, Loader2 } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { uploadTaskCover, isTaskCoverUploadAvailable } from '@/lib/task-cover-upload';
 
 
 const priorities = ['Baixa', 'Média', 'Alta', 'Urgente'] as const;
@@ -56,10 +57,15 @@ interface TaskDialogProps {
   onSave: (data: any) => void;
   lists: KanbanList[];
   initialListId?: string;
+  boardId?: string;
 }
 
-export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialListId }: TaskDialogProps) {
+export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialListId, boardId }: TaskDialogProps) {
   const isEditing = !!task;
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [removeCover, setRemoveCover] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -67,6 +73,8 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialL
 
   useEffect(() => {
     if (isOpen) {
+      setCoverFile(null);
+      setRemoveCover(false);
       const sortedLists = [...lists].sort((a,b) => a.order - b.order);
       if (task) {
         reset({
@@ -82,7 +90,6 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialL
           title: '',
           description: '',
           priority: 'Média',
-          // Use initialListId if provided, otherwise default to first list
           listId: initialListId || sortedLists[0]?.id || '',
           deadline: undefined,
         });
@@ -90,11 +97,39 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialL
     }
   }, [task, isOpen, reset, lists, initialListId]);
 
+  const existingCoverUrl = task?.coverImageUrl && !removeCover && !coverFile ? task.coverImageUrl : null;
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (coverFile) {
+      const url = URL.createObjectURL(coverFile);
+      setObjectUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setObjectUrl(null);
+  }, [coverFile]);
+  const previewUrl = objectUrl ?? existingCoverUrl ?? null;
 
-  const handleFormSubmit = (data: TaskFormData) => {
+  const handleFormSubmit = async (data: TaskFormData) => {
+    let coverImageUrl: string | null | undefined = existingCoverUrl ?? undefined;
+    if (removeCover) coverImageUrl = null;
+    else if (coverFile && boardId && isTaskCoverUploadAvailable()) {
+      setCoverUploading(true);
+      try {
+        coverImageUrl = await uploadTaskCover(coverFile, boardId, task?.id);
+      } catch (err) {
+        console.error('Upload da capa falhou:', err);
+        setCoverUploading(false);
+        return;
+      }
+      setCoverUploading(false);
+    } else if (task?.coverImageUrl && !removeCover && !coverFile) {
+      coverImageUrl = task.coverImageUrl;
+    }
+
     const dataToSave = {
       ...data,
       deadline: data.deadline?.toISOString(),
+      ...(coverImageUrl !== undefined && { coverImageUrl: coverImageUrl === null ? null : coverImageUrl || undefined }),
     };
     onSave(isEditing ? { ...task, ...dataToSave } : dataToSave);
   };
@@ -121,6 +156,59 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialL
               <Label htmlFor="description">Descrição</Label>
               <Textarea id="description" placeholder="Adicione uma descrição mais detalhada..." {...register('description')} />
             </div>
+
+            {isTaskCoverUploadAvailable() && (
+              <div className="space-y-2">
+                <Label>Capa do card (opcional)</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) setCoverFile(f);
+                    setRemoveCover(false);
+                    e.target.value = '';
+                  }}
+                />
+                {previewUrl ? (
+                  <div className="relative rounded-md border overflow-hidden bg-muted/50">
+                    <img src={previewUrl} alt="Capa" className="w-full h-32 object-cover" />
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImagePlus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8"
+                        onClick={() => { setCoverFile(null); setRemoveCover(true); }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    Adicionar imagem de capa
+                  </Button>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <Controller
@@ -179,7 +267,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialL
               control={control}
               render={({ field }) => (
                 <div className="space-y-2">
-                  <Label>Prazo</Label>
+                  <Label>Prazo (opcional)</Label>
                    <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -190,7 +278,7 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialL
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                          {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Nenhum prazo</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -229,7 +317,10 @@ export function TaskDialog({ task, isOpen, onClose, onSave, lists = [], initialL
             <SheetClose asChild>
               <Button type="button" variant="outline">Cancelar</Button>
             </SheetClose>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit" disabled={coverUploading}>
+              {coverUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Salvar
+            </Button>
           </SheetFooter>
         </form>
       </SheetContent>

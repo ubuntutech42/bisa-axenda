@@ -24,6 +24,13 @@ const priorityClasses: Record<Task['priority'], string> = {
   Urgente: 'border-red-500',
 };
 
+const priorityStripClasses: Record<Task['priority'], string> = {
+  Baixa: 'bg-green-500/25',
+  Média: 'bg-yellow-500/25',
+  Alta: 'bg-orange-500/25',
+  Urgente: 'bg-red-500/25',
+};
+
 const categoryClasses: Record<Task['category'], string> = {
     Trabalho: "bg-chart-1/10 text-chart-1 border-chart-1/20",
     Estudo: "bg-chart-2/10 text-chart-2 border-chart-2/20",
@@ -74,37 +81,48 @@ function KanbanCardInner({ task, index, onClick }: KanbanCardProps) {
     >
       <Card
         className={cn(
-          'cursor-grab active:cursor-grabbing border-l-4 hover:shadow-md transition-shadow',
+          'cursor-grab active:cursor-grabbing border-l-4 hover:shadow-md transition-shadow overflow-hidden rounded-lg',
           priorityClasses[task.priority],
           isDragging && 'shadow-xl ring-2 ring-primary opacity-90'
         )}
       >
-              <CardHeader className="p-3">
-                <Badge variant="outline" className={cn("text-xs self-start", categoryClasses[task.category])}>{task.category}</Badge>
+              {task.coverImageUrl ? (
+                <div className="w-full h-[100px] bg-muted rounded-t-lg overflow-hidden">
+                  <img
+                    src={task.coverImageUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className={cn('w-full h-1 rounded-t-lg', priorityStripClasses[task.priority])} aria-hidden />
+              )}
+              <CardHeader className="p-2.5 pb-1">
+                <Badge variant="outline" className={cn("text-xs self-start shrink-0", categoryClasses[task.category])}>{task.category}</Badge>
               </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <p className="font-medium text-sm text-card-foreground">{task.title}</p>
+              <CardContent className="p-2.5 pt-0">
+                <p className="font-medium text-sm text-card-foreground leading-snug line-clamp-2 break-words">{task.title}</p>
               </CardContent>
-              <CardFooter className="p-3 pt-0 flex justify-between items-center text-xs text-muted-foreground">
-                <div className="flex items-center gap-3">
-                  {task.description && <AlignLeft className="w-4 h-4" />}
+              <CardFooter className="p-2.5 pt-1 flex justify-between items-center gap-2 text-xs text-muted-foreground min-h-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {task.description && <AlignLeft className="w-3.5 h-3.5 shrink-0" />}
                   {task.comments && task.comments.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="w-4 h-4" />
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <MessageSquare className="w-3.5 h-3.5" />
                       <span>{task.comments.length}</span>
                     </div>
                   )}
                   {checklistTotal > 0 && (
-                    <div className={cn("flex items-center gap-1", checklistProgress === checklistTotal && "text-green-600")}>
-                      <CheckSquare className="w-4 h-4" />
+                    <div className={cn("flex items-center gap-0.5 shrink-0", checklistProgress === checklistTotal && "text-green-600")}>
+                      <CheckSquare className="w-3.5 h-3.5" />
                       <span>{checklistProgress}/{checklistTotal}</span>
                     </div>
                   )}
                 </div>
                 {timeText && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{timeText}</span>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span className="truncate">{timeText}</span>
                   </div>
                 )}
               </CardFooter>
