@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { KanbanCard } from './KanbanCard';
 import type { Task, KanbanList } from '@/lib/types';
 import { Input } from '../ui/input';
-import { Droppable } from 'react-beautiful-dnd';
+import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { Plus } from 'lucide-react';
@@ -21,6 +21,8 @@ interface KanbanColumnProps {
 export function KanbanColumn({ list, tasks, onCardClick, onUpdateListName, onNewTaskClick }: KanbanColumnProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [listName, setListName] = useState(list.name);
+
+  const { setNodeRef, isOver } = useDroppable({ id: list.id });
 
   const handleTitleClick = () => {
     setIsEditing(true);
@@ -70,20 +72,14 @@ export function KanbanColumn({ list, tasks, onCardClick, onUpdateListName, onNew
                 )}
                  <span className="text-sm font-normal text-muted-foreground">{tasks.length}</span>
             </div>
-            <Droppable droppableId={list.id} isDropDisabled={false}>
-                {(provided, snapshot) => (
-                <ScrollArea
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={cn("flex-1 p-3 transition-colors", snapshot.isDraggingOver && "bg-muted")}
-                >
-                    {tasks.map((task, index) => (
-                    <KanbanCard key={task.id} task={task} index={index} onClick={() => onCardClick(task)} />
-                    ))}
-                    {provided.placeholder}
-                </ScrollArea>
-                )}
-            </Droppable>
+            <ScrollArea
+                ref={setNodeRef}
+                className={cn('flex-1 p-3 transition-colors min-h-[120px]', isOver && 'bg-muted')}
+            >
+                {tasks.map((task, index) => (
+                  <KanbanCard key={task.id} task={task} index={index} onClick={() => onCardClick(task)} />
+                ))}
+            </ScrollArea>
             <div className='p-2 mt-auto border-t'>
                 <Button onClick={onNewTaskClick} variant='ghost' className='w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground'>
                     <Plus className='mr-2' />

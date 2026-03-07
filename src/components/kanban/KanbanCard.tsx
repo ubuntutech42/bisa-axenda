@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -9,7 +8,8 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, MessageSquare, CheckSquare, AlignLeft } from 'lucide-react';
-import { Draggable } from 'react-beautiful-dnd';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 interface KanbanCardProps {
   task: Task;
@@ -34,6 +34,18 @@ const categoryClasses: Record<Task['category'], string> = {
 
 
 function KanbanCardInner({ task, index, onClick }: KanbanCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: task.id });
+
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform) }
+    : undefined;
+
   const checklistProgress = task.checklist ? task.checklist.filter(item => item.completed).length : 0;
   const checklistTotal = task.checklist ? task.checklist.length : 0;
 
@@ -52,22 +64,21 @@ function KanbanCardInner({ task, index, onClick }: KanbanCardProps) {
   const timeText = getTimeText();
 
   return (
-    <Draggable draggableId={task.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            onClick={onClick}
-            className="mb-3"
-        >
-            <Card
-              className={cn(
-                'cursor-pointer border-l-4 hover:shadow-md transition-shadow',
-                priorityClasses[task.priority],
-                snapshot.isDragging && 'shadow-xl ring-2 ring-primary'
-              )}
-            >
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      className="mb-3"
+    >
+      <Card
+        className={cn(
+          'cursor-grab active:cursor-grabbing border-l-4 hover:shadow-md transition-shadow',
+          priorityClasses[task.priority],
+          isDragging && 'shadow-xl ring-2 ring-primary opacity-90'
+        )}
+      >
               <CardHeader className="p-3">
                 <Badge variant="outline" className={cn("text-xs self-start", categoryClasses[task.category])}>{task.category}</Badge>
               </CardHeader>
@@ -98,9 +109,7 @@ function KanbanCardInner({ task, index, onClick }: KanbanCardProps) {
                 )}
               </CardFooter>
             </Card>
-        </div>
-      )}
-    </Draggable>
+    </div>
   );
 }
 

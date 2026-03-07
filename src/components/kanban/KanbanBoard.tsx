@@ -11,7 +11,7 @@ import { collection, doc, updateDoc, serverTimestamp, addDoc } from 'firebase/fi
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
-import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { DndContext, type DragEndEvent } from '@dnd-kit/core';
 
 interface KanbanBoardProps {
   board: KanbanBoardType;
@@ -104,36 +104,39 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
     }
   };
 
-  const onDragEnd = async (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+  const onDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
 
-    if (!destination) {
-      return;
+    const taskId = active.id as string;
+    let newListId: string;
+    const isListId = sortedLists.some((l) => l.id === over.id);
+    if (isListId) {
+      newListId = over.id as string;
+    } else {
+      const taskOver = tasks?.find((t) => t.id === over.id);
+      newListId = taskOver?.listId ?? sortedLists[0]?.id ?? '';
     }
+    if (!taskId || !newListId) return;
 
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-    
+    const task = tasks?.find((t) => t.id === taskId);
+    if (task?.listId === newListId) return;
+
     if (!user || !boardId) return;
 
     try {
-        const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', draggableId);
-        await updateDoc(taskRef, {
-            listId: destination.droppableId,
-            updatedAt: serverTimestamp(),
-        });
-        // Optimistic update handled by useCollection hook
+      const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', taskId);
+      await updateDoc(taskRef, {
+        listId: newListId,
+        updatedAt: serverTimestamp(),
+      });
     } catch (error) {
-        console.error("Error updating task list:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Erro ao mover tarefa',
-            description: 'Não foi possível mover a tarefa. Por favor, tente novamente.',
-        });
+      console.error('Error updating task list:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao mover tarefa',
+        description: 'Não foi possível mover a tarefa. Por favor, tente novamente.',
+      });
     }
   };
 
@@ -155,7 +158,7 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
   }
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DndContext onDragEnd={onDragEnd}>
       <ScrollArea className="w-full whitespace-nowrap h-full">
         <div className="flex gap-6 pb-6 items-start h-full">
           {sortedLists.map((list) => {
@@ -189,6 +192,6 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
             lists={sortedLists}
           />
       )}
-    </DragDropContext>
+    </DndContext>
   );
 }
