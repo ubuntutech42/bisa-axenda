@@ -160,6 +160,7 @@ export default function BoardPage() {
         onSave={handleCreateTask}
         lists={lists}
         initialListId={initialListForNewTask}
+        boardId={activeBoard.id}
       />}
       {activeBoard && user && <ShareDialog 
         board={activeBoard}

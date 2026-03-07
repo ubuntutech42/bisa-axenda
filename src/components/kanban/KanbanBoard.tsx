@@ -7,7 +7,7 @@ import { TaskDialog } from './TaskDialog';
 import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, serverTimestamp, addDoc, deleteField } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -50,10 +50,12 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
     if (!user || !updatedTaskData.id || !boardId) return;
     try {
       const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', updatedTaskData.id);
-      await updateDoc(taskRef, {
-        ...updatedTaskData,
-        updatedAt: serverTimestamp(),
-      });
+      const { id: _id, ...rest } = updatedTaskData;
+      const updateData: Record<string, unknown> = { ...rest, updatedAt: serverTimestamp() };
+      if (updateData.coverImageUrl === null) {
+        updateData.coverImageUrl = deleteField();
+      }
+      await updateDoc(taskRef, updateData);
       toast({
         title: 'Tarefa atualizada!',
         description: `A tarefa "${updatedTaskData.title}" foi salva.`,
@@ -190,6 +192,7 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
             onClose={handleCloseDialog}
             onSave={handleSaveTask}
             lists={sortedLists}
+            boardId={board.id}
           />
       )}
     </DndContext>

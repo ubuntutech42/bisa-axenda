@@ -19,6 +19,13 @@ export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pe
 
 export type Priority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 
+export interface TaskAttachment {
+  name: string;
+  url: string;
+  contentType?: string;
+  size?: number;
+}
+
 export interface Task {
   id: string;
   userId: string;
@@ -28,6 +35,8 @@ export interface Task {
   category: Category;
   priority: Priority;
   deadline?: string;
+  coverImageUrl?: string;
+  attachments?: TaskAttachment[];
   estimatedTime?: number; // in minutes
   timeSpent: number; // in minutes
   checklist?: { text: string; completed: boolean }[];
