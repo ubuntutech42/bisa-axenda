@@ -35,8 +35,8 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 
-const priorities: Priority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
-const categories: Category[] = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'];
+const priorities = ['Baixa', 'Média', 'Alta', 'Urgente'] as const;
+const categories = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'] as const;
 
 const taskSchema = z.object({
   title: z.string().min(1, { message: "O título é obrigatório." }),

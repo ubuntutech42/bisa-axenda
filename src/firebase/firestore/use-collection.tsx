@@ -70,7 +70,7 @@ export function useCollection<T = any>(
       (err: FirestoreError) => {
         const path = memoizedTargetRefOrQuery.type === 'collection'
             ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as Query)._query.path.canonicalString();
+            : (memoizedTargetRefOrQuery as Query & { _query: { path: { canonicalString(): string } } })._query.path.canonicalString();
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
@@ -88,7 +88,8 @@ export function useCollection<T = any>(
   }, [memoizedTargetRefOrQuery]);
 
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error('Query was not properly memoized using useMemoFirebase: ' + (memoizedTargetRefOrQuery as Query)._query.path.canonicalString());
+    const q = memoizedTargetRefOrQuery as Query & { _query: { path: { canonicalString(): string } } };
+    throw new Error('Query was not properly memoized using useMemoFirebase: ' + q._query.path.canonicalString());
   }
 
   return { data, isLoading, error };

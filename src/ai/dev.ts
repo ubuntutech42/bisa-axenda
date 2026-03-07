@@ -33,8 +33,9 @@ if (process.env.npm_lifecycle_event === 'dev' && !process.env.GENKIT_ENV) {
   let genkitProcess: ChildProcess | null = null;
 
   function startGenkit() {
-    // Start the genkit process in detached mode to manage it as a group leader
-    genkitProcess = exec(command, { detached: true });
+    // Start the genkit process in detached mode to manage it as a group leader.
+    // exec() accepts detached at runtime; Node types omit it from ExecOptions.
+    genkitProcess = exec(command, { detached: true } as import('child_process').ExecOptions);
 
     console.log('Starting Genkit servers...');
     console.log(`Executing: ${command}`);

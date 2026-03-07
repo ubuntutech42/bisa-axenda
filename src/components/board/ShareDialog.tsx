@@ -33,7 +33,8 @@ type InviteFormData = z.infer<typeof inviteSchema>;
 
 interface ShareDialogProps {
   board: KanbanBoard;
-  currentUser: User;
+  /** Firebase Auth user (uid) or app User (id) for ownership check */
+  currentUser: { uid: string } | User;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -42,7 +43,8 @@ export function ShareDialog({ board, currentUser, isOpen, onClose }: ShareDialog
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isOwner = board.userId === currentUser.uid;
+  const currentUserId = 'uid' in currentUser ? currentUser.uid : currentUser.id;
+  const isOwner = board.userId === currentUserId;
 
   const [members, setMembers] = useState<User[]>([]);
   const [areMembersLoading, setAreMembersLoading] = useState(true);
@@ -190,7 +192,7 @@ export function ShareDialog({ board, currentUser, isOpen, onClose }: ShareDialog
                                             <AvatarFallback>{member.userName?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-medium">{member.userName} {member.id === currentUser.uid && "(Você)"}</p>
+                                            <p className="font-medium">{member.userName} {member.id === currentUserId && "(Você)"}</p>
                                             <p className="text-xs text-muted-foreground">{member.email}</p>
                                         </div>
                                     </div>

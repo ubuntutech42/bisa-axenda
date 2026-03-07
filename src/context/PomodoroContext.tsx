@@ -36,7 +36,7 @@ interface PomodoroContextType {
   setCurrentBoardId: (id: string | null) => void;
   pomodoroCount: number;
   isFloatingPomodoroOpen: boolean;
-  setIsFloatingPomodoroOpen: (isOpen: boolean) => void;
+  setIsFloatingPomodoroOpen: React.Dispatch<React.SetStateAction<boolean>>;
   settings: PomodoroSettings;
   updateSettings: (newSettings: Partial<PomodoroSettings>) => void;
 }

@@ -32,13 +32,12 @@ export const playFocusStartSound = () => {
 export const playBreakStartSound = () => {
   playSound(() => {
     const synth = new Tone.MetalSynth({
-      frequency: 300,
       envelope: { attack: 0.001, decay: 0.1, release: 0.05 },
       harmonicity: 3.1,
       modulationIndex: 22,
       resonance: 3000,
       octaves: 1.5
-    }).toDestination();
+    } as Tone.MetalSynthOptions).toDestination();
     synth.triggerAttackRelease("C5", "32n", Tone.now(), 0.8);
   });
 };
