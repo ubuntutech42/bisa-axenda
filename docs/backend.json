@@ -1,0 +1,646 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Axénda application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user.",
+          "format": "uuid"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Username of the user."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the user's profile image.",
+          "format": "uri"
+        },
+        "age": {
+          "type": "number",
+          "description": "Age of the user."
+        },
+        "gender": {
+          "type": "string",
+          "description": "Gender of the user (free-form text)."
+        },
+        "bio": {
+            "type": "string",
+            "description": "A short bio about the user."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when the user account was created."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "userName",
+        "createdAt"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task in the Kanban board.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the task."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this task."
+        },
+        "listId": {
+          "type": "string",
+          "description": "The ID of the KanbanList this task belongs to."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the task."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Estudo", "Trabalho", "Autocuidado", "Criação", "Pessoal"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["Baixa", "Média", "Alta", "Urgente"]
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "estimatedTime": {
+          "type": "number",
+          "description": "Estimated time in minutes."
+        },
+        "timeSpent": {
+          "type": "number",
+          "description": "Time spent in minutes."
+        },
+        "checklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "completed": { "type": "boolean" }
+            },
+            "required": ["text", "completed"]
+          }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["id", "userId", "listId", "title", "category", "priority", "timeSpent", "createdAt"]
+    },
+    "KanbanBoard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "KanbanBoard",
+      "type": "object",
+      "description": "Represents a board for organizing tasks or other items. Can be shared with multiple users.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the board."
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of the user who owns this board."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the board."
+        },
+        "group": {
+            "type": "string",
+            "description": "An optional grouping for the board, e.g., 'Work' or 'Studies'."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type or template of the board.",
+          "enum": ["kanban", "swot", "business_canvas", "custom", "goal_setting", "weekly_reflection"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the board was created."
+        },
+        "members": {
+          "type": "array",
+          "description": "A list of user IDs who have access to this board. The first member is the owner.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["id", "userId", "name", "type", "createdAt", "members"]
+    },
+    "KanbanList": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "KanbanList",
+      "type": "object",
+      "description": "Represents a list (column) within a Kanban board.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Kanban list."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the list (e.g., 'To Do', 'Strengths')."
+        },
+        "order": {
+          "type": "number",
+          "description": "The order of the list within the board."
+        }
+      },
+      "required": ["id", "name", "order"]
+    },
+    "KanbanCard": {
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
+      "title": "KanbanCard",
+      "type": "object",
+      "description": "Represents a card within a Kanban list, representing a task.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Kanban card.",
+          "format": "uuid"
+        },
+        "kanbanListId": {
+          "type": "string",
+          "description": "Reference to the KanbanList this card belongs to. (Relationship: KanbanList 1:N KanbanCard)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the Kanban card."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the task represented by the card."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority of the task (e.g., 'High', 'Medium', 'Low')."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date of the task.",
+          "format": "date-time"
+        },
+        "estimatedTime": {
+          "type": "number",
+          "description": "Estimated time to complete the task, in hours."
+        },
+        "effectiveTime": {
+          "type": "number",
+          "description": "Effective time spent on the task, in hours."
+        },
+        "categoryIds": {
+          "type": "array",
+          "description": "References to Categories associated with this card. (Relationship: Category N:N KanbanCard)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "kanbanListId",
+        "title"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category for classifying Kanban cards.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category.",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created this category. (Relationship: User 1:N Category)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "color": {
+          "type": "string",
+          "description": "Color associated with the category (e.g., '#FF0000')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name"
+      ]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on a Kanban card.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the comment.",
+          "format": "uuid"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this comment belongs to. (Relationship: KanbanCard 1:N Comment)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who wrote the comment. (Relationship: User 1:N Comment)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text of the comment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the comment was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "kanbanCardId",
+        "userId",
+        "text",
+        "createdAt"
+      ]
+    },
+    "ChecklistItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
+      "title": "ChecklistItem",
+      "type": "object",
+      "description": "Represents an item in a checklist on a Kanban card.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the checklist item.",
+          "format": "uuid"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this checklist item belongs to. (Relationship: KanbanCard 1:N ChecklistItem)"
+        },
+        "text": {
+          "type": "string",
+          "description": "Text of the checklist item."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates whether the checklist item is completed."
+        }
+      },
+      "required": [
+        "id",
+        "kanbanCardId",
+        "text",
+        "isCompleted"
+      ]
+    },
+    "PomodoroSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PomodoroSession",
+      "type": "object",
+      "description": "Represents a Pomodoro session for time management.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Pomodoro session.",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who started this session. (Relationship: User 1:N PomodoroSession)"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this PomodoroSession is linked to. (Relationship: KanbanCard 1:N PomodoroSession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the Pomodoro session.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the Pomodoro session.",
+          "format": "date-time"
+        },
+        "focusDuration": {
+          "type": "number",
+          "description": "Duration of the focus period in minutes."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of focus for the session (e.g., 'Study', 'Work', 'Self-care')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "endTime",
+        "focusDuration",
+        "breakDuration"
+      ]
+    },
+    "Reminder": {
+      "$schema": "http://json-schema.org/draft-07/schema#_disabled",
+      "title": "Reminder",
+      "type": "object",
+      "description": "Represents a reminder for a Kanban card.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the reminder.",
+          "format": "uuid"
+        },
+        "kanbanCardId": {
+          "type": "string",
+          "description": "Reference to the KanbanCard this reminder is associated with. (Relationship: KanbanCard 1:N Reminder)"
+        },
+        "reminderTime": {
+          "type": "string",
+          "description": "Time when the reminder should be triggered.",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Custom message for the reminder."
+        }
+      },
+      "required": [
+        "id",
+        "kanbanCardId",
+        "reminderTime"
+      ]
+    },
+    "CalendarEventCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CalendarEventCategory",
+      "type": "object",
+      "description": "Represents a user-defined category for calendar events.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the event category."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this category."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category (e.g., 'Pessoal', 'Trabalho')."
+        },
+        "color": {
+          "type": "string",
+          "description": "A hex color code for the category."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "color",
+        "createdAt"
+      ]
+    },
+    "CalendarEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CalendarEvent",
+      "type": "object",
+      "description": "Represents an event in the calendar.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the calendar event."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created this event."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the calendar event."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the calendar event."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the calendar event in YYYY-MM-DD format.",
+          "format": "date"
+        },
+        "categoryId": {
+            "type": "string",
+            "description": "A reference to the user's event category for this event."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "date",
+        "categoryId",
+        "createdAt"
+      ]
+    },
+    "CulturalEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CulturalEvent",
+      "type": "object",
+      "description": "Represents an important date for the Black community.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the cultural event.",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string",
+          "description": "Name of the cultural event (e.g., 'Juneteenth')."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the cultural event in YYYY-MM-DD format.",
+          "format": "date"
+        },
+        "type": {
+            "type": "string",
+            "enum": ["cultural", "comercial"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the cultural event."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "date",
+        "type",
+        "createdAt"
+      ]
+    },
+     "Quote": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quote",
+      "description": "Represents an inspirational quote.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "author": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time"}
+      },
+      "required": ["id", "text", "author", "imageUrl", "createdAt"]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "description": "Represents a notification sent to users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "promo", "warning"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "message", "type", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profiles."
+    },
+    "/kanbanBoards/{boardId}": {
+      "schema": {
+        "$ref": "#/entities/KanbanBoard"
+      },
+      "description": "Stores all the boards for all users. Access is controlled by the 'members' array."
+    },
+    "/kanbanBoards/{boardId}/lists/{listId}": {
+      "schema": {
+        "$ref": "#/entities/KanbanList"
+      },
+      "description": "Stores lists for a specific board."
+    },
+    "/kanbanBoards/{boardId}/tasks/{taskId}": {
+      "schema": {
+        "$ref": "#/entities/Task"
+      },
+      "description": "Stores tasks for a specific board."
+    },
+    "/users/{userId}/categories/{categoryId}": {
+      "schema": {
+        "$ref": "#/entities/Category"
+      },
+      "description": "Stores user-created categories for tasks."
+    },
+    "/users/{userId}/pomodoroSessions/{pomodoroSessionId}": {
+      "schema": {
+        "$ref": "#/entities/PomodoroSession"
+      },
+      "description": "Stores Pomodoro sessions for a user."
+    },
+    "/users/{userId}/calendarEvents/{calendarEventId}": {
+      "schema": {
+        "$ref": "#/entities/CalendarEvent"
+      },
+      "description": "Stores calendar events for a user."
+    },
+    "/users/{userId}/eventCategories/{eventCategoryId}": {
+      "schema": {
+        "$ref": "#/entities/CalendarEventCategory"
+      },
+      "description": "Stores user-defined categories for calendar events."
+    },
+    "/culturalEvents/{culturalEventId}": {
+      "schema": {
+        "$ref": "#/entities/CulturalEvent"
+      },
+      "description": "Stores global cultural events, editable by admins."
+    },
+    "/quotes/{quoteId}": {
+      "schema": {
+        "$ref": "#/entities/Quote"
+      },
+      "description": "Stores inspirational quotes, editable by admins."
+    },
+    "/notifications/{notificationId}": {
+        "schema": {
+            "$ref": "#/entities/Notification"
+        },
+        "description": "Stores global notifications sent by admins."
+    }
+  }
+}

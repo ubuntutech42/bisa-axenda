@@ -1,0 +1,170 @@
+{
+  "authors": {
+    "Angela Davis": [
+      {
+        "id": "davis-1",
+        "description": "Angela Davis speaking.",
+        "imageUrl": "https://picsum.photos/seed/davis1/600/400?grayscale",
+        "imageHint": "Angela Davis"
+      },
+      {
+        "id": "davis-2",
+        "description": "Portrait of Angela Davis.",
+        "imageUrl": "https://picsum.photos/seed/davis2/600/400?grayscale",
+        "imageHint": "Angela Davis portrait"
+      }
+    ],
+    "James Baldwin": [
+      {
+        "id": "baldwin-1",
+        "description": "James Baldwin portrait.",
+        "imageUrl": "https://picsum.photos/seed/baldwin1/600/400?grayscale",
+        "imageHint": "James Baldwin"
+      }
+    ],
+    "Conceição Evaristo": [
+      {
+        "id": "evaristo-1",
+        "description": "Conceição Evaristo smiling.",
+        "imageUrl": "https://picsum.photos/seed/evaristo1/600/400?grayscale",
+        "imageHint": "Conceição Evaristo"
+      }
+    ],
+    "Lélia Gonzalez": [
+      {
+        "id": "gonzalez-1",
+        "description": "Lélia Gonzalez portrait.",
+        "imageUrl": "https://picsum.photos/seed/gonzalez1/600/400?grayscale",
+        "imageHint": "Lelia Gonzalez"
+      }
+    ],
+    "bell hooks": [
+      {
+        "id": "hooks-1",
+        "description": "bell hooks portrait.",
+        "imageUrl": "https://picsum.photos/seed/hooks1/600/400?grayscale",
+        "imageHint": "bell hooks"
+      }
+    ],
+    "Nina Simone": [
+      {
+        "id": "simone-1",
+        "description": "Nina Simone performing.",
+        "imageUrl": "https://picsum.photos/seed/simone1/600/400?grayscale",
+        "imageHint": "Nina Simone"
+      }
+    ],
+    "Nelson Mandela": [
+      {
+        "id": "mandela-1",
+        "description": "Nelson Mandela smiling.",
+        "imageUrl": "https://picsum.photos/seed/mandela1/600/400?grayscale",
+        "imageHint": "Nelson Mandela"
+      }
+    ],
+    "Frantz Fanon": [
+      {
+        "id": "fanon-1",
+        "description": "Frantz Fanon portrait.",
+        "imageUrl": "https://picsum.photos/seed/fanon1/600/400?grayscale",
+        "imageHint": "Frantz Fanon"
+      }
+    ],
+    "Gil Scott-Heron": [
+      {
+        "id": "heron-1",
+        "description": "Gil Scott-Heron.",
+        "imageUrl": "https://picsum.photos/seed/heron/600/400?grayscale",
+        "imageHint": "Gil Scott-Heron"
+      }
+    ],
+    "Partido dos Panteras Negras": [
+      {
+        "id": "panthers-1",
+        "description": "Image for the Black Panthers' motto.",
+        "imageUrl": "https://picsum.photos/seed/panthers/600/400?grayscale",
+        "imageHint": "Black Panther"
+      }
+    ],
+    "Simone de Beauvoir": [
+      {
+        "id": "debeauvoir-1",
+        "description": "Simone de Beauvoir portrait.",
+        "imageUrl": "https://picsum.photos/seed/debeauvoir1/600/400?grayscale",
+        "imageHint": "Simone de Beauvoir"
+      }
+    ],
+    "Maya Angelou": [
+      {
+        "id": "angelou-1",
+        "description": "Maya Angelou portrait.",
+        "imageUrl": "https://picsum.photos/seed/angelou1/600/400?grayscale",
+        "imageHint": "Maya Angelou"
+      }
+    ],
+    "Michelle Obama": [
+      {
+        "id": "obama-1",
+        "description": "Michelle Obama portrait.",
+        "imageUrl": "https://picsum.photos/seed/mobama1/600/400?grayscale",
+        "imageHint": "Michelle Obama"
+      }
+    ],
+    "Shirley Chisholm": [
+      {
+        "id": "chisholm-1",
+        "description": "Shirley Chisholm portrait.",
+        "imageUrl": "https://picsum.photos/seed/chisholm1/600/400?grayscale",
+        "imageHint": "Shirley Chisholm"
+      }
+    ],
+    "Madam C.J. Walker": [
+      {
+        "id": "walker-1",
+        "description": "Madam C.J. Walker portrait.",
+        "imageUrl": "https://picsum.photos/seed/cjwalker1/600/400?grayscale",
+        "imageHint": "Madam C.J. Walker"
+      }
+    ],
+    "Alice Walker": [
+      {
+        "id": "alicewalker-1",
+        "description": "Alice Walker portrait.",
+        "imageUrl": "https://picsum.photos/seed/alicewalker1/600/400?grayscale",
+        "imageHint": "Alice Walker"
+      }
+    ]
+  },
+  "inspirational": [
+    {
+      "id": "insp-1",
+      "description": "Inspiring image of people marching for civil rights.",
+      "imageUrl": "https://picsum.photos/seed/march/600/400?grayscale",
+      "imageHint": "civil rights march"
+    },
+    {
+      "id": "insp-2",
+      "description": "Black Power fist.",
+      "imageUrl": "https://picsum.photos/seed/fist/600/400?grayscale",
+      "imageHint": "black power fist"
+    },
+    {
+      "id": "insp-3",
+      "description": "Image for the Black Panthers' motto.",
+      "imageUrl": "https://picsum.photos/seed/panthers/600/400?grayscale",
+      "imageHint": "Black Panther"
+    },
+    {
+      "id": "insp-4",
+      "description": "Gil Scott-Heron.",
+      "imageUrl": "https://picsum.photos/seed/heron/600/400?grayscale",
+      "imageHint": "Gil Scott-Heron"
+    },
+    {
+      "id": "insp-5",
+      "description": "A beautiful representation of ancestry and connection.",
+      "imageUrl": "https://picsum.photos/seed/ancestry1/800/600",
+      "imageHint": "ancestry connection"
+    }
+  ]
+}
