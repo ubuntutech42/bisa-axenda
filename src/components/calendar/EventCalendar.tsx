@@ -25,7 +25,7 @@ import { addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { buttonVariants } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ADMIN_UIDS } from '@/lib/admin';
+import { useUserIsAdmin } from '@/hooks/useUserIsAdmin';
 
 type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' | 'comercial' }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & { type: 'lunar' });
 
@@ -53,7 +53,7 @@ export function EventCalendar() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+  const { isAdmin } = useUserIsAdmin();
 
   const { allCategories, categoriesMap, isLoading: areCategoriesLoading } = useCategories();
   

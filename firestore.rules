@@ -24,8 +24,9 @@ service cloud.firestore {
     
     // --- Admin Function ---
     function isAdmin() {
-      // UID do administrador - substitua pelo UID real do admin no seu projeto
-      return request.auth.uid == 'FyF8IhsagahHEamM0YGWPffSsXD3';
+      // Custom claim (ex.: seed local: npm run seed) ou UID legado para produção.
+      return request.auth.token.admin == true
+        || request.auth.uid == 'FyF8IhsagahHEamM0YGWPffSsXD3';
     }
 
     /**

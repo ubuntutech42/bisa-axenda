@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ADMIN_UIDS } from '@/lib/admin';
+import { useUserIsAdmin } from '@/hooks/useUserIsAdmin';
 import { UserProfileButton } from '@/components/layout/Sidebar';
 import { ROUTES } from '@/lib/routes';
 import { POMODORO_SOUND_OPTIONS } from '@/lib/sounds';
@@ -231,7 +231,7 @@ export default function SettingsPage() {
       });
     }, [settings, reset]);
 
-    const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+    const { isAdmin, isCheckingAdmin } = useUserIsAdmin();
 
     const onPomodoroSubmit = (data: typeof settings) => {
         updateSettings(data);
@@ -244,7 +244,7 @@ export default function SettingsPage() {
         }
     }, [isUserLoading, user, router]);
 
-    if (isUserLoading || !user) {
+    if (isUserLoading || !user || isCheckingAdmin) {
         return (
             <div className="flex items-center justify-center h-full">
                 <Loader className="h-10 w-10 animate-spin text-primary" />
