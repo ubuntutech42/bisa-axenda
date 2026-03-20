@@ -1,0 +1,24 @@
+# Lista tasks do usuario autenticado
+query ListMyTasks @auth(level: USER) {
+  tasks(where: { userId: { eq_expr: "auth.uid" } }) {
+    id
+    description
+    status
+    createdAt
+    dueDate
+    priority
+  }
+}
+
+# Lista metas do usuario autenticado
+query ListMyGoals @auth(level: USER) {
+  goals(where: { userId: { eq_expr: "auth.uid" } }) {
+    id
+    title
+    status
+    dueDate
+    createdAt
+    description
+    category
+  }
+}

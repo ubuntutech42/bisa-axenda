@@ -1,0 +1,63 @@
+type User @table {
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  photoUrl: String
+  bio: String
+  culturalAffiliation: String
+}
+
+type Routine @table {
+  user: User!
+  name: String!
+  frequency: String!
+  createdAt: Timestamp!
+  description: String
+  startTime: Timestamp
+  endTime: Timestamp
+}
+
+type Goal @table {
+  user: User!
+  title: String!
+  dueDate: Date!
+  status: String!
+  createdAt: Timestamp!
+  description: String
+  category: String
+}
+
+type Project @table {
+  user: User!
+  goal: Goal
+  name: String!
+  status: String!
+  createdAt: Timestamp!
+  description: String
+  startDate: Date
+  endDate: Date
+}
+
+type Task @table {
+  user: User!
+  routine: Routine
+  goal: Goal
+  project: Project
+  description: String!
+  status: String!
+  createdAt: Timestamp!
+  dueDate: Date
+  priority: String
+}
+
+type BusinessActivity @table {
+  user: User!
+  project: Project
+  type: String!
+  description: String!
+  activityDate: Date!
+  createdAt: Timestamp!
+  relatedClient: String
+  amount: Float
+  status: String
+}

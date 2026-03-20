@@ -7,6 +7,7 @@ Axénda é uma ferramenta de organização pessoal afrocentrada, focada em produ
 - **Framework:** Next.js 15 (App Router)
 - **UI:** React, Tailwind CSS, ShadCN UI
 - **Backend/Auth:** Firebase (Firestore, Authentication)
+- **Dados relacionais:** [Firebase Data Connect](https://firebase.google.com/docs/data-connect) (GraphQL + Cloud SQL PostgreSQL), com SDK TypeScript gerado em `src/lib/dataconnect-sdk` e pacotes locais `@axenda/dataconnect-web` / `@axenda/dataconnect-admin`
 - **AI:** Google Genkit
 - **Ícones:** Lucide React
 
@@ -33,21 +34,41 @@ Para trabalhar neste projeto no Cursor, siga estes passos:
    - **Edição Inline (Cmd+K):** Selecione um trecho de código e peça para "mudar a cor deste botão" ou "melhorar a tipagem desta função".
    - **Composer (Cmd+I):** O recurso mais poderoso. Peça mudanças complexas que envolvam vários arquivos (ex: "Crie uma nova funcionalidade de etiquetas para as tarefas"). Ele aplicará as mudanças de forma similar ao App Prototyper do Firebase Studio.
 
+### Dados locais (emulador + seed)
+
+- Com **Firestore** (porta `8080`) e **Auth** (`9099`) rodando no [Firebase Emulator Suite](https://firebase.google.com/docs/emulator-suite), execute `npm run seed` para popular usuários e documentos de exemplo (veja credenciais e projeto demo em [`scripts/seed.ts`](scripts/seed.ts)).
+- Para **Data Connect** em desenvolvimento, use o emulador conforme a [documentação oficial](https://firebase.google.com/docs/data-connect/web-sdk#instrument-clients) (porta típica `9399` no SDK gerado).
+
 ## Scripts Disponíveis
 
 - `npm run dev`: Inicia o servidor de desenvolvimento do Next.js.
 - `npm run genkit:dev`: Inicia a interface do Genkit para testar os fluxos de IA.
+- `npm run genkit:watch`: Idem, com recarregamento ao alterar `src/ai`.
 - `npm run build`: Cria a versão de produção.
 - `npm run lint`: Verifica o código com ESLint.
 - `npm run typecheck`: Valida os tipos TypeScript sem compilar.
+- `npm run seed`: Roda o seed no Firestore/Auth local (emuladores ativos).
+
+Após `npm install`, o script `prepare` instala o [Husky](https://typicode.github.io/husky/). O hook `pre-commit` versionado hoje é intencionalmente leve; você pode estender com lint ou testes conforme a necessidade do time.
+
+## Mensagens de commit (Commitlint)
+
+O [`commitlint.config.js`](commitlint.config.js) estende **@commitlint/config-conventional** e exige **referência AX-** (prefixo de issue configurado; regra `references-empty`). Exemplos alinhados ao histórico do projeto:
+
+- `feat: [AX-42] adiciona filtro por data`
+- `docs: [AX-000] ajusta README`
+
+Para validar a mensagem do último commit (Git em PATH): `git log -1 --pretty=%B | npx --no commitlint`.
 
 ## Estrutura do Projeto
 
 - `/src/app`: Rotas e páginas da aplicação.
 - `/src/components`: Componentes React reutilizáveis.
-- `/src/firebase`: Configuração e hooks do Firebase.
+- `/src/firebase`: Configuração e hooks do Firebase (inclui `dataconnect.ts` para o cliente Data Connect).
 - `/src/ai`: Fluxos e lógica de Inteligência Artificial usando Genkit.
-- `/src/lib`: Utilitários, tipos e constantes.
+- `/src/lib`: Utilitários, tipos e constantes; `dataconnect-service.ts` centraliza chamadas ao SDK gerado fora de hooks React.
+- `/src/lib/dataconnect-sdk`: SDKs gerados (web, React e admin) — **regenerar** com o Firebase CLI ao alterar schema/queries em `/dataconnect`.
+- `/dataconnect`: Schema GraphQL, conector e operações do Firebase Data Connect (referenciado em [`firebase.json`](firebase.json)).
 
 ## Estratégia de Branches
 

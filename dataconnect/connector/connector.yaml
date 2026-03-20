@@ -1,0 +1,12 @@
+connectorId: "axendaConnector"
+
+generate:
+  javascriptSdk:
+    outputDir: "../../src/lib/dataconnect-sdk/web"
+    package: "@axenda/dataconnect-web"
+    packageJsonDir: "../../"
+    react: true
+  adminNodeSdk:
+    outputDir: "../../src/lib/dataconnect-sdk/admin"
+    package: "@axenda/dataconnect-admin"
+    packageJsonDir: "../../"
