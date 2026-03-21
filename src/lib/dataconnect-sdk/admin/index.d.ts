@@ -84,16 +84,6 @@ export interface User_Key {
   __typename?: 'User_Key';
 }
 
-/** Generated Node Admin SDK operation action function for the 'ListMyTasks' Query. Allow users to execute without passing in DataConnect. */
-export function listMyTasks(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyTasksData>>;
-/** Generated Node Admin SDK operation action function for the 'ListMyTasks' Query. Allow users to pass in custom DataConnect instances. */
-export function listMyTasks(options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyTasksData>>;
-
-/** Generated Node Admin SDK operation action function for the 'ListMyGoals' Query. Allow users to execute without passing in DataConnect. */
-export function listMyGoals(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyGoalsData>>;
-/** Generated Node Admin SDK operation action function for the 'ListMyGoals' Query. Allow users to pass in custom DataConnect instances. */
-export function listMyGoals(options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyGoalsData>>;
-
 /** Generated Node Admin SDK operation action function for the 'CreateTask' Mutation. Allow users to execute without passing in DataConnect. */
 export function createTask(dc: DataConnect, vars: CreateTaskVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateTaskData>>;
 /** Generated Node Admin SDK operation action function for the 'CreateTask' Mutation. Allow users to pass in custom DataConnect instances. */
@@ -103,4 +93,14 @@ export function createTask(vars: CreateTaskVariables, options?: OperationOptions
 export function createGoal(dc: DataConnect, vars: CreateGoalVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateGoalData>>;
 /** Generated Node Admin SDK operation action function for the 'CreateGoal' Mutation. Allow users to pass in custom DataConnect instances. */
 export function createGoal(vars: CreateGoalVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateGoalData>>;
+
+/** Generated Node Admin SDK operation action function for the 'ListMyTasks' Query. Allow users to execute without passing in DataConnect. */
+export function listMyTasks(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyTasksData>>;
+/** Generated Node Admin SDK operation action function for the 'ListMyTasks' Query. Allow users to pass in custom DataConnect instances. */
+export function listMyTasks(options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyTasksData>>;
+
+/** Generated Node Admin SDK operation action function for the 'ListMyGoals' Query. Allow users to execute without passing in DataConnect. */
+export function listMyGoals(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyGoalsData>>;
+/** Generated Node Admin SDK operation action function for the 'ListMyGoals' Query. Allow users to pass in custom DataConnect instances. */
+export function listMyGoals(options?: OperationOptions): Promise<ExecuteOperationResponse<ListMyGoalsData>>;
 

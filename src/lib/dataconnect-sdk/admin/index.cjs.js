@@ -7,20 +7,6 @@ const connectorConfig = {
 };
 exports.connectorConfig = connectorConfig;
 
-function listMyTasks(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('ListMyTasks', undefined, inputOpts);
-}
-exports.listMyTasks = listMyTasks;
-
-function listMyGoals(dcOrOptions, options) {
-  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
-  dcInstance.useGen(true);
-  return dcInstance.executeQuery('ListMyGoals', undefined, inputOpts);
-}
-exports.listMyGoals = listMyGoals;
-
 function createTask(dcOrVarsOrOptions, varsOrOptions, options) {
   const { dc: dcInstance, vars: inputVars, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrVarsOrOptions, varsOrOptions, options, true, true);
   dcInstance.useGen(true);
@@ -34,4 +20,18 @@ function createGoal(dcOrVarsOrOptions, varsOrOptions, options) {
   return dcInstance.executeMutation('CreateGoal', inputVars, inputOpts);
 }
 exports.createGoal = createGoal;
+
+function listMyTasks(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('ListMyTasks', undefined, inputOpts);
+}
+exports.listMyTasks = listMyTasks;
+
+function listMyGoals(dcOrOptions, options) {
+  const { dc: dcInstance, options: inputOpts} = validateAdminArgs(connectorConfig, dcOrOptions, options, undefined);
+  dcInstance.useGen(true);
+  return dcInstance.executeQuery('ListMyGoals', undefined, inputOpts);
+}
+exports.listMyGoals = listMyGoals;
 

@@ -12,16 +12,16 @@ For each operation, there is a wrapper hook that can be used to call the operati
 
 Here are all of the hooks that get generated:
 ```ts
-import { useListMyTasks, useListMyGoals, useCreateTask, useCreateGoal } from '@axenda/dataconnect-web/react';
+import { useCreateTask, useCreateGoal, useListMyTasks, useListMyGoals } from '@axenda/dataconnect-web/react';
 // The types of these hooks are available in react/index.d.ts
-
-const { data, isPending, isSuccess, isError, error } = useListMyTasks();
-
-const { data, isPending, isSuccess, isError, error } = useListMyGoals();
 
 const { data, isPending, isSuccess, isError, error } = useCreateTask(createTaskVars);
 
 const { data, isPending, isSuccess, isError, error } = useCreateGoal(createGoalVars);
+
+const { data, isPending, isSuccess, isError, error } = useListMyTasks();
+
+const { data, isPending, isSuccess, isError, error } = useListMyGoals();
 
 ```
 
@@ -60,20 +60,20 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { listMyTasks, listMyGoals, createTask, createGoal } from '@axenda/dataconnect-web';
+import { createTask, createGoal, listMyTasks, listMyGoals } from '@axenda/dataconnect-web';
 
-
-// Operation ListMyTasks: 
-const { data } = await ListMyTasks(dataConnect);
-
-// Operation ListMyGoals: 
-const { data } = await ListMyGoals(dataConnect);
 
 // Operation CreateTask:  For variables, look at type CreateTaskVars in ../index.d.ts
 const { data } = await CreateTask(dataConnect, createTaskVars);
 
 // Operation CreateGoal:  For variables, look at type CreateGoalVars in ../index.d.ts
 const { data } = await CreateGoal(dataConnect, createGoalVars);
+
+// Operation ListMyTasks: 
+const { data } = await ListMyTasks(dataConnect);
+
+// Operation ListMyGoals: 
+const { data } = await ListMyGoals(dataConnect);
 
 
 ```

@@ -7,30 +7,6 @@ const connectorConfig = {
 };
 exports.connectorConfig = connectorConfig;
 
-const listMyTasksRef = (dc) => {
-  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
-  dcInstance._useGeneratedSdk();
-  return queryRef(dcInstance, 'ListMyTasks');
-}
-listMyTasksRef.operationName = 'ListMyTasks';
-exports.listMyTasksRef = listMyTasksRef;
-
-exports.listMyTasks = function listMyTasks(dc) {
-  return executeQuery(listMyTasksRef(dc));
-};
-
-const listMyGoalsRef = (dc) => {
-  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
-  dcInstance._useGeneratedSdk();
-  return queryRef(dcInstance, 'ListMyGoals');
-}
-listMyGoalsRef.operationName = 'ListMyGoals';
-exports.listMyGoalsRef = listMyGoalsRef;
-
-exports.listMyGoals = function listMyGoals(dc) {
-  return executeQuery(listMyGoalsRef(dc));
-};
-
 const createTaskRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
@@ -53,4 +29,28 @@ exports.createGoalRef = createGoalRef;
 
 exports.createGoal = function createGoal(dcOrVars, vars) {
   return executeMutation(createGoalRef(dcOrVars, vars));
+};
+
+const listMyTasksRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListMyTasks');
+}
+listMyTasksRef.operationName = 'ListMyTasks';
+exports.listMyTasksRef = listMyTasksRef;
+
+exports.listMyTasks = function listMyTasks(dc) {
+  return executeQuery(listMyTasksRef(dc));
+};
+
+const listMyGoalsRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListMyGoals');
+}
+listMyGoalsRef.operationName = 'ListMyGoals';
+exports.listMyGoalsRef = listMyGoalsRef;
+
+exports.listMyGoals = function listMyGoals(dc) {
+  return executeQuery(listMyGoalsRef(dc));
 };

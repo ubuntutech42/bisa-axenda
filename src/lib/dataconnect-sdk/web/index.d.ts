@@ -86,30 +86,6 @@ export interface User_Key {
   __typename?: 'User_Key';
 }
 
-interface ListMyTasksRef {
-  /* Allow users to create refs without passing in DataConnect */
-  (): QueryRef<ListMyTasksData, undefined>;
-  /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect): QueryRef<ListMyTasksData, undefined>;
-  operationName: string;
-}
-export const listMyTasksRef: ListMyTasksRef;
-
-export function listMyTasks(): QueryPromise<ListMyTasksData, undefined>;
-export function listMyTasks(dc: DataConnect): QueryPromise<ListMyTasksData, undefined>;
-
-interface ListMyGoalsRef {
-  /* Allow users to create refs without passing in DataConnect */
-  (): QueryRef<ListMyGoalsData, undefined>;
-  /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect): QueryRef<ListMyGoalsData, undefined>;
-  operationName: string;
-}
-export const listMyGoalsRef: ListMyGoalsRef;
-
-export function listMyGoals(): QueryPromise<ListMyGoalsData, undefined>;
-export function listMyGoals(dc: DataConnect): QueryPromise<ListMyGoalsData, undefined>;
-
 interface CreateTaskRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateTaskVariables): MutationRef<CreateTaskData, CreateTaskVariables>;
@@ -133,4 +109,28 @@ export const createGoalRef: CreateGoalRef;
 
 export function createGoal(vars: CreateGoalVariables): MutationPromise<CreateGoalData, CreateGoalVariables>;
 export function createGoal(dc: DataConnect, vars: CreateGoalVariables): MutationPromise<CreateGoalData, CreateGoalVariables>;
+
+interface ListMyTasksRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListMyTasksData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListMyTasksData, undefined>;
+  operationName: string;
+}
+export const listMyTasksRef: ListMyTasksRef;
+
+export function listMyTasks(): QueryPromise<ListMyTasksData, undefined>;
+export function listMyTasks(dc: DataConnect): QueryPromise<ListMyTasksData, undefined>;
+
+interface ListMyGoalsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListMyGoalsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListMyGoalsData, undefined>;
+  operationName: string;
+}
+export const listMyGoalsRef: ListMyGoalsRef;
+
+export function listMyGoals(): QueryPromise<ListMyGoalsData, undefined>;
+export function listMyGoals(dc: DataConnect): QueryPromise<ListMyGoalsData, undefined>;
 

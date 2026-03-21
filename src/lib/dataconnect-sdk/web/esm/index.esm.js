@@ -6,28 +6,6 @@ export const connectorConfig = {
   location: 'southamerica-east1'
 };
 
-export const listMyTasksRef = (dc) => {
-  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
-  dcInstance._useGeneratedSdk();
-  return queryRef(dcInstance, 'ListMyTasks');
-}
-listMyTasksRef.operationName = 'ListMyTasks';
-
-export function listMyTasks(dc) {
-  return executeQuery(listMyTasksRef(dc));
-}
-
-export const listMyGoalsRef = (dc) => {
-  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
-  dcInstance._useGeneratedSdk();
-  return queryRef(dcInstance, 'ListMyGoals');
-}
-listMyGoalsRef.operationName = 'ListMyGoals';
-
-export function listMyGoals(dc) {
-  return executeQuery(listMyGoalsRef(dc));
-}
-
 export const createTaskRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
@@ -48,5 +26,27 @@ createGoalRef.operationName = 'CreateGoal';
 
 export function createGoal(dcOrVars, vars) {
   return executeMutation(createGoalRef(dcOrVars, vars));
+}
+
+export const listMyTasksRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListMyTasks');
+}
+listMyTasksRef.operationName = 'ListMyTasks';
+
+export function listMyTasks(dc) {
+  return executeQuery(listMyTasksRef(dc));
+}
+
+export const listMyGoalsRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListMyGoals');
+}
+listMyGoalsRef.operationName = 'ListMyGoals';
+
+export function listMyGoals(dc) {
+  return executeQuery(listMyGoalsRef(dc));
 }
 
