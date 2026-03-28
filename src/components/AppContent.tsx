@@ -42,7 +42,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!DEV_SKIP_AUTH || !auth || isUserLoading || user) return;
     signInAnonymously(auth).catch((err) => console.error('Dev skip auth: signInAnonymously failed', err));
-  }, [DEV_SKIP_AUTH, auth, isUserLoading, user]);
+  }, [auth, isUserLoading, user]);
 
   useEffect(() => {
     if (isUserLoading) return;

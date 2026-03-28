@@ -206,7 +206,7 @@ export function EventCategoryManager() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Excluir a categoria "{categoryToDelete?.name}" não apagará os eventos existentes que a utilizam. Eles perderão a associação com esta categoria. A ação não pode ser desfeita.
+                        Excluir a categoria &quot;{categoryToDelete?.name}&quot; não apagará os eventos existentes que a utilizam. Eles perderão a associação com esta categoria. A ação não pode ser desfeita.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

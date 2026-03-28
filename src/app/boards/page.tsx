@@ -317,7 +317,7 @@ function BoardsPageContent() {
             <AlertDialog open={!!groupToDelete} onOpenChange={(open) => !open && setGroupToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir o grupo "{groupToDelete}"?</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir o grupo &quot;{groupToDelete}&quot;?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Esta ação é permanente e <span className='font-bold'>excluirá todos os quadros que você possui</span> dentro deste grupo. Quadros compartilhados com você não serão afetados. Você tem certeza?
                         </AlertDialogDescription>
@@ -332,7 +332,7 @@ function BoardsPageContent() {
             <AlertDialog open={!!boardToDelete} onOpenChange={(open) => !open && setBoardToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir o quadro "{boardToDelete?.name}"?</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir o quadro &quot;{boardToDelete?.name}&quot;?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Esta ação é permanente e excluirá todas as colunas e tarefas dentro deste quadro. Apenas o proprietário pode fazer isso. Você tem certeza?
                         </AlertDialogDescription>

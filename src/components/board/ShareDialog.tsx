@@ -20,7 +20,8 @@ import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
-import type { KanbanBoard, User } from '@/lib/types';
+import type { User as AuthUser } from 'firebase/auth';
+import type { KanbanBoard, User as AppUser } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Loader, Trash2, Crown } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
@@ -33,7 +34,7 @@ type InviteFormData = z.infer<typeof inviteSchema>;
 
 interface ShareDialogProps {
   board: KanbanBoard;
-  currentUser: User;
+  currentUser: AuthUser;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -44,7 +45,7 @@ export function ShareDialog({ board, currentUser, isOpen, onClose }: ShareDialog
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isOwner = board.userId === currentUser.uid;
 
-  const [members, setMembers] = useState<User[]>([]);
+  const [members, setMembers] = useState<AppUser[]>([]);
   const [areMembersLoading, setAreMembersLoading] = useState(true);
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export function ShareDialog({ board, currentUser, isOpen, onClose }: ShareDialog
         const memberDocs = await Promise.all(memberPromises);
         const memberData = memberDocs
           .filter(docSnap => docSnap.exists())
-          .map(docSnap => ({...docSnap.data(), id: docSnap.id } as User));
+          .map(docSnap => ({...docSnap.data(), id: docSnap.id } as AppUser));
 
         setMembers(memberData.sort((a,b) => a.userName.localeCompare(b.userName)));
       } catch (error) {
@@ -103,7 +104,7 @@ export function ShareDialog({ board, currentUser, isOpen, onClose }: ShareDialog
         return;
       }
 
-      const userToInvite = querySnapshot.docs[0].data() as User;
+      const userToInvite = querySnapshot.docs[0].data() as AppUser;
 
       if (board.members.includes(userToInvite.id)) {
         toast({ variant: 'destructive', title: 'Membro já existente', description: `${userToInvite.userName} já faz parte deste quadro.` });

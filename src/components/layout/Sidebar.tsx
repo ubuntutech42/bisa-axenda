@@ -58,7 +58,7 @@ export function UserProfileButton() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
-  const { setIsFloatingPomodoroOpen } = usePomodoro();
+  const { isFloatingPomodoroOpen, setIsFloatingPomodoroOpen } = usePomodoro();
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile } = useDoc<UserType>(userDocRef);
@@ -76,11 +76,13 @@ export function UserProfileButton() {
     [firestore, userProfile]
   );
   const { data: notifications, isLoading } = useCollection<NotificationType>(notificationsQuery);
-  const now = new Date();
   const visibleNotifications = useMemo(
-    () => (notifications ?? []).filter(
-      (n) => !n.visibleAt || n.visibleAt.toDate() <= now
-    ),
+    () => {
+      const now = new Date();
+      return (notifications ?? []).filter(
+        (n) => !n.visibleAt || n.visibleAt.toDate() <= now
+      );
+    },
     [notifications]
   );
   const notificationCount = visibleNotifications.length;
@@ -125,7 +127,7 @@ export function UserProfileButton() {
                     {notificationCount > 0 && <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">{notificationCount}</span>}
                 </DropdownMenuItem>
               </SheetTrigger>
-            <DropdownMenuItem onClick={() => setIsFloatingPomodoroOpen(prev => !prev)}>
+            <DropdownMenuItem onClick={() => setIsFloatingPomodoroOpen(!isFloatingPomodoroOpen)}>
               <Timer className="mr-2 h-4 w-4" />
               <span>Timer Flutuante</span>
             </DropdownMenuItem>

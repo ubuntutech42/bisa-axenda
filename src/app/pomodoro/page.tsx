@@ -16,7 +16,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { usePomodoro } from '@/context/PomodoroContext';
 import PomodoroTimerDisplay from '@/components/pomodoro/PomodoroTimerDisplay';
-import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { TaskDialog, type TaskDialogSaveData } from '@/components/kanban/TaskDialog';
 import { useToast } from '@/hooks/use-toast';
 import { UserProfileButton } from '@/components/layout/Sidebar';
 
@@ -78,7 +78,7 @@ export default function PomodoroPage() {
     }
   }, [isUserLoading, user, router]);
   
-  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'userId' | 'timeSpent' | 'createdAt'>) => {
+  const handleCreateTask = async (newTaskData: TaskDialogSaveData) => {
     if (!user || !currentBoardId) return;
     try {
       const tasksCollection = collection(firestore, 'kanbanBoards', currentBoardId, 'tasks');

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import type { Task } from '@/lib/types';
@@ -98,11 +98,14 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const timeOptions: Record<TimerMode, number> = {
-    pomodoro: settings.pomodoro * 60,
-    shortBreak: settings.shortBreak * 60,
-    longBreak: settings.longBreak * 60,
-  };
+  const timeOptions = useMemo<Record<TimerMode, number>>(
+    () => ({
+      pomodoro: settings.pomodoro * 60,
+      shortBreak: settings.shortBreak * 60,
+      longBreak: settings.longBreak * 60,
+    }),
+    [settings.pomodoro, settings.shortBreak, settings.longBreak]
+  );
 
   const saveSession = useCallback(async (startTime: Date, focusDurationInSeconds: number) => {
     if (!user || !currentTaskId || !firestore || !currentBoardId || focusDurationInSeconds <= 0) return;
@@ -134,11 +137,11 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, currentTaskId, currentBoardId, firestore]);
 
-  const setMode = (newMode: TimerMode) => {
+  const setMode = useCallback((newMode: TimerMode) => {
     setIsActive(false);
     setModeState(newMode);
     setTime(timeOptions[newMode]);
-  }
+  }, [timeOptions]);
   
   const resetTimer = useCallback(() => {
     setIsActive(false);
@@ -166,7 +169,7 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
         playFocusStartSoundWithPreset(settings.soundFocus);
         setMode('pomodoro');
       }
-  }, [mode, pomodoroCount, settings.longBreakInterval, settings.soundFocus, settings.soundShortBreak, settings.soundLongBreak]);
+  }, [mode, pomodoroCount, settings.longBreakInterval, settings.soundFocus, settings.soundShortBreak, settings.soundLongBreak, setMode]);
 
 
   useEffect(() => {
@@ -231,7 +234,7 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setTime(timeOptions[mode]);
     setIsActive(false);
-  }, [settings, mode]);
+  }, [mode, timeOptions]);
 
   return (
     <PomodoroContext.Provider value={{ 

@@ -35,8 +35,8 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 
-const priorities: Priority[] = ['Baixa', 'Média', 'Alta', 'Urgente'];
-const categories: Category[] = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'];
+const priorities = ['Baixa', 'Média', 'Alta', 'Urgente'] as const satisfies readonly Priority[];
+const categories = ['Trabalho', 'Estudo', 'Autocuidado', 'Criação', 'Pessoal'] as const satisfies readonly Category[];
 
 const taskSchema = z.object({
   title: z.string().min(1, { message: "O título é obrigatório." }),
@@ -48,12 +48,21 @@ const taskSchema = z.object({
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
+export interface TaskDialogSaveData {
+  id?: string;
+  title: string;
+  description?: string;
+  category: Category;
+  priority: Priority;
+  listId: string;
+  deadline?: string;
+}
 
 interface TaskDialogProps {
   task?: Task | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: TaskDialogSaveData) => void;
   lists: KanbanList[];
   initialListId?: string;
 }

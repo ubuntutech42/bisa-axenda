@@ -26,6 +26,10 @@ export interface UseCollectionResult<T> {
   error: FirestoreError | Error | null; // Error object, or null.
 }
 
+function getTargetPath(target: CollectionReference<DocumentData> | Query<DocumentData>): string {
+  return 'path' in target ? target.path : '[query]';
+}
+
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Handles nullable references/queries.
@@ -70,7 +74,7 @@ export function useCollection<T = any>(
       (err: FirestoreError) => {
         const path = memoizedTargetRefOrQuery.type === 'collection'
             ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as Query)._query.path.canonicalString();
+            : getTargetPath(memoizedTargetRefOrQuery);
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
@@ -88,7 +92,7 @@ export function useCollection<T = any>(
   }, [memoizedTargetRefOrQuery]);
 
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error('Query was not properly memoized using useMemoFirebase: ' + (memoizedTargetRefOrQuery as Query)._query.path.canonicalString());
+    throw new Error('Query was not properly memoized using useMemoFirebase: ' + getTargetPath(memoizedTargetRefOrQuery));
   }
 
   return { data, isLoading, error };

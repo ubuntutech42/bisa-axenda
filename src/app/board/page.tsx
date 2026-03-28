@@ -11,7 +11,7 @@ import { Header } from '@/components/layout/Header';
 import { Loader, Plus, ArrowLeft, Users } from 'lucide-react';
 import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { TaskDialog, type TaskDialogSaveData } from '@/components/kanban/TaskDialog';
 import { ROUTES } from '@/lib/routes';
 
 const KanbanBoard = dynamic(
@@ -81,7 +81,7 @@ export default function BoardPage({ params, searchParams }: BoardPageProps) {
       }
   }, [activeBoard, isBoardLoading, user, router, boardId, toast, boardError]);
 
-  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'timeSpent' | 'createdAt' >) => {
+  const handleCreateTask = async (newTaskData: TaskDialogSaveData) => {
     if (!user || !activeBoard) return;
     try {
       const tasksCollection = collection(firestore, 'kanbanBoards', activeBoard.id, 'tasks');

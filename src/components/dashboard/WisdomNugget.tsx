@@ -106,7 +106,7 @@ export function WisdomNugget() {
       <CardContent className="relative z-10 p-4 md:p-6">
         <h3 className="mb-2 text-xs md:text-sm font-semibold text-primary">Frase do dia</h3>
         <blockquote className="text-base md:text-lg font-semibold text-primary-foreground italic border-l-4 border-primary pl-3 md:pl-4">
-          "{quote.text}"
+          &quot;{quote.text}&quot;
         </blockquote>
         <p className="text-right mt-2 text-xs md:text-sm text-muted-foreground">
             -{' '}

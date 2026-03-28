@@ -13,6 +13,7 @@ const priorityVariantMap: Record<Priority, BadgeProps['variant']> = {
   Média: 'secondary',
   Baixa: 'outline',
 };
+const completedListNames = ['concluído', 'done'];
 
 const TaskRow = React.memo(function TaskRow({ task }: { task: Task }) {
   return (
@@ -36,7 +37,6 @@ interface TasksOverviewProps {
 }
 
 function TasksOverviewInner({ tasks, lists }: TasksOverviewProps) {
-  const completedListNames = ['concluído', 'done'];
   const completedListIds = React.useMemo(
     () => lists.filter(l => completedListNames.includes(l.name.toLowerCase())).map(l => l.id),
     [lists]
