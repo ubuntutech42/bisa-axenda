@@ -24,9 +24,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ADMIN_UIDS } from '@/lib/admin';
+import { useUserIsAdmin } from '@/hooks/useUserIsAdmin';
 import { UserProfileButton } from '@/components/layout/Sidebar';
 import { ROUTES } from '@/lib/routes';
+import { POMODORO_SOUND_OPTIONS } from '@/lib/sounds';
 
 const EventCategoryManager = dynamic(
   () => import('@/components/layout/EventCategoryManager').then((m) => m.EventCategoryManager),
@@ -212,11 +213,25 @@ export default function SettingsPage() {
     const { settings, updateSettings } = usePomodoro();
     const { toast } = useToast();
 
-    const { register, handleSubmit, watch } = useForm({
-        defaultValues: settings,
+    const { register, handleSubmit, control, reset } = useForm({
+        defaultValues: {
+          ...settings,
+          soundFocus: settings.soundFocus ?? 'default',
+          soundShortBreak: settings.soundShortBreak ?? 'default',
+          soundLongBreak: settings.soundLongBreak ?? 'default',
+        },
     });
 
-    const isAdmin = user ? ADMIN_UIDS.includes(user.uid) : false;
+    useEffect(() => {
+      reset({
+        ...settings,
+        soundFocus: settings.soundFocus ?? 'default',
+        soundShortBreak: settings.soundShortBreak ?? 'default',
+        soundLongBreak: settings.soundLongBreak ?? 'default',
+      });
+    }, [settings, reset]);
+
+    const { isAdmin, isCheckingAdmin } = useUserIsAdmin();
 
     const onPomodoroSubmit = (data: typeof settings) => {
         updateSettings(data);
@@ -229,7 +244,7 @@ export default function SettingsPage() {
         }
     }, [isUserLoading, user, router]);
 
-    if (isUserLoading || !user) {
+    if (isUserLoading || !user || isCheckingAdmin) {
         return (
             <div className="flex items-center justify-center h-full">
                 <Loader className="h-10 w-10 animate-spin text-primary" />
@@ -238,13 +253,13 @@ export default function SettingsPage() {
     }
     
     return (
-        <div className="flex flex-col h-full w-full">
+        <div className="flex flex-col min-h-0 w-full">
             <Header>
                 <h1 className="text-3xl font-bold font-headline">Configurações</h1>
                 <UserProfileButton />
             </Header>
-            <div className="flex-1 overflow-y-auto -mr-6 pr-6">
-                <div className="max-w-4xl mx-auto w-full">
+            <div className="-mr-6 pr-6">
+                <div className="max-w-4xl mx-auto w-full pb-4">
                     <Tabs defaultValue="profile" className="w-full">
                         <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'}`}>
                             <TabsTrigger value="profile">Perfil</TabsTrigger>
@@ -284,9 +299,9 @@ export default function SettingsPage() {
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>Timer Pomodoro</CardTitle>
-                                        <CardDescription>Ajuste os tempos de foco e descanso para se adequar ao seu ritmo.</CardDescription>
+                                        <CardDescription>Ajuste os tempos de foco e descanso e os sons de notificação.</CardDescription>
                                     </CardHeader>
-                                    <CardContent className="space-y-4">
+                                    <CardContent className="space-y-6">
                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                           <div className="space-y-2">
                                               <Label htmlFor="pomodoro">Foco (min)</Label>
@@ -300,7 +315,69 @@ export default function SettingsPage() {
                                               <Label htmlFor="longBreak">Pausa Longa (min)</Label>
                                               <Input id="longBreak" type="number" {...register('longBreak', { valueAsNumber: true, min: 1 })} />
                                           </div>
-                                      </div>
+                                        </div>
+                                        <div className="space-y-4 border-t pt-4">
+                                          <p className="text-sm font-medium text-foreground">Sons de notificação</p>
+                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="space-y-2">
+                                              <Label htmlFor="soundFocus">Foco</Label>
+                                              <Controller
+                                                name="soundFocus"
+                                                control={control}
+                                                render={({ field }) => (
+                                                  <Select onValueChange={field.onChange} value={field.value ?? 'default'}>
+                                                    <SelectTrigger id="soundFocus">
+                                                      <SelectValue placeholder="Som" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      {POMODORO_SOUND_OPTIONS.map((opt) => (
+                                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                )}
+                                              />
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label htmlFor="soundShortBreak">Pausa curta</Label>
+                                              <Controller
+                                                name="soundShortBreak"
+                                                control={control}
+                                                render={({ field }) => (
+                                                  <Select onValueChange={field.onChange} value={field.value ?? 'default'}>
+                                                    <SelectTrigger id="soundShortBreak">
+                                                      <SelectValue placeholder="Som" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      {POMODORO_SOUND_OPTIONS.map((opt) => (
+                                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                )}
+                                              />
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label htmlFor="soundLongBreak">Pausa longa</Label>
+                                              <Controller
+                                                name="soundLongBreak"
+                                                control={control}
+                                                render={({ field }) => (
+                                                  <Select onValueChange={field.onChange} value={field.value ?? 'default'}>
+                                                    <SelectTrigger id="soundLongBreak">
+                                                      <SelectValue placeholder="Som" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      {POMODORO_SOUND_OPTIONS.map((opt) => (
+                                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                )}
+                                              />
+                                            </div>
+                                          </div>
+                                        </div>
                                     </CardContent>
                                     <CardFooter>
                                         <Button type="submit">Salvar Alterações</Button>

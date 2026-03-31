@@ -1,0 +1,39 @@
+# Cria uma task para o usuario autenticado
+mutation CreateTask(
+  $description: String!
+  $status: String!
+  $dueDate: Date
+  $priority: String
+) @auth(level: USER) {
+  task_insert(
+    data: {
+      userId_expr: "auth.uid"
+      description: $description
+      status: $status
+      createdAt_expr: "request.time"
+      dueDate: $dueDate
+      priority: $priority
+    }
+  )
+}
+
+# Cria uma meta para o usuario autenticado
+mutation CreateGoal(
+  $title: String!
+  $dueDate: Date!
+  $status: String!
+  $description: String
+  $category: String
+) @auth(level: USER) {
+  goal_insert(
+    data: {
+      userId_expr: "auth.uid"
+      title: $title
+      dueDate: $dueDate
+      status: $status
+      createdAt_expr: "request.time"
+      description: $description
+      category: $category
+    }
+  )
+}

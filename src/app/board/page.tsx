@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
@@ -11,7 +11,7 @@ import { Header } from '@/components/layout/Header';
 import { Loader, Plus, ArrowLeft, Users } from 'lucide-react';
 import type { KanbanBoard as KanbanBoardType, KanbanList, Task } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { TaskDialog, type TaskDialogSaveData } from '@/components/kanban/TaskDialog';
 import { ROUTES } from '@/lib/routes';
 
 const KanbanBoard = dynamic(
@@ -23,15 +23,26 @@ import { BoardMembers } from '@/components/board/BoardMembers';
 import { ShareDialog } from '@/components/board/ShareDialog';
 import { UserProfileButton } from '@/components/layout/Sidebar';
 
+type BoardPageProps = {
+  params?: Promise<Record<string, string | string[]>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default function BoardPage() {
+export default function BoardPage({ params, searchParams }: BoardPageProps) {
+  const resolvedParams = params != null ? use(params) : {};
+  const resolvedSearchParams = searchParams != null ? use(searchParams) : {};
+
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const boardId = searchParams.get('id');
+  const boardId =
+    typeof resolvedSearchParams?.id === 'string'
+      ? resolvedSearchParams.id
+      : Array.isArray(resolvedSearchParams?.id)
+        ? resolvedSearchParams.id[0]
+        : null;
 
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -70,7 +81,7 @@ export default function BoardPage() {
       }
   }, [activeBoard, isBoardLoading, user, router, boardId, toast, boardError]);
 
-  const handleCreateTask = async (newTaskData: Omit<Task, 'id' | 'timeSpent' | 'createdAt' >) => {
+  const handleCreateTask = async (newTaskData: TaskDialogSaveData) => {
     if (!user || !activeBoard) return;
     try {
       const tasksCollection = collection(firestore, 'kanbanBoards', activeBoard.id, 'tasks');
@@ -160,7 +171,6 @@ export default function BoardPage() {
         onSave={handleCreateTask}
         lists={lists}
         initialListId={initialListForNewTask}
-        boardId={activeBoard.id}
       />}
       {activeBoard && user && <ShareDialog 
         board={activeBoard}

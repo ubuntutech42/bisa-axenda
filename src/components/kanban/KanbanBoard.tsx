@@ -7,11 +7,11 @@ import { TaskDialog } from './TaskDialog';
 import type { Task, KanbanList, KanbanBoard as KanbanBoardType } from '@/lib/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, serverTimestamp, addDoc, deleteField } from 'firebase/firestore';
+import { collection, doc, updateDoc, serverTimestamp, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
-import { DndContext, type DragEndEvent } from '@dnd-kit/core';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 
 interface KanbanBoardProps {
   board: KanbanBoardType;
@@ -50,12 +50,10 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
     if (!user || !updatedTaskData.id || !boardId) return;
     try {
       const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', updatedTaskData.id);
-      const { id: _id, ...rest } = updatedTaskData;
-      const updateData: Record<string, unknown> = { ...rest, updatedAt: serverTimestamp() };
-      if (updateData.coverImageUrl === null) {
-        updateData.coverImageUrl = deleteField();
-      }
-      await updateDoc(taskRef, updateData);
+      await updateDoc(taskRef, {
+        ...updatedTaskData,
+        updatedAt: serverTimestamp(),
+      });
       toast({
         title: 'Tarefa atualizada!',
         description: `A tarefa "${updatedTaskData.title}" foi salva.`,
@@ -106,39 +104,36 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
     }
   };
 
-  const onDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over) return;
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
 
-    const taskId = active.id as string;
-    let newListId: string;
-    const isListId = sortedLists.some((l) => l.id === over.id);
-    if (isListId) {
-      newListId = over.id as string;
-    } else {
-      const taskOver = tasks?.find((t) => t.id === over.id);
-      newListId = taskOver?.listId ?? sortedLists[0]?.id ?? '';
+    if (!destination) {
+      return;
     }
-    if (!taskId || !newListId) return;
 
-    const task = tasks?.find((t) => t.id === taskId);
-    if (task?.listId === newListId) return;
-
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+    
     if (!user || !boardId) return;
 
     try {
-      const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', taskId);
-      await updateDoc(taskRef, {
-        listId: newListId,
-        updatedAt: serverTimestamp(),
-      });
+        const taskRef = doc(firestore, 'kanbanBoards', boardId, 'tasks', draggableId);
+        await updateDoc(taskRef, {
+            listId: destination.droppableId,
+            updatedAt: serverTimestamp(),
+        });
+        // Optimistic update handled by useCollection hook
     } catch (error) {
-      console.error('Error updating task list:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao mover tarefa',
-        description: 'Não foi possível mover a tarefa. Por favor, tente novamente.',
-      });
+        console.error("Error updating task list:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Erro ao mover tarefa',
+            description: 'Não foi possível mover a tarefa. Por favor, tente novamente.',
+        });
     }
   };
 
@@ -160,7 +155,7 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
   }
 
   return (
-    <DndContext onDragEnd={onDragEnd}>
+    <DragDropContext onDragEnd={onDragEnd}>
       <ScrollArea className="w-full whitespace-nowrap h-full">
         <div className="flex gap-6 pb-6 items-start h-full">
           {sortedLists.map((list) => {
@@ -192,9 +187,8 @@ export function KanbanBoard({ board, lists, onNewTaskClick }: KanbanBoardProps) 
             onClose={handleCloseDialog}
             onSave={handleSaveTask}
             lists={sortedLists}
-            boardId={board.id}
           />
       )}
-    </DndContext>
+    </DragDropContext>
   );
 }

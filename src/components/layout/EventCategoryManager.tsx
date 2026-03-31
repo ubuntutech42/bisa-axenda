@@ -24,6 +24,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Label } from '../ui/label';
+import { colorToHexForInput } from '@/lib/color';
 
 const newCategorySchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
@@ -145,7 +146,7 @@ export function EventCategoryManager() {
               <Input
                 type="color"
                 className="w-12 h-10 p-1"
-                value={category.color}
+                value={colorToHexForInput(category.color)}
                 onChange={(e) => handleColorChange(category.id, e.target.value, true)}
               />
               <Input
@@ -166,7 +167,7 @@ export function EventCategoryManager() {
             <Input
                 type="color"
                 className="w-12 h-10 p-1"
-                value={category.color}
+                value={colorToHexForInput(category.color)}
                 onChange={(e) => handleColorChange(category.id, e.target.value, false)}
             />
             <Input
@@ -205,7 +206,7 @@ export function EventCategoryManager() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Excluir a categoria "{categoryToDelete?.name}" não apagará os eventos existentes que a utilizam. Eles perderão a associação com esta categoria. A ação não pode ser desfeita.
+                        Excluir a categoria &quot;{categoryToDelete?.name}&quot; não apagará os eventos existentes que a utilizam. Eles perderão a associação com esta categoria. A ação não pode ser desfeita.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

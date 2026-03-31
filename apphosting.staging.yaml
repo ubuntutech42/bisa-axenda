@@ -1,0 +1,11 @@
+# Overrides para o ambiente de homologação (branch: test).
+# Mesclado sobre apphosting.yaml pelo App Hosting ao fazer rollout
+# num backend cujo "Environment name" estiver definido como "staging".
+# Docs: https://firebase.google.com/docs/app-hosting/multiple-environments
+
+runConfig:
+  maxInstances: 1
+  minInstances: 0
+  cpu: 1
+  memoryMiB: 512
+  concurrency: 5

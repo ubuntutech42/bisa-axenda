@@ -1,8 +1,8 @@
 extend type Query {
   """
-  ✨ Look up a single `Movie` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  ✨ Look up a single `BusinessActivity` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
-  movie(
+  businessActivity(
     """
     The unique ID of the object.
     """
@@ -11,17 +11,17 @@ extend type Query {
     """
     The key used to identify the object.
     """
-    key: Movie_Key
+    key: BusinessActivity_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Movie_FirstRow
-  ): Movie @fdc_generated(from: "Movie", purpose: QUERY_SINGLE)
+    first: BusinessActivity_FirstRow
+  ): BusinessActivity @fdc_generated(from: "BusinessActivity", purpose: QUERY_SINGLE)
   """
-  ✨ Look up a single `MovieMetadata` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  ✨ Look up a single `Goal` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
-  movieMetadata(
+  goal(
     """
     The unique ID of the object.
     """
@@ -30,27 +30,70 @@ extend type Query {
     """
     The key used to identify the object.
     """
-    key: MovieMetadata_Key
+    key: Goal_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: MovieMetadata_FirstRow
-  ): MovieMetadata @fdc_generated(from: "MovieMetadata", purpose: QUERY_SINGLE)
+    first: Goal_FirstRow
+  ): Goal @fdc_generated(from: "Goal", purpose: QUERY_SINGLE)
   """
-  ✨ Look up a single `Review` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  ✨ Look up a single `Project` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
-  review(
+  project(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
     """
     The key used to identify the object.
     """
-    key: Review_Key
+    key: Project_Key
 
     """
     Fetch the first row based on the filters and ordering.
     """
-    first: Review_FirstRow
-  ): Review @fdc_generated(from: "Review", purpose: QUERY_SINGLE)
+    first: Project_FirstRow
+  ): Project @fdc_generated(from: "Project", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Routine` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  routine(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Routine_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Routine_FirstRow
+  ): Routine @fdc_generated(from: "Routine", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Task` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  task(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Task_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Task_FirstRow
+  ): Task @fdc_generated(from: "Task", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -58,12 +101,7 @@ extend type Query {
     """
     The unique ID of the object.
     """
-    id: String
-
-    """
-    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
-    """
-    id_expr: String_Expr
+    id: UUID
 
     """
     The key used to identify the object.
@@ -76,18 +114,18 @@ extend type Query {
     first: User_FirstRow
   ): User @fdc_generated(from: "User", purpose: QUERY_SINGLE)
   """
-  ✨ List `Movie` objects in the table and return selected fields, optionally filtered by `where` conditions
+  ✨ List `BusinessActivity` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
-  movies(
+  businessActivities(
     """
     Filter condition to narrow down the query results.
     """
-    where: Movie_Filter
+    where: BusinessActivity_Filter
 
     """
     Order the query results by specific fields.
     """
-    orderBy: [Movie_Order!]
+    orderBy: [BusinessActivity_Order!]
 
     """
     Number of rows to skip before starting to return the results.
@@ -107,21 +145,21 @@ extend type Query {
     """
     Filter condition to apply to the groups of aggregate queries.
     """
-    having: Movie_Having
-  ): [Movie!]! @fdc_generated(from: "Movie", purpose: QUERY_MULTIPLE)
+    having: BusinessActivity_Having
+  ): [BusinessActivity!]! @fdc_generated(from: "BusinessActivity", purpose: QUERY_MULTIPLE)
   """
-  ✨ List `MovieMetadata` objects in the table and return selected fields, optionally filtered by `where` conditions
+  ✨ List `Goal` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
-  movieMetadatas(
+  goals(
     """
     Filter condition to narrow down the query results.
     """
-    where: MovieMetadata_Filter
+    where: Goal_Filter
 
     """
     Order the query results by specific fields.
     """
-    orderBy: [MovieMetadata_Order!]
+    orderBy: [Goal_Order!]
 
     """
     Number of rows to skip before starting to return the results.
@@ -141,21 +179,21 @@ extend type Query {
     """
     Filter condition to apply to the groups of aggregate queries.
     """
-    having: MovieMetadata_Having
-  ): [MovieMetadata!]! @fdc_generated(from: "MovieMetadata", purpose: QUERY_MULTIPLE)
+    having: Goal_Having
+  ): [Goal!]! @fdc_generated(from: "Goal", purpose: QUERY_MULTIPLE)
   """
-  ✨ List `Review` objects in the table and return selected fields, optionally filtered by `where` conditions
+  ✨ List `Project` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
-  reviews(
+  projects(
     """
     Filter condition to narrow down the query results.
     """
-    where: Review_Filter
+    where: Project_Filter
 
     """
     Order the query results by specific fields.
     """
-    orderBy: [Review_Order!]
+    orderBy: [Project_Order!]
 
     """
     Number of rows to skip before starting to return the results.
@@ -175,8 +213,76 @@ extend type Query {
     """
     Filter condition to apply to the groups of aggregate queries.
     """
-    having: Review_Having
-  ): [Review!]! @fdc_generated(from: "Review", purpose: QUERY_MULTIPLE)
+    having: Project_Having
+  ): [Project!]! @fdc_generated(from: "Project", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Routine` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  routines(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Routine_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Routine_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Routine_Having
+  ): [Routine!]! @fdc_generated(from: "Routine", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Task` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  tasks(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Task_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Task_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Task_Having
+  ): [Task!]! @fdc_generated(from: "Task", purpose: QUERY_MULTIPLE)
   """
   ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

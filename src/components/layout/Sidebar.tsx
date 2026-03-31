@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -50,6 +51,7 @@ const navItems = [
 
 interface SidebarProps {
   isCollapsed: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 export function UserProfileButton() {
@@ -74,7 +76,16 @@ export function UserProfileButton() {
     [firestore, userProfile]
   );
   const { data: notifications, isLoading } = useCollection<NotificationType>(notificationsQuery);
-  const notificationCount = notifications?.length || 0;
+  const visibleNotifications = useMemo(
+    () => {
+      const now = new Date();
+      return (notifications ?? []).filter(
+        (n) => !n.visibleAt || n.visibleAt.toDate() <= now
+      );
+    },
+    [notifications]
+  );
+  const notificationCount = visibleNotifications.length;
 
   if (isUserLoading || !user) {
     return <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />;
@@ -142,8 +153,8 @@ export function UserProfileButton() {
           <div className="py-4 space-y-4 -mr-2 pr-2 h-[calc(100%-80px)] overflow-y-auto">
               {isLoading ? (
                   <div className="flex justify-center items-center h-40"><Loader className="animate-spin" /></div>
-              ) : notifications && notifications.length > 0 ? (
-                  notifications.map(notification => (
+              ) : visibleNotifications.length > 0 ? (
+                  visibleNotifications.map(notification => (
                       <div key={notification.id} className="p-3 rounded-lg bg-muted/50 border">
                           <h4 className="font-semibold">{notification.title}</h4>
                           <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
@@ -163,13 +174,13 @@ export function UserProfileButton() {
 
 
 function SidebarHeader({ isCollapsed }: { isCollapsed: boolean }) {
-    return (
-        <div className={cn("flex h-16 shrink-0 items-center border-b px-4")}>
-            <div className='flex items-center gap-2 flex-1'>
-              <Logo isCollapsed={isCollapsed} />
-            </div>
-        </div>
-    )
+  return (
+    <div className={cn("flex h-16 shrink-0 items-center border-b px-3 transition-[padding] duration-300 ease-in-out", isCollapsed && "px-2 justify-center")}>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <Logo isCollapsed={isCollapsed} />
+      </div>
+    </div>
+  );
 }
 
 function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
@@ -183,25 +194,25 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
             const Icon = item.icon;
             const isActive = item.href === '/boards' ? isBoardsActive || pathname === '/boards' : pathname === item.href;
             return (
-              <TooltipProvider key={item.label} delayDuration={0}>
+              <TooltipProvider key={item.label} delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
                       href={item.href}
                       className={cn(
-                        'group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all duration-300 ease-in-out hover:text-primary hover:bg-primary/10',
-                         isCollapsed ? 'w-12 h-12 justify-center' : 'w-full',
-                        isActive && 'bg-primary/20 text-primary font-bold'
+                        'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-colors duration-200 ease-out hover:text-primary hover:bg-primary/10',
+                        isCollapsed ? 'w-10 h-10 justify-center p-0 mx-auto' : 'w-full',
+                        isActive && 'bg-primary/20 text-primary font-medium'
                       )}
                     >
-                      <Icon className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-all duration-300 ease-in-out group-hover:text-primary", { 'text-primary': isActive })} />
-                      <span className={cn("transform transition-all duration-300 ease-in-out", isCollapsed && 'sr-only')}>
+                      <Icon className={cn("h-5 w-5 shrink-0 transition-colors duration-200", { 'text-primary': isActive })} />
+                      <span className={cn("whitespace-nowrap overflow-hidden transition-[opacity,width] duration-300 ease-in-out", isCollapsed ? 'sr-only w-0 opacity-0' : 'opacity-100')}>
                         {item.label}
                       </span>
                     </Link>
                   </TooltipTrigger>
                   {isCollapsed && (
-                    <TooltipContent side="right">
+                    <TooltipContent side="right" sideOffset={8} className="font-medium">
                       {item.label}
                     </TooltipContent>
                   )}
@@ -214,18 +225,60 @@ function NavContent({ isCollapsed }: { isCollapsed: boolean }) {
   );
 }
 
-export function Sidebar({ isCollapsed }: SidebarProps) {
+export function Sidebar({ isCollapsed, onCollapsedChange }: SidebarProps) {
   const { user } = useUser();
   const pathname = usePathname();
 
   if (!user || pathname.startsWith('/landing') || pathname === '/') {
     return null;
   }
-  
+
+  const toggleCollapsed = () => onCollapsedChange?.(!isCollapsed);
+
   return (
-      <aside className={cn("hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out", isCollapsed ? "w-20" : "w-64")}>
-        <SidebarHeader isCollapsed={isCollapsed} />
-        <NavContent isCollapsed={isCollapsed} />
-      </aside>
+    <aside
+      className={cn(
+        'hidden md:flex md:flex-col border-r bg-card fixed top-0 left-0 h-full z-50 overflow-hidden',
+        'transition-[width] duration-300 ease-in-out',
+        isCollapsed ? 'w-[4.5rem]' : 'w-64'
+      )}
+    >
+      <SidebarHeader isCollapsed={isCollapsed} />
+      <NavContent isCollapsed={isCollapsed} />
+      {onCollapsedChange && (
+        <div className="mt-auto shrink-0 border-t p-2">
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleCollapsed}
+                  className={cn(
+                    'w-full transition-colors duration-200',
+                    isCollapsed ? 'w-10 h-10 p-0 mx-auto rounded-lg' : 'justify-start gap-2 rounded-lg'
+                  )}
+                  aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
+                >
+                  {isCollapsed ? (
+                    <PanelRightClose className="h-5 w-5 shrink-0" />
+                  ) : (
+                    <>
+                      <PanelLeftClose className="h-5 w-5 shrink-0" />
+                      <span className="text-sm font-medium">Recolher menu</span>
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              {isCollapsed && (
+                <TooltipContent side="right" sideOffset={8}>
+                  Expandir menu
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
+    </aside>
   );
 }

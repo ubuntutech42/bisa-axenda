@@ -1,26 +1,76 @@
-extend type Movie {
+extend type BusinessActivity {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
   """
-  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Movie", purpose: IMPLICIT_KEY_FIELD)
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "BusinessActivity", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `BusinessActivity`.`project`. It must match the value of `Project`.`id`. See `@ref` for how to customize it.
+  """
+  projectId: UUID @fdc_generated(from: "BusinessActivity.project", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `BusinessActivity`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "BusinessActivity.user", purpose: IMPLICIT_REF_FIELD)
 }
-extend type MovieMetadata {
+extend type Goal {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
   """
-  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "MovieMetadata", purpose: IMPLICIT_KEY_FIELD)
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Goal", purpose: IMPLICIT_KEY_FIELD)
   """
-  ✨ Implicit foreign key field based on `MovieMetadata`.`movie`. It must match the value of `Movie`.`id`. See `@ref` for how to customize it.
+  ✨ Implicit foreign key field based on `Goal`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
   """
-  movieId: UUID! @fdc_generated(from: "MovieMetadata.movie", purpose: IMPLICIT_REF_FIELD)
+  userId: UUID! @fdc_generated(from: "Goal.user", purpose: IMPLICIT_REF_FIELD)
 }
-extend type Review {
+extend type Project {
   """
-  ✨ Implicit foreign key field based on `Review`.`movie`. It must match the value of `Movie`.`id`. See `@ref` for how to customize it.
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
   """
-  movieId: UUID! @fdc_generated(from: "Review.movie", purpose: IMPLICIT_REF_FIELD)
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Project", purpose: IMPLICIT_KEY_FIELD)
   """
-  ✨ Implicit foreign key field based on `Review`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  ✨ Implicit foreign key field based on `Project`.`goal`. It must match the value of `Goal`.`id`. See `@ref` for how to customize it.
   """
-  userId: String! @fdc_generated(from: "Review.user", purpose: IMPLICIT_REF_FIELD)
+  goalId: UUID @fdc_generated(from: "Project.goal", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Project`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "Project.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Routine {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Routine", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Routine`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "Routine.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Task {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Task", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Task`.`goal`. It must match the value of `Goal`.`id`. See `@ref` for how to customize it.
+  """
+  goalId: UUID @fdc_generated(from: "Task.goal", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Task`.`project`. It must match the value of `Project`.`id`. See `@ref` for how to customize it.
+  """
+  projectId: UUID @fdc_generated(from: "Task.project", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Task`.`routine`. It must match the value of `Routine`.`id`. See `@ref` for how to customize it.
+  """
+  routineId: UUID @fdc_generated(from: "Task.routine", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Task`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "Task.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type User {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "User", purpose: IMPLICIT_KEY_FIELD)
 }

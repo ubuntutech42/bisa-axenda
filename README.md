@@ -1,46 +1,119 @@
-# Axénda - Sua agenda com axé
+# Opensquad
 
-Axénda é uma ferramenta de organização pessoal afrocentrada, focada em produtividade, ancestralidade e conexão com seus ciclos.
+Crie squads de agentes de IA que trabalham juntos — direto do seu IDE.
 
-## Tech Stack
+## Como Usar
 
-- **Framework:** Next.js 15 (App Router)
-- **UI:** React, Tailwind CSS, ShadCN UI
-- **Backend/Auth:** Firebase (Firestore, Authentication)
-- **AI:** Google Genkit
-- **Ícones:** Lucide React
+Abra esta pasta no seu IDE e digite:
 
-## Como editar usando o Cursor IDE
+```
+/opensquad
+```
 
-Para trabalhar neste projeto no Cursor, siga estes passos:
+Isso abre o menu principal. De lá você pode criar squads, executá-los e mais.
 
-1. **Baixe o Código:** Certifique-se de que todos os arquivos do projeto estão em uma pasta no seu computador.
-2. **Abra no Cursor:** Clique em `File > Open Folder` e selecione a pasta do projeto.
-3. **Configuração de Ambiente:**
-   - Crie um arquivo `.env` na raiz (baseado no `.env.example`).
-   - Adicione suas chaves do Firebase e do Google AI (GEMINI_API_KEY).
-4. **Instalação:**
-   ```bash
-   npm install
-   ```
-5. **Recursos de IA do Cursor:**
-   - **Chat (Cmd+L):** Pergunte sobre a lógica de qualquer componente. Use `@Files` para dar contexto à IA sobre arquivos específicos.
-   - **Edição Inline (Cmd+K):** Selecione um trecho de código e peça para "mudar a cor deste botão" ou "melhorar a tipagem desta função".
-   - **Composer (Cmd+I):** O recurso mais poderoso. Peça mudanças complexas que envolvam vários arquivos (ex: "Crie uma nova funcionalidade de etiquetas para as tarefas"). Ele aplicará as mudanças de forma similar ao App Prototyper do Firebase Studio.
+Você também pode ser direto — descreva o que quer em linguagem natural:
 
-## Scripts Disponíveis
+```
+/opensquad crie um squad para escrever posts no LinkedIn sobre IA
+/opensquad execute o squad meu-squad
+```
 
-- `npm run dev`: Inicia o servidor de desenvolvimento do Next.js.
-- `npm run genkit:dev`: Inicia a interface do Genkit para testar os fluxos de IA.
-- `npm run build`: Cria a versão de produção.
+## Criar um Squad
 
-## Estrutura do Projeto
+Digite `/opensquad` e escolha "Criar squad" no menu, ou seja direto:
 
-- `/src/app`: Rotas e páginas da aplicação.
-- `/src/components`: Componentes React reutilizáveis.
-- `/src/firebase`: Configuração e hooks do Firebase.
-- `/src/ai`: Fluxos e lógica de Inteligência Artificial usando Genkit.
-- `/src/lib`: Utilitários, tipos e constantes.
+```
+/opensquad crie um squad para [o que você precisa]
+```
+
+O Arquiteto fará algumas perguntas, projetará o squad e configurará tudo automaticamente.
+
+## Executar um Squad
+
+Digite `/opensquad` e escolha "Executar squad" no menu, ou seja direto:
+
+```
+/opensquad execute o squad <nome-do-squad>
+```
+
+O squad executa automaticamente, pausando apenas nos checkpoints de decisão.
+
+## Escritório Virtual
+
+O Escritório Virtual é uma interface visual 2D que mostra seus agentes trabalhando em tempo real.
+
+**Passo 1 — Gere o dashboard** (no seu IDE):
+
+```
+/opensquad dashboard
+```
+
+**Passo 2 — Sirva localmente** (no terminal):
+
+```bash
+npx serve squads/<nome-do-squad>/dashboard
+```
+
+**Passo 3 —** Abra `http://localhost:3000` no seu navegador.
 
 ---
-Uma criação **UBUNTU TECH**.
+
+# Opensquad (English)
+
+Create AI squads that work together — right from your IDE.
+
+## How to Use
+
+Open this folder in your IDE and type:
+
+```
+/opensquad
+```
+
+This opens the main menu. From there you can create squads, run them, and more.
+
+You can also be direct — describe what you want in plain language:
+
+```
+/opensquad create a squad for writing LinkedIn posts about AI
+/opensquad run my-squad
+```
+
+## Create a Squad
+
+Type `/opensquad` and choose "Create squad" from the menu, or be direct:
+
+```
+/opensquad create a squad for [what you need]
+```
+
+The Architect will ask a few questions, design the squad, and set everything up automatically.
+
+## Run a Squad
+
+Type `/opensquad` and choose "Run squad" from the menu, or be direct:
+
+```
+/opensquad run the <squad-name> squad
+```
+
+The squad runs automatically, pausing only at decision checkpoints.
+
+## Virtual Office
+
+The Virtual Office is a 2D visual interface that shows your agents working in real time.
+
+**Step 1 — Generate the dashboard** (in your IDE):
+
+```
+/opensquad dashboard
+```
+
+**Step 2 — Serve it locally** (in terminal):
+
+```bash
+npx serve squads/<squad-name>/dashboard
+```
+
+**Step 3 —** Open `http://localhost:3000` in your browser.

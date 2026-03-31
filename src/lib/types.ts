@@ -19,13 +19,6 @@ export type Category = 'Estudo' | 'Trabalho' | 'Autocuidado' | 'Criação' | 'Pe
 
 export type Priority = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 
-export interface TaskAttachment {
-  name: string;
-  url: string;
-  contentType?: string;
-  size?: number;
-}
-
 export interface Task {
   id: string;
   userId: string;
@@ -35,8 +28,6 @@ export interface Task {
   category: Category;
   priority: Priority;
   deadline?: string;
-  coverImageUrl?: string;
-  attachments?: TaskAttachment[];
   estimatedTime?: number; // in minutes
   timeSpent: number; // in minutes
   checklist?: { text: string; completed: boolean }[];
@@ -66,7 +57,7 @@ export interface CulturalEvent {
   title: string;
   description: string;
   type: 'cultural' | 'comercial';
-  createdAt: Timestamp;
+  createdAt?: Timestamp; // opcional para eventos do calendário mestre (in-memory)
 }
 
 export interface Quote {
@@ -83,6 +74,8 @@ export interface Notification {
     message: string;
     type: 'info' | 'promo' | 'warning';
     createdAt: Timestamp;
+    /** Quando a notificação deve ficar visível. Se ausente, é imediata (compatível com docs antigos). */
+    visibleAt?: Timestamp;
 }
 
 
