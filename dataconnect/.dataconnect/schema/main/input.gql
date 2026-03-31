@@ -55,13 +55,13 @@ input BusinessActivity_Data {
   """
   projectId_expr: UUID_Expr
   """
-  ✨ Generated from Field `BusinessActivity`.`userId` of type `UUID!`
+  ✨ Generated from Field `BusinessActivity`.`userId` of type `String!`
   """
-  userId: UUID
+  userId: String
   """
-  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `BusinessActivity`.`userId` of type `UUID!`)
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `BusinessActivity`.`userId` of type `String!`)
   """
-  userId_expr: UUID_Expr
+  userId_expr: String_Expr
   """
   ✨ Generated from Field `BusinessActivity`.`project` of type `Project`
   """
@@ -172,9 +172,9 @@ input BusinessActivity_Filter {
   """
   projectId: UUID_Filter
   """
-  ✨ Generated from Field `BusinessActivity`.`userId` of type `UUID!`
+  ✨ Generated from Field `BusinessActivity`.`userId` of type `String!`
   """
-  userId: UUID_Filter
+  userId: String_Filter
   """
   ✨ Generated from Field `BusinessActivity`.`project` of type `Project`
   """
@@ -361,7 +361,7 @@ input BusinessActivity_Order {
   """
   projectId: OrderDirection
   """
-  ✨ Generated from Field `BusinessActivity`.`userId` of type `UUID!`
+  ✨ Generated from Field `BusinessActivity`.`userId` of type `String!`
   """
   userId: OrderDirection
   """
@@ -490,13 +490,13 @@ input Goal_Data {
   """
   id_expr: UUID_Expr
   """
-  ✨ Generated from Field `Goal`.`userId` of type `UUID!`
+  ✨ Generated from Field `Goal`.`userId` of type `String!`
   """
-  userId: UUID
+  userId: String
   """
-  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Goal`.`userId` of type `UUID!`)
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Goal`.`userId` of type `String!`)
   """
-  userId_expr: UUID_Expr
+  userId_expr: String_Expr
   """
   ✨ Generated from Field `Goal`.`user` of type `User!`
   """
@@ -587,9 +587,9 @@ input Goal_Filter {
   """
   id: UUID_Filter
   """
-  ✨ Generated from Field `Goal`.`userId` of type `UUID!`
+  ✨ Generated from Field `Goal`.`userId` of type `String!`
   """
-  userId: UUID_Filter
+  userId: String_Filter
   """
   ✨ Generated from Field `Goal`.`user` of type `User!`
   """
@@ -748,7 +748,7 @@ input Goal_Order {
   """
   id: OrderDirection
   """
-  ✨ Generated from Field `Goal`.`userId` of type `UUID!`
+  ✨ Generated from Field `Goal`.`userId` of type `String!`
   """
   userId: OrderDirection
   """
@@ -853,13 +853,13 @@ input Project_Data {
   """
   goalId_expr: UUID_Expr
   """
-  ✨ Generated from Field `Project`.`userId` of type `UUID!`
+  ✨ Generated from Field `Project`.`userId` of type `String!`
   """
-  userId: UUID
+  userId: String
   """
-  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Project`.`userId` of type `UUID!`)
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Project`.`userId` of type `String!`)
   """
-  userId_expr: UUID_Expr
+  userId_expr: String_Expr
   """
   ✨ Generated from Field `Project`.`goal` of type `Goal`
   """
@@ -966,9 +966,9 @@ input Project_Filter {
   """
   goalId: UUID_Filter
   """
-  ✨ Generated from Field `Project`.`userId` of type `UUID!`
+  ✨ Generated from Field `Project`.`userId` of type `String!`
   """
-  userId: UUID_Filter
+  userId: String_Filter
   """
   ✨ Generated from Field `Project`.`goal` of type `Goal`
   """
@@ -1147,7 +1147,7 @@ input Project_Order {
   """
   goalId: OrderDirection
   """
-  ✨ Generated from Field `Project`.`userId` of type `UUID!`
+  ✨ Generated from Field `Project`.`userId` of type `String!`
   """
   userId: OrderDirection
   """
@@ -1260,13 +1260,13 @@ input Routine_Data {
   """
   id_expr: UUID_Expr
   """
-  ✨ Generated from Field `Routine`.`userId` of type `UUID!`
+  ✨ Generated from Field `Routine`.`userId` of type `String!`
   """
-  userId: UUID
+  userId: String
   """
-  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Routine`.`userId` of type `UUID!`)
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Routine`.`userId` of type `String!`)
   """
-  userId_expr: UUID_Expr
+  userId_expr: String_Expr
   """
   ✨ Generated from Field `Routine`.`user` of type `User!`
   """
@@ -1365,9 +1365,9 @@ input Routine_Filter {
   """
   id: UUID_Filter
   """
-  ✨ Generated from Field `Routine`.`userId` of type `UUID!`
+  ✨ Generated from Field `Routine`.`userId` of type `String!`
   """
-  userId: UUID_Filter
+  userId: String_Filter
   """
   ✨ Generated from Field `Routine`.`user` of type `User!`
   """
@@ -1530,7 +1530,7 @@ input Routine_Order {
   """
   id: OrderDirection
   """
-  ✨ Generated from Field `Routine`.`userId` of type `UUID!`
+  ✨ Generated from Field `Routine`.`userId` of type `String!`
   """
   userId: OrderDirection
   """
@@ -1659,13 +1659,13 @@ input Task_Data {
   """
   routineId_expr: UUID_Expr
   """
-  ✨ Generated from Field `Task`.`userId` of type `UUID!`
+  ✨ Generated from Field `Task`.`userId` of type `String!`
   """
-  userId: UUID
+  userId: String
   """
-  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Task`.`userId` of type `UUID!`)
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Task`.`userId` of type `String!`)
   """
-  userId_expr: UUID_Expr
+  userId_expr: String_Expr
   """
   ✨ Generated from Field `Task`.`goal` of type `Goal`
   """
@@ -1772,9 +1772,9 @@ input Task_Filter {
   """
   routineId: UUID_Filter
   """
-  ✨ Generated from Field `Task`.`userId` of type `UUID!`
+  ✨ Generated from Field `Task`.`userId` of type `String!`
   """
-  userId: UUID_Filter
+  userId: String_Filter
   """
   ✨ Generated from Field `Task`.`goal` of type `Goal`
   """
@@ -1953,7 +1953,7 @@ input Task_Order {
   """
   routineId: OrderDirection
   """
-  ✨ Generated from Field `Task`.`userId` of type `UUID!`
+  ✨ Generated from Field `Task`.`userId` of type `String!`
   """
   userId: OrderDirection
   """
@@ -2058,13 +2058,13 @@ input Task_Order {
 """
 input User_Data {
   """
-  ✨ Generated from Field `User`.`id` of type `UUID!`
+  ✨ Generated from Field `User`.`id` of type `String!`
   """
-  id: UUID
+  id: String
   """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `String!`)
   """
-  id_expr: UUID_Expr
+  id_expr: String_Expr
   """
   ✨ Generated from Field `User`.`bio` of type `String`
   """
@@ -2139,9 +2139,9 @@ input User_Filter {
   """
   _or: [User_Filter!]
   """
-  ✨ Generated from Field `User`.`id` of type `UUID!`
+  ✨ Generated from Field `User`.`id` of type `String!`
   """
-  id: UUID_Filter
+  id: String_Filter
   """
   ✨ Generated from Field `User`.`bio` of type `String`
   """
@@ -2266,13 +2266,13 @@ input User_Having {
 """
 input User_Key {
   """
-  ✨ Generated from Field `User`.`id` of type `UUID!`
+  ✨ Generated from Field `User`.`id` of type `String!`
   """
-  id: UUID
+  id: String
   """
-  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `String!`)
   """
-  id_expr: UUID_Expr
+  id_expr: String_Expr
 }
 """
 ✨ Generated list filter input type for table 'User'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
@@ -2292,7 +2292,7 @@ input User_ListFilter {
 """
 input User_Order {
   """
-  ✨ Generated from Field `User`.`id` of type `UUID!`
+  ✨ Generated from Field `User`.`id` of type `String!`
   """
   id: OrderDirection
   """
