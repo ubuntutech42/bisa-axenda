@@ -1,123 +1,119 @@
-# Axénda - Sua agenda com axé
+# Opensquad
 
-Axénda é uma ferramenta de organização pessoal afrocentrada, focada em produtividade, ancestralidade e conexão com seus ciclos.
+Crie squads de agentes de IA que trabalham juntos — direto do seu IDE.
 
-## Tech Stack
+## Como Usar
 
-- **Framework:** Next.js 15 (App Router)
-- **UI:** React, Tailwind CSS, ShadCN UI
-- **Backend/Auth:** Firebase (Firestore, Authentication)
-- **Dados relacionais:** [Firebase Data Connect](https://firebase.google.com/docs/data-connect) (GraphQL + Cloud SQL PostgreSQL), com SDK TypeScript gerado em `src/lib/dataconnect-sdk` e pacotes locais `@axenda/dataconnect-web` / `@axenda/dataconnect-admin`
-- **AI:** Google Genkit
-- **Ícones:** Lucide React
+Abra esta pasta no seu IDE e digite:
 
-## Como editar usando o Cursor IDE
+```
+/opensquad
+```
 
-Para trabalhar neste projeto no Cursor, siga estes passos:
+Isso abre o menu principal. De lá você pode criar squads, executá-los e mais.
 
-1. **Baixe o Código:** Certifique-se de que todos os arquivos do projeto estão em uma pasta no seu computador.
-2. **Abra no Cursor:** Clique em `File > Open Folder` e selecione a pasta do projeto.
-3. **Configuração de Ambiente:**
-   - Crie um arquivo `.env.local` na raiz (não é versionado).
-   - Adicione suas chaves do Firebase e do Google AI (GEMINI_API_KEY).
-   - **Desenvolvimento sem login:** Para entrar direto no app sem tela de login, adicione em `.env.local`:
-     ```
-     NEXT_PUBLIC_DEV_SKIP_AUTH=true
-     ```
-     O app fará login anônimo automaticamente. Use apenas em ambiente local; não defina em produção.
-4. **Instalação:**
-   ```bash
-   npm install
-   ```
-5. **Recursos de IA do Cursor:**
-   - **Chat (Cmd+L):** Pergunte sobre a lógica de qualquer componente. Use `@Files` para dar contexto à IA sobre arquivos específicos.
-   - **Edição Inline (Cmd+K):** Selecione um trecho de código e peça para "mudar a cor deste botão" ou "melhorar a tipagem desta função".
-   - **Composer (Cmd+I):** O recurso mais poderoso. Peça mudanças complexas que envolvam vários arquivos (ex: "Crie uma nova funcionalidade de etiquetas para as tarefas"). Ele aplicará as mudanças de forma similar ao App Prototyper do Firebase Studio.
+Você também pode ser direto — descreva o que quer em linguagem natural:
 
-### Dados locais (emulador + seed)
+```
+/opensquad crie um squad para escrever posts no LinkedIn sobre IA
+/opensquad execute o squad meu-squad
+```
 
-- Com **Firestore** (porta `8080`) e **Auth** (`9099`) rodando no [Firebase Emulator Suite](https://firebase.google.com/docs/emulator-suite), execute `npm run seed` para popular usuários e documentos de exemplo (veja credenciais e projeto demo em [`scripts/seed.ts`](scripts/seed.ts)).
-- Para **Data Connect** em desenvolvimento, use o emulador conforme a [documentação oficial](https://firebase.google.com/docs/data-connect/web-sdk#instrument-clients) (porta típica `9399` no SDK gerado).
+## Criar um Squad
 
-## Scripts Disponíveis
+Digite `/opensquad` e escolha "Criar squad" no menu, ou seja direto:
 
-- `npm run dev`: Inicia o servidor de desenvolvimento do Next.js.
-- `npm run genkit:dev`: Inicia a interface do Genkit para testar os fluxos de IA.
-- `npm run genkit:watch`: Idem, com recarregamento ao alterar `src/ai`.
-- `npm run build`: Cria a versão de produção.
-- `npm run lint`: Verifica o código com ESLint.
-- `npm run typecheck`: Valida os tipos TypeScript sem compilar.
-- `npm run seed`: Roda o seed no Firestore/Auth local (emuladores ativos).
+```
+/opensquad crie um squad para [o que você precisa]
+```
 
-Após `npm install`, o script `prepare` instala o [Husky](https://typicode.github.io/husky/). O hook `pre-commit` versionado hoje é intencionalmente leve; você pode estender com lint ou testes conforme a necessidade do time.
+O Arquiteto fará algumas perguntas, projetará o squad e configurará tudo automaticamente.
 
-## Mensagens de commit (Commitlint)
+## Executar um Squad
 
-O [`commitlint.config.js`](commitlint.config.js) estende **@commitlint/config-conventional** e exige **referência AX-** (prefixo de issue configurado; regra `references-empty`). Exemplos alinhados ao histórico do projeto:
+Digite `/opensquad` e escolha "Executar squad" no menu, ou seja direto:
 
-- `feat: [AX-42] adiciona filtro por data`
-- `docs: [AX-000] ajusta README`
+```
+/opensquad execute o squad <nome-do-squad>
+```
 
-Para validar a mensagem do último commit (Git em PATH): `git log -1 --pretty=%B | npx --no commitlint`.
+O squad executa automaticamente, pausando apenas nos checkpoints de decisão.
 
-## Estrutura do Projeto
+## Escritório Virtual
 
-- `/src/app`: Rotas e páginas da aplicação.
-- `/src/components`: Componentes React reutilizáveis.
-- `/src/firebase`: Configuração e hooks do Firebase (inclui `dataconnect.ts` para o cliente Data Connect).
-- `/src/ai`: Fluxos e lógica de Inteligência Artificial usando Genkit.
-- `/src/lib`: Utilitários, tipos e constantes; `dataconnect-service.ts` centraliza chamadas ao SDK gerado fora de hooks React.
-- `/src/lib/dataconnect-sdk`: SDKs gerados (web, React e admin) — **regenerar** com o Firebase CLI ao alterar schema/queries em `/dataconnect`.
-- `/dataconnect`: Schema GraphQL, conector e operações do Firebase Data Connect (referenciado em [`firebase.json`](firebase.json)).
+O Escritório Virtual é uma interface visual 2D que mostra seus agentes trabalhando em tempo real.
 
-## Estratégia de Branches
+**Passo 1 — Gere o dashboard** (no seu IDE):
 
-O projeto usa um modelo de **trunk-based adaptado** com 3 branches principais:
+```
+/opensquad dashboard
+```
 
-| Branch       | Papel                                                                 |
-|--------------|-----------------------------------------------------------------------|
-| `main`       | Desenvolvimento diário. Commits atômicos protegidos por Feature Flags. |
-| `test`       | Homologação. Push aqui dispara o ambiente de staging no Firebase.     |
-| `production` | Código estável em produção. Merges restritos via PR de `test`.        |
+**Passo 2 — Sirva localmente** (no terminal):
 
-O fluxo de promoção é: `main` → `test` → `production`.
+```bash
+npx serve squads/<nome-do-squad>/dashboard
+```
 
-## CI/CD (GitHub Actions)
-
-O workflow em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) é executado em todo push e pull request para `main`, `test` e `production`.
-
-**Job `quality`** (obrigatório em todas as branches):
-1. `npm ci` — instalação reproduzível
-2. `npm run lint` — ESLint via Next.js
-3. `npm run typecheck` — `tsc --noEmit`
-4. `npm run build` — compilação Next.js
-
-**Job `deploy-staging`** (apenas na branch `test`, após `quality` passar):
-- Autentica no Google Cloud via Workload Identity Federation (WIF)
-- Cria um rollout no Firebase App Hosting no backend de homologação
-
-O ambiente de homologação (`apphosting.staging.yaml`) é mapeado ao backend do Firebase App Hosting cuja *live branch* está configurada como `test` e cujo *Environment name* é `staging`.
-
-### Secrets necessários
-
-Para o job de deploy funcionar, configure estes secrets no repositório (Settings → Secrets → Actions):
-
-| Secret                            | Descrição                                                   |
-|-----------------------------------|-------------------------------------------------------------|
-| `WIF_PROVIDER`                    | Provider do Workload Identity Federation (formato `projects/…`) |
-| `WIF_SERVICE_ACCOUNT`             | E-mail da Service Account com permissão no App Hosting      |
-| `APPHOSTING_BACKEND_ID_STAGING`   | ID do backend de staging no Firebase App Hosting            |
-| `FIREBASE_PROJECT_ID_STAGING`     | ID do projeto Firebase de homologação                       |
-
-> Se preferir usar JSON de Service Account em vez de WIF, substitua o passo `google-github-actions/auth` por um secret `FIREBASE_SERVICE_ACCOUNT_STAGING` e passe-o via `GOOGLE_APPLICATION_CREDENTIALS`.
-
-### Configurando o Backend de Staging no Firebase Console
-
-1. Acesse [Firebase Console → App Hosting](https://console.firebase.google.com/project/_/apphosting).
-2. Selecione o projeto de homologação.
-3. Crie ou edite um backend; em **Settings → Deployment**, defina a *live branch* como `test`.
-4. Em **Settings → Environment**, defina o *Environment name* como `staging` — isso fará o App Hosting aplicar o arquivo `apphosting.staging.yaml` automaticamente.
-5. Anote o **Backend ID** para usar no secret `APPHOSTING_BACKEND_ID_STAGING`.
+**Passo 3 —** Abra `http://localhost:3000` no seu navegador.
 
 ---
-Uma criação **UBUNTU TECH**.
+
+# Opensquad (English)
+
+Create AI squads that work together — right from your IDE.
+
+## How to Use
+
+Open this folder in your IDE and type:
+
+```
+/opensquad
+```
+
+This opens the main menu. From there you can create squads, run them, and more.
+
+You can also be direct — describe what you want in plain language:
+
+```
+/opensquad create a squad for writing LinkedIn posts about AI
+/opensquad run my-squad
+```
+
+## Create a Squad
+
+Type `/opensquad` and choose "Create squad" from the menu, or be direct:
+
+```
+/opensquad create a squad for [what you need]
+```
+
+The Architect will ask a few questions, design the squad, and set everything up automatically.
+
+## Run a Squad
+
+Type `/opensquad` and choose "Run squad" from the menu, or be direct:
+
+```
+/opensquad run the <squad-name> squad
+```
+
+The squad runs automatically, pausing only at decision checkpoints.
+
+## Virtual Office
+
+The Virtual Office is a 2D visual interface that shows your agents working in real time.
+
+**Step 1 — Generate the dashboard** (in your IDE):
+
+```
+/opensquad dashboard
+```
+
+**Step 2 — Serve it locally** (in terminal):
+
+```bash
+npx serve squads/<squad-name>/dashboard
+```
+
+**Step 3 —** Open `http://localhost:3000` in your browser.
