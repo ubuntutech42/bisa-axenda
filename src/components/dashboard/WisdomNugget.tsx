@@ -6,7 +6,8 @@ import type { Quote } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '../ui/skeleton';
 import { useFirestore } from '@/firebase';
-import { collection, query, limit, getDocs, startAt, orderBy, doc } from 'firebase/firestore';
+import { collection, query, limit, getDocs, orderBy, startAt, doc } from 'firebase/firestore';
+import { DEFAULT_QUOTES } from '@/lib/default-quotes';
 
 export function WisdomNugget() {
   const firestore = useFirestore();
@@ -37,7 +38,6 @@ export function WisdomNugget() {
           setQuote(randomQuote);
           setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(randomQuote.author)}`);
         } else {
-          // If the first query is empty, try another one from the beginning of the collection
           const secondQuery = query(collection(firestore, 'quotes'), limit(1));
           const secondSnapshot = await getDocs(secondQuery);
           if (!secondSnapshot.empty) {
@@ -45,12 +45,28 @@ export function WisdomNugget() {
             setQuote(fallbackQuote);
             setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(fallbackQuote.author)}`);
           } else {
-             setQuote(null); // No quotes in collection
+            const defaultQuote = DEFAULT_QUOTES[Math.floor(Math.random() * DEFAULT_QUOTES.length)];
+            setQuote({
+              id: 'default',
+              text: defaultQuote.text,
+              author: defaultQuote.author,
+              imageUrl: defaultQuote.imageUrl,
+              createdAt: {} as Quote['createdAt'],
+            });
+            setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(defaultQuote.author)}`);
           }
         }
       } catch (error) {
         console.error("Error fetching random quote:", error);
-        setQuote(null);
+        const defaultQuote = DEFAULT_QUOTES[Math.floor(Math.random() * DEFAULT_QUOTES.length)];
+        setQuote({
+          id: 'default',
+          text: defaultQuote.text,
+          author: defaultQuote.author,
+          imageUrl: defaultQuote.imageUrl,
+          createdAt: {} as Quote['createdAt'],
+        });
+        setGoogleSearchUrl(`https://www.google.com/search?q=${encodeURIComponent(defaultQuote.author)}`);
       } finally {
         setIsLoading(false);
       }
@@ -90,7 +106,7 @@ export function WisdomNugget() {
       <CardContent className="relative z-10 p-4 md:p-6">
         <h3 className="mb-2 text-xs md:text-sm font-semibold text-primary">Frase do dia</h3>
         <blockquote className="text-base md:text-lg font-semibold text-primary-foreground italic border-l-4 border-primary pl-3 md:pl-4">
-          "{quote.text}"
+          &quot;{quote.text}&quot;
         </blockquote>
         <p className="text-right mt-2 text-xs md:text-sm text-muted-foreground">
             -{' '}

@@ -92,7 +92,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
             <CommandEmpty>
                 {allowCreation && inputValue.trim() ? (
                     <Button variant="ghost" className='w-full justify-start' onClick={handleCreate}>
-                        Criar "{inputValue}"
+                        Criar &quot;{inputValue}&quot;
                     </Button>
                 ) : noResultsText}
             </CommandEmpty>

@@ -1,0 +1,36 @@
+{
+"folders": [
+{
+"name": "bisa-agentes",
+"path": "bisa-agentes"
+},
+{
+"name": "bisa-axenda",
+"path": "bisa-axenda"
+},
+{
+"name": "bisa-baoba-sites",
+"path": "bisa-baoba-sites"
+},
+{
+"name": "bisa-grio",
+"path": "bisa-grio"
+},
+{
+"name": "axenda",
+"path": "axenda"
+}
+],
+"settings": {
+"git.detectSubmodules": true,
+"search.exclude": {
+"**/node_modules": true,
+"**/.next": true,
+"**/.firebase": true
+},
+"files.watcherExclude": {
+"**/node_modules/**": true,
+"**/.next/**": true
+}
+}
+}

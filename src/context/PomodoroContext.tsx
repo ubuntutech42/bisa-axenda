@@ -1,10 +1,12 @@
 
 'use client';
 
-import React, { createContext, useState, useContext, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import type { Task } from '@/lib/types';
+
+import type { PomodoroSoundPreset } from '@/lib/sounds';
 
 type TimerMode = 'pomodoro' | 'shortBreak' | 'longBreak';
 
@@ -13,6 +15,9 @@ interface PomodoroSettings {
   shortBreak: number;
   longBreak: number;
   longBreakInterval: number;
+  soundFocus?: PomodoroSoundPreset;
+  soundShortBreak?: PomodoroSoundPreset;
+  soundLongBreak?: PomodoroSoundPreset;
 }
 
 const DEFAULT_SETTINGS: PomodoroSettings = {
@@ -20,6 +25,9 @@ const DEFAULT_SETTINGS: PomodoroSettings = {
   shortBreak: 5,
   longBreak: 15,
   longBreakInterval: 4,
+  soundFocus: 'default',
+  soundShortBreak: 'default',
+  soundLongBreak: 'default',
 };
 
 interface PomodoroContextType {
@@ -36,7 +44,7 @@ interface PomodoroContextType {
   setCurrentBoardId: (id: string | null) => void;
   pomodoroCount: number;
   isFloatingPomodoroOpen: boolean;
-  setIsFloatingPomodoroOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsFloatingPomodoroOpen: (isOpen: boolean) => void;
   settings: PomodoroSettings;
   updateSettings: (newSettings: Partial<PomodoroSettings>) => void;
 }
@@ -61,10 +69,15 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     try {
       const savedSettings = localStorage.getItem('pomodoroSettings');
       if (savedSettings) {
-        const parsedSettings = JSON.parse(savedSettings);
-        // Basic validation
-        if (parsedSettings.pomodoro && parsedSettings.shortBreak && parsedSettings.longBreak && parsedSettings.longBreakInterval) {
-            setSettings(parsedSettings);
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.pomodoro && parsed.shortBreak && parsed.longBreak && parsed.longBreakInterval) {
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...parsed,
+            soundFocus: parsed.soundFocus ?? 'default',
+            soundShortBreak: parsed.soundShortBreak ?? 'default',
+            soundLongBreak: parsed.soundLongBreak ?? 'default',
+          });
         }
       }
     } catch (error) {
@@ -85,11 +98,14 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const timeOptions: Record<TimerMode, number> = {
-    pomodoro: settings.pomodoro * 60,
-    shortBreak: settings.shortBreak * 60,
-    longBreak: settings.longBreak * 60,
-  };
+  const timeOptions = useMemo<Record<TimerMode, number>>(
+    () => ({
+      pomodoro: settings.pomodoro * 60,
+      shortBreak: settings.shortBreak * 60,
+      longBreak: settings.longBreak * 60,
+    }),
+    [settings.pomodoro, settings.shortBreak, settings.longBreak]
+  );
 
   const saveSession = useCallback(async (startTime: Date, focusDurationInSeconds: number) => {
     if (!user || !currentTaskId || !firestore || !currentBoardId || focusDurationInSeconds <= 0) return;
@@ -121,11 +137,11 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, currentTaskId, currentBoardId, firestore]);
 
-  const setMode = (newMode: TimerMode) => {
+  const setMode = useCallback((newMode: TimerMode) => {
     setIsActive(false);
     setModeState(newMode);
     setTime(timeOptions[newMode]);
-  }
+  }, [timeOptions]);
   
   const resetTimer = useCallback(() => {
     setIsActive(false);
@@ -133,18 +149,27 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   }, [mode, timeOptions]);
 
   const advanceToNextMode = useCallback(async () => {
-      const { playBreakStartSound, playFocusStartSound } = await import('@/lib/sounds');
+      const {
+        playFocusStartSoundWithPreset,
+        playShortBreakSoundWithPreset,
+        playLongBreakSoundWithPreset,
+      } = await import('@/lib/sounds');
       setIsActive(false);
       if (mode === 'pomodoro') {
         const newPomodoroCount = pomodoroCount + 1;
         setPomodoroCount(newPomodoroCount);
-        playBreakStartSound();
-        setMode(newPomodoroCount % settings.longBreakInterval === 0 ? 'longBreak' : 'shortBreak');
+        const nextMode = newPomodoroCount % settings.longBreakInterval === 0 ? 'longBreak' : 'shortBreak';
+        if (nextMode === 'longBreak') {
+          playLongBreakSoundWithPreset(settings.soundLongBreak);
+        } else {
+          playShortBreakSoundWithPreset(settings.soundShortBreak);
+        }
+        setMode(nextMode);
       } else {
-        playFocusStartSound();
+        playFocusStartSoundWithPreset(settings.soundFocus);
         setMode('pomodoro');
       }
-  }, [mode, pomodoroCount, settings.longBreakInterval]);
+  }, [mode, pomodoroCount, settings.longBreakInterval, settings.soundFocus, settings.soundShortBreak, settings.soundLongBreak, setMode]);
 
 
   useEffect(() => {
@@ -170,18 +195,24 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   }, [isActive, time, mode, sessionStartTime, saveSession, advanceToNextMode, timeOptions.pomodoro]);
 
   const toggleTimer = async () => {
-    const { playFocusStartSound, playBreakStartSound } = await import('@/lib/sounds');
+    const {
+      playFocusStartSoundWithPreset,
+      playShortBreakSoundWithPreset,
+      playLongBreakSoundWithPreset,
+    } = await import('@/lib/sounds');
     if (mode === 'pomodoro' && !currentTaskId) {
       alert("Por favor, selecione uma tarefa para iniciar o foco.");
       return;
     }
     if (!isActive && time === timeOptions[mode]) {
-        if (mode === 'pomodoro') {
-            playFocusStartSound();
-            setSessionStartTime(new Date());
-        } else {
-            playBreakStartSound();
-        }
+      if (mode === 'pomodoro') {
+        playFocusStartSoundWithPreset(settings.soundFocus);
+        setSessionStartTime(new Date());
+      } else if (mode === 'shortBreak') {
+        playShortBreakSoundWithPreset(settings.soundShortBreak);
+      } else {
+        playLongBreakSoundWithPreset(settings.soundLongBreak);
+      }
     }
     setIsActive(!isActive);
   };
@@ -203,7 +234,7 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setTime(timeOptions[mode]);
     setIsActive(false);
-  }, [settings, mode]);
+  }, [mode, timeOptions]);
 
   return (
     <PomodoroContext.Provider value={{ 

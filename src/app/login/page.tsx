@@ -16,6 +16,7 @@ import { Logo } from '@/components/layout/Logo';
 import { useToast } from '@/hooks/use-toast';
 import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { Loader } from 'lucide-react';
+import { AxendaLoginButton } from '@/components/auth/AxendaLoginButton';
 import { sendPasswordReset, fetchGoogleProfileData } from '@/firebase/auth/actions';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -157,9 +158,15 @@ export default function LoginPage() {
               <Input id="password" type="password" placeholder="********" {...register('password')} />
               {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
             </div>
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
+            <AxendaLoginButton
+              type="submit"
+              className="w-full"
+              size="lg"
+              loading={loading}
+              loadingText="Entrando..."
+            >
+              Entrar
+            </AxendaLoginButton>
           </form>
 
           <div className="text-sm text-right mt-4">

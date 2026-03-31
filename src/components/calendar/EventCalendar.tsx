@@ -1,32 +1,33 @@
 
-
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName, CalendarEventCategory } from '@/lib/types';
-import { format, isSameDay, parseISO, getMonth, getYear } from 'date-fns';
+import type { Task, CulturalEvent, KanbanBoard, CalendarEvent as CalendarEventType, LunarPhase, LunarPhaseName } from '@/lib/types';
+import { format, isSameDay, parseISO, getMonth, getYear, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { getMasterCalendarEventsForYear } from '@/lib/master-calendar-axenda';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { Loader } from 'lucide-react';
+import { Loader, CalendarDays } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CheckedState } from '@radix-ui/react-checkbox';
 import { getLunarDataForMonthAction } from '@/app/calendar/actions';
 import { LunarMonthSummary } from './LunarMonthSummary';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { LunarIcon } from './LunarIcon';
 import { useCategories } from '@/hooks/useCategories';
 import { CreateEventDialog } from './CreateEventDialog';
 import { addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { buttonVariants } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useUserIsAdmin } from '@/hooks/useUserIsAdmin';
 
-type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' | 'comercial' }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & {type: 'lunar'});
+type CombinedEvent = (Task & { type: 'task' }) | (CulturalEvent & { type: 'cultural' | 'comercial' }) | (CalendarEventType & { type: 'userEvent' }) | (LunarPhase & { type: 'lunar' });
 
 const processSvg = (svgString: string) => {
     if (!svgString) return '';
@@ -52,6 +53,7 @@ export function EventCalendar() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { isAdmin } = useUserIsAdmin();
 
   const { allCategories, categoriesMap, isLoading: areCategoriesLoading } = useCategories();
   
@@ -111,6 +113,7 @@ export function EventCalendar() {
 
   const [lunarData, setLunarData] = useState<Record<string, LunarPhase>>({});
   const [isLunarDataLoading, setIsLunarDataLoading] = useState(true);
+  const fetchedLunarMonthsRef = useRef<Set<string>>(new Set());
 
   const userEventsQuery = useMemoFirebase(() =>
     user ? query(collection(firestore, 'users', user.uid, 'calendarEvents')) : null,
@@ -119,16 +122,15 @@ export function EventCalendar() {
   const { data: userEvents, isLoading: areUserEventsLoading } = useCollection<CalendarEventType>(userEventsQuery);
   
   const fetchLunarDataForMonth = useCallback(async (monthDate: Date) => {
-    setIsLunarDataLoading(true);
-    const month = getMonth(monthDate) + 1; // 1-based month
-    const year = getYear(monthDate);
-
     const monthKey = format(monthDate, 'yyyy-MM');
-    if (Object.keys(lunarData).some(key => key.startsWith(monthKey))) {
-        setIsLunarDataLoading(false);
-        return;
+    if (fetchedLunarMonthsRef.current.has(monthKey)) {
+      setIsLunarDataLoading(false);
+      return;
     }
-    
+    fetchedLunarMonthsRef.current.add(monthKey);
+    setIsLunarDataLoading(true);
+    const month = getMonth(monthDate) + 1;
+    const year = getYear(monthDate);
     try {
         const result = await getLunarDataForMonthAction(month, year);
         if (result.success && result.data) {
@@ -144,7 +146,7 @@ export function EventCalendar() {
               svg: phaseInfo.svg,
             };
           }
-          setLunarData(prevData => ({ ...prevData, ...newLunarData }));
+          setLunarData(prev => ({ ...prev, ...newLunarData }));
         } else {
           console.error("Failed to fetch lunar data:", result.error);
         }
@@ -153,7 +155,7 @@ export function EventCalendar() {
     } finally {
         setIsLunarDataLoading(false);
     }
-  }, [lunarData]);
+  }, []);
 
   useEffect(() => {
     fetchLunarDataForMonth(currentMonth);
@@ -164,8 +166,12 @@ export function EventCalendar() {
     if (activeCategories.task) {
         eventList.push(...allTasks.map(t => ({...t, type: 'task' as const })));
     }
-    if (activeCategories.cultural && culturalEvents) {
-        eventList.push(...culturalEvents.filter(e => e.type === 'cultural').map(e => ({...e})));
+    if (activeCategories.cultural) {
+        const masterCultural = getMasterCalendarEventsForYear(getYear(currentMonth), { includeEditorialContent: isAdmin });
+        eventList.push(...masterCultural.map(e => ({ ...e, type: 'cultural' as const })));
+        if (culturalEvents) {
+          eventList.push(...culturalEvents.filter(e => e.type === 'cultural').map(e => ({ ...e })));
+        }
     }
     if (activeCategories.comercial && culturalEvents) {
         eventList.push(...culturalEvents.filter(e => e.type === 'comercial').map(e => ({...e})));
@@ -178,13 +184,35 @@ export function EventCalendar() {
         eventList.push(...lunarEvents);
     }
     return eventList;
-  }, [allTasks, userEvents, culturalEvents, activeCategories, lunarData]);
+  }, [allTasks, userEvents, culturalEvents, activeCategories, lunarData, currentMonth, isAdmin]);
 
-  const selectedDayEvents = date ? allEvents.filter(event => {
-    const eventDate = 'deadline' in event && event.deadline ? event.deadline : ('date' in event ? event.date : undefined);
-    if (!eventDate) return false;
-    return isSameDay(parseISO(eventDate), date);
-  }) : [];
+  const getEventDate = useCallback((event: CombinedEvent): string | undefined => {
+    if (event.type === 'task') return event.deadline;
+    return event.date;
+  }, []);
+
+  const eventsByDayKey = useMemo(() => {
+    const map = new Map<string, CombinedEvent[]>();
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+    const days = eachDayOfInterval({ start, end });
+    for (const d of days) {
+      const key = format(d, 'yyyy-MM-dd');
+      const dayEvents = allEvents.filter(event => {
+        const eventDate = getEventDate(event);
+        if (!eventDate) return false;
+        return isSameDay(parseISO(eventDate), d);
+      });
+      if (dayEvents.length) map.set(key, dayEvents);
+    }
+    return map;
+  }, [allEvents, currentMonth, getEventDate]);
+
+  const selectedDayEvents = useMemo(() => {
+    if (!date) return [];
+    const key = format(date, 'yyyy-MM-dd');
+    return eventsByDayKey.get(key) ?? [];
+  }, [date, eventsByDayKey]);
 
   const handleCategoryChange = (category: keyof typeof activeCategories, checked: CheckedState) => {
     setActiveCategories(prev => ({
@@ -193,11 +221,6 @@ export function EventCalendar() {
     }));
   };
 
-  const getEventDate = (event: CombinedEvent): string | undefined => {
-    if (event.type === 'task') return event.deadline;
-    return event.date;
-  }
-  
   const getEventColor = (event: CombinedEvent): string => {
     switch (event.type) {
         case 'cultural': return 'hsl(var(--accent))';
@@ -234,27 +257,38 @@ export function EventCalendar() {
     }
   };
 
-  const handleDayClick = (day: Date) => {
+  const handleDayDoubleClick = (day: Date) => {
     setDate(day);
     setInitialEventDate(day);
     setIsCreateEventDialogOpen(true);
-  }
+  };
+
+  const [selectedEventForDetail, setSelectedEventForDetail] = useState<CombinedEvent | null>(null);
 
 
   if (areTasksLoading || areUserEventsLoading || areCategoriesLoading || areCulturalEventsLoading) {
-    return <div className="flex items-center justify-center h-full"><Loader className="h-10 w-10 animate-spin text-primary" /></div>
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+        <div className="lg:col-span-2 flex items-center justify-center min-h-[24rem]">
+          <Loader className="h-10 w-10 animate-spin text-primary" />
+        </div>
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 rounded-lg bg-muted" />
+          <div className="h-64 rounded-lg bg-muted" />
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
     <div className="grid grid-cols-1 lg:grid-cols-3 lg:items-start lg:gap-8">
       <div className="lg:col-span-2 mb-8 lg:mb-0">
-        <Card>
+        <Card className="overflow-hidden">
           <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
-            onDayClick={handleDayClick}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             className="p-0"
@@ -293,140 +327,156 @@ export function EventCalendar() {
             locale={ptBR}
             components={{
               DayContent: ({ date }) => {
-                const dayEvents = allEvents.filter(event => {
-                    const eventDate = getEventDate(event);
-                    if (!eventDate) return false;
-                    return isSameDay(parseISO(eventDate), date);
-                });
-                const dayLunarData = activeCategories.lunar ? lunarData[format(date, 'yyyy-MM-dd')] : null;
-
+                const key = format(date, 'yyyy-MM-dd');
+                const dayEvents = eventsByDayKey.get(key) ?? [];
+                const dayLunarData = activeCategories.lunar ? lunarData[key] : null;
+                const nonLunar = dayEvents.filter(e => e.type !== 'lunar').slice(0, 3);
                 return (
-                  <div className="relative flex flex-col items-center justify-center h-full w-full">
+                  <div
+                    className="relative flex flex-col items-center justify-center h-full w-full min-h-[2.5rem] cursor-pointer"
+                    onDoubleClick={(e) => { e.stopPropagation(); handleDayDoubleClick(date); }}
+                  >
                     {dayLunarData && (
-                      <div 
-                        className="absolute top-1 right-1 w-4 h-4 text-foreground"
+                      <div
+                        className="absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center overflow-hidden text-foreground [&>svg]:max-w-full [&>svg]:max-h-full"
                         dangerouslySetInnerHTML={{ __html: processSvg(dayLunarData.svg) }}
                       />
                     )}
-                    <span className="relative">{format(date, 'd')}</span>
-                    {dayEvents.length > 0 && (
-                      <div className="absolute bottom-1 flex justify-center gap-1">
-                        {dayEvents.filter(e => e.type !== 'lunar').slice(0,3).map(event => (
-                            <div key={`${event.type}-${event.id}`} className="w-1.5 h-1.5 rounded-full" style={{
-                              backgroundColor: getEventColor(event)
-                            }}></div>
+                    <span className="relative block">{format(date, 'd')}</span>
+                    {nonLunar.length > 0 && (
+                      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex justify-center gap-0.5">
+                        {nonLunar.map(event => (
+                          <div
+                            key={`${event.type}-${event.id}`}
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: getEventColor(event) }}
+                          />
                         ))}
                       </div>
                     )}
                   </div>
                 );
-              }
+              },
             }}
           />
         </Card>
       </div>
-      <div>
+      <div className="space-y-4">
         <Card>
-          <CardHeader className='pb-4'>
+          <CardHeader className="pb-3">
             <CardTitle className="font-headline text-lg">
-                Fases da Lua em {format(currentMonth, "MMMM", { locale: ptBR })}
+              Fases da Lua em {format(currentMonth, 'MMMM', { locale: ptBR })}
             </CardTitle>
             <LunarMonthSummary lunarData={lunarData} isLoading={isLunarDataLoading} />
           </CardHeader>
-          <Separator />
-          <CardContent className='pt-4'>
-            <p className="font-semibold text-foreground mb-2">
-                {date ? format(date, "d 'de' MMMM", { locale: ptBR }) : 'Selecione uma data'}
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-headline text-base">
+              {date ? format(date, "d 'de' MMMM", { locale: ptBR }) : 'Selecione uma data'}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Um clique no dia mostra os eventos; dois cliques criam um novo. Clique em um evento para ver os detalhes.
             </p>
-             <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox id="task-filter" checked={activeCategories.task} onCheckedChange={(checked) => handleCategoryChange('task', checked)} />
-                <label htmlFor="task-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Tarefas
+          </CardHeader>
+          <Separator />
+          <CardContent className="pt-4 space-y-4">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Filtrar por</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-2.5">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={activeCategories.task} onCheckedChange={(c) => handleCategoryChange('task', c)} />
+                  <span className="text-sm">Tarefas</span>
                 </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="cultural-filter" checked={activeCategories.cultural} onCheckedChange={(checked) => handleCategoryChange('cultural', checked)} />
-                <label htmlFor="cultural-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Cultural
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={activeCategories.cultural} onCheckedChange={(c) => handleCategoryChange('cultural', c)} />
+                  <span className="text-sm">Cultural</span>
                 </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="comercial-filter" checked={activeCategories.comercial} onCheckedChange={(checked) => handleCategoryChange('comercial', checked)} />
-                <label htmlFor="comercial-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Comercial
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={activeCategories.comercial} onCheckedChange={(c) => handleCategoryChange('comercial', c)} />
+                  <span className="text-sm">Comercial</span>
                 </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="userEvent-filter" checked={activeCategories.userEvent} onCheckedChange={(checked) => handleCategoryChange('userEvent', checked)} />
-                <label htmlFor="userEvent-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Eventos
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={activeCategories.userEvent} onCheckedChange={(c) => handleCategoryChange('userEvent', c)} />
+                  <span className="text-sm">Eventos</span>
                 </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="lunar-filter" checked={activeCategories.lunar} onCheckedChange={(checked) => handleCategoryChange('lunar', checked)} />
-                <label htmlFor="lunar-filter" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Lua
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={activeCategories.lunar} onCheckedChange={(c) => handleCategoryChange('lunar', c)} />
+                  <span className="text-sm">Lua</span>
                 </label>
               </div>
             </div>
-            <ScrollArea className="h-64">
-              <div className="space-y-4">
+            <ScrollArea className="h-64 pr-2">
+              <div className="space-y-3">
                 {selectedDayEvents.length > 0 ? (
                   selectedDayEvents.map((event) => {
-                     const category = event.type === 'userEvent' ? categoriesMap.get(event.categoryId) : undefined;
-                     const eventColor = getEventColor(event);
-
+                    const category = event.type === 'userEvent' ? categoriesMap.get(event.categoryId) : undefined;
+                    const eventColor = getEventColor(event);
                     return (
-                    <div key={`${event.type}-${event.id}`} className="p-3 rounded-lg bg-muted/50 text-sm">
-                      {event.type === 'task' ? (
-                        <>
-                          <div className="flex justify-between items-start">
-                             <p className="font-semibold">{event.title}</p>
-                             <Badge variant="secondary">Tarefa</Badge>
-                          </div>
-                          <p className="text-muted-foreground">{event.category}</p>
-                        </>
-                      ) : event.type === 'cultural' ? (
-                        <>
-                           <div className="flex justify-between items-start">
-                             <p className="font-semibold">{event.title}</p>
-                             <Badge style={{ backgroundColor: eventColor }} className="text-accent-foreground">Cultural</Badge>
-                           </div>
-                           <p className="text-muted-foreground mt-1">{event.description}</p>
-                        </>
-                      ) : event.type === 'comercial' ? (
-                        <>
-                           <div className="flex justify-between items-start">
-                             <p className="font-semibold">{event.title}</p>
-                             <Badge style={{ backgroundColor: eventColor, color: 'white' }}>Comercial</Badge>
-                           </div>
-                           <p className="text-muted-foreground mt-1">{event.description}</p>
-                        </>
-                      ) : event.type === 'userEvent' && category ? (
-                        <>
-                          <div className="flex justify-between items-start">
-                             <p className="font-semibold">{event.title}</p>
-                             <Badge style={{ backgroundColor: category.color, color: 'white' }}>{category.name}</Badge>
-                           </div>
-                           {event.description && <p className="text-muted-foreground mt-1">{event.description}</p>}
-                        </>
-                      ) : event.type === 'lunar' ? (
-                        <>
-                          <div className="flex justify-between items-start">
-                             <div className='flex items-center gap-2'>
-                                <div className="w-5 h-5 text-foreground" dangerouslySetInnerHTML={{ __html: processSvg(event.svg) }} />
-                                <p className="font-semibold">{event.phaseName}</p>
-                             </div>
-                             <Badge variant="outline">Lua</Badge>
-                           </div>
-                           <p className="text-muted-foreground mt-1">{event.description}</p>
-                        </>
-                      ) : null }
-                    </div>
-                  )})
+                      <div
+                        key={`${event.type}-${event.id}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedEventForDetail(event)}
+                        onKeyDown={(e) => e.key === 'Enter' && setSelectedEventForDetail(event)}
+                        className="rounded-lg border bg-card text-sm overflow-hidden pl-3 border-l-4 cursor-pointer transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring"
+                        style={{ borderLeftColor: event.type === 'lunar' ? 'hsl(var(--muted-foreground))' : eventColor }}
+                      >
+                        <div className="py-2.5 pr-3">
+                          {event.type === 'task' ? (
+                            <>
+                              <div className="flex justify-between items-start gap-2">
+                                <p className="font-medium leading-tight">{event.title}</p>
+                                <Badge variant="secondary" className="shrink-0 text-xs">Tarefa</Badge>
+                              </div>
+                              <p className="text-muted-foreground text-xs mt-0.5">{event.category}</p>
+                            </>
+                          ) : event.type === 'cultural' ? (
+                            <>
+                              <div className="flex justify-between items-start gap-2">
+                                <p className="font-medium leading-tight">{event.title}</p>
+                                <Badge style={{ backgroundColor: eventColor }} className="text-accent-foreground shrink-0 text-xs">Cultural</Badge>
+                              </div>
+                              {event.description && <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">{event.description}</p>}
+                            </>
+                          ) : event.type === 'comercial' ? (
+                            <>
+                              <div className="flex justify-between items-start gap-2">
+                                <p className="font-medium leading-tight">{event.title}</p>
+                                <Badge style={{ backgroundColor: eventColor, color: 'white' }} className="shrink-0 text-xs">Comercial</Badge>
+                              </div>
+                              {event.description && <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">{event.description}</p>}
+                            </>
+                          ) : event.type === 'userEvent' && category ? (
+                            <>
+                              <div className="flex justify-between items-start gap-2">
+                                <p className="font-medium leading-tight">{event.title}</p>
+                                <Badge style={{ backgroundColor: category.color, color: 'white' }} className="shrink-0 text-xs">{category.name}</Badge>
+                              </div>
+                              {event.description && <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">{event.description}</p>}
+                            </>
+                          ) : event.type === 'lunar' ? (
+                            <>
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="w-4 h-4 shrink-0 text-foreground [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: processSvg(event.svg) }} />
+                                  <p className="font-medium leading-tight truncate">{event.phaseName}</p>
+                                </div>
+                                <Badge variant="outline" className="shrink-0 text-xs">Lua</Badge>
+                              </div>
+                              {event.description && <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">{event.description}</p>}
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })
                 ) : (
-                  <p className="text-center text-muted-foreground py-10">Nenhum evento para este dia.</p>
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <CalendarDays className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                    <p className="text-sm text-muted-foreground">Nenhum evento para este dia.</p>
+                    <p className="text-xs text-muted-foreground/80 mt-1">Clique em um dia no calendário para adicionar.</p>
+                  </div>
                 )}
               </div>
             </ScrollArea>
@@ -440,6 +490,58 @@ export function EventCalendar() {
         onCreate={handleCreateEvent}
         initialDate={initialEventDate}
       />
+    <Dialog open={!!selectedEventForDetail} onOpenChange={(open) => !open && setSelectedEventForDetail(null)}>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        {selectedEventForDetail && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="pr-8">
+                {selectedEventForDetail.type === 'task' && selectedEventForDetail.title}
+                {selectedEventForDetail.type === 'cultural' && selectedEventForDetail.title}
+                {selectedEventForDetail.type === 'comercial' && selectedEventForDetail.title}
+                {selectedEventForDetail.type === 'userEvent' && selectedEventForDetail.title}
+                {selectedEventForDetail.type === 'lunar' && selectedEventForDetail.phaseName}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {date && (
+                  <span className="text-sm text-muted-foreground">
+                    {format(date, "d 'de' MMMM yyyy", { locale: ptBR })}
+                  </span>
+                )}
+                {selectedEventForDetail.type === 'task' && (
+                  <Badge variant="secondary">Tarefa</Badge>
+                )}
+                {selectedEventForDetail.type === 'cultural' && (
+                  <Badge style={{ backgroundColor: getEventColor(selectedEventForDetail) }} className="text-accent-foreground">Cultural</Badge>
+                )}
+                {selectedEventForDetail.type === 'comercial' && (
+                  <Badge style={{ backgroundColor: getEventColor(selectedEventForDetail), color: 'white' }}>Comercial</Badge>
+                )}
+                {selectedEventForDetail.type === 'userEvent' && (() => {
+                  const cat = categoriesMap.get(selectedEventForDetail.categoryId);
+                  return cat ? <Badge style={{ backgroundColor: cat.color, color: 'white' }}>{cat.name}</Badge> : null;
+                })()}
+                {selectedEventForDetail.type === 'lunar' && <Badge variant="outline">Lua</Badge>}
+              </div>
+              {selectedEventForDetail.type === 'task' && selectedEventForDetail.category && (
+                <p className="text-sm text-muted-foreground">{selectedEventForDetail.category}</p>
+              )}
+              {(selectedEventForDetail.type === 'cultural' || selectedEventForDetail.type === 'comercial' || selectedEventForDetail.type === 'userEvent') && selectedEventForDetail.description && (
+                <p className="text-sm whitespace-pre-wrap">{selectedEventForDetail.description}</p>
+              )}
+              {selectedEventForDetail.type === 'lunar' && selectedEventForDetail.description && (
+                <p className="text-sm whitespace-pre-wrap">{selectedEventForDetail.description}</p>
+              )}
+              {selectedEventForDetail.type === 'lunar' && (
+                <div className="w-10 h-10 text-foreground [&>svg]:max-w-full [&>svg]:max-h-full" dangerouslySetInnerHTML={{ __html: processSvg(selectedEventForDetail.svg) }} />
+              )}
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

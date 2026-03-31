@@ -8,7 +8,7 @@
 import { config } from 'dotenv';
 config();
 
-import { exec, type ChildProcess } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 
 // Only run this logic in the main Next.js development process, not in workers.
 // The `tsx` process is the parent, and we check that we are not in a Genkit-spawned process.
@@ -34,8 +34,7 @@ if (process.env.npm_lifecycle_event === 'dev' && !process.env.GENKIT_ENV) {
 
   function startGenkit() {
     // Start the genkit process in detached mode to manage it as a group leader.
-    // exec() accepts detached at runtime; Node types omit it from ExecOptions.
-    genkitProcess = exec(command, { detached: true } as import('child_process').ExecOptions);
+    genkitProcess = spawn(command, [], { detached: true, shell: true });
 
     console.log('Starting Genkit servers...');
     console.log(`Executing: ${command}`);
@@ -57,16 +56,19 @@ if (process.env.npm_lifecycle_event === 'dev' && !process.env.GENKIT_ENV) {
     });
   }
 
-  function handleShutdown(signal: string) {
+  function handleShutdown(signal: NodeJS.Signals | 'exit') {
     console.log(`Received ${signal}. Shutting down Genkit servers...`);
     if (genkitProcess && genkitProcess.pid) {
       try {
-        // Kill the entire process group by using a negative PID.
-        // This is crucial to ensure all child processes of Genkit are terminated.
-        process.kill(-genkitProcess.pid, signal);
-        console.log(`Sent ${signal} to process group ${genkitProcess.pid}`);
+        // On POSIX systems we can kill the process group using a negative PID.
+        if (process.platform !== 'win32') {
+          process.kill(-genkitProcess.pid, 'SIGTERM');
+        } else {
+          process.kill(genkitProcess.pid, 'SIGTERM');
+        }
+        console.log(`Sent termination signal to Genkit process ${genkitProcess.pid}`);
       } catch (e) {
-        console.error(`Error killing process group ${genkitProcess.pid}:`, e);
+        console.error(`Error killing Genkit process ${genkitProcess.pid}:`, e);
       }
       genkitProcess = null;
     }

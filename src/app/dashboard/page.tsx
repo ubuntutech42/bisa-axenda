@@ -11,8 +11,9 @@ import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { WisdomNugget } from '@/components/dashboard/WisdomNugget';
 import { TasksOverview } from '@/components/dashboard/TasksOverview';
-import { CheckCircle, Clock, Coffee, Loader } from 'lucide-react';
+import { CheckCircle, Clock, Coffee } from 'lucide-react';
 import { UserProfileButton } from '@/components/layout/Sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type TaskWithBoardId = Task & { boardId: string };
 
@@ -123,10 +124,12 @@ export default function DashboardPage() {
     }
   }, [userProfile?.firstName, userProfile?.gender, user?.displayName]);
 
-  if (isUserLoading || areBoardsLoading || areTasksLoading || isProfileLoading || !user) {
+  const isLoadingStats = areBoardsLoading || areTasksLoading;
+
+  if (isUserLoading || !user) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader className="h-10 w-10 animate-spin text-primary" />
+      <div className="flex items-center justify-center h-full min-h-[200px]">
+        <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -142,12 +145,28 @@ export default function DashboardPage() {
                 <WisdomNugget />
 
                 <div className="grid gap-4 md:grid-cols-3">
-                <StatCard icon={CheckCircle} title="Tarefas Concluídas" value={stats.completedTasks.toString()} />
-                <StatCard icon={Clock} title="Horas de Foco" value={stats.totalTime.toString()} />
-                <StatCard icon={Coffee} title="Tarefas Ativas" value={stats.activeTasks.toString()} />
+                  <StatCard
+                    icon={CheckCircle}
+                    title="Tarefas Concluídas"
+                    value={isLoadingStats ? '...' : stats.completedTasks.toString()}
+                  />
+                  <StatCard
+                    icon={Clock}
+                    title="Horas de Foco"
+                    value={isLoadingStats ? '...' : stats.totalTime.toString()}
+                  />
+                  <StatCard
+                    icon={Coffee}
+                    title="Tarefas Ativas"
+                    value={isLoadingStats ? '...' : stats.activeTasks.toString()}
+                  />
                 </div>
-                
-                <TasksOverview tasks={allTasks} lists={allLists} />
+
+                {isLoadingStats ? (
+                  <Skeleton className="h-48 w-full rounded-lg" />
+                ) : (
+                  <TasksOverview tasks={allTasks} lists={allLists} />
+                )}
             </div>
         </div>
     </div>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
+import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useRef, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
@@ -79,6 +79,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
+        // #region agent log
+        if (typeof fetch !== 'undefined') fetch('http://127.0.0.1:7478/ingest/67b52dda-7cfc-4e99-9fbb-9d237c3be7a6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'80706c'},body:JSON.stringify({sessionId:'80706c',location:'provider.tsx:onAuthStateChanged',message:'Auth state resolved',data:{t:Date.now(),hasUser:!!firebaseUser},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
       },
       (error) => { // Auth listener error
@@ -156,7 +159,26 @@ export const useFirebaseApp = (): FirebaseApp => {
 type MemoFirebase <T> = T & {__memo?: boolean};
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
-  const memoized = useMemo(factory, deps);
+  const memoRef = useRef<{ deps: DependencyList; value: T } | null>(null);
+  if (memoRef.current === null) {
+    memoRef.current = {
+      deps: [...deps],
+      value: factory(),
+    };
+  } else {
+    const shouldRecompute =
+      memoRef.current.deps.length !== deps.length ||
+      deps.some((dep, index) => !Object.is(dep, memoRef.current!.deps[index]));
+
+    if (shouldRecompute) {
+      memoRef.current = {
+        deps: [...deps],
+        value: factory(),
+      };
+    }
+  }
+
+  const memoized = memoRef.current.value;
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
   (memoized as MemoFirebase<T>).__memo = true;
