@@ -18,6 +18,7 @@ import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { Loader } from 'lucide-react';
 import { AxendaLoginButton } from '@/components/auth/AxendaLoginButton';
 import { sendPasswordReset, fetchGoogleProfileData } from '@/firebase/auth/actions';
+import { motion } from 'framer-motion';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>
@@ -114,68 +115,98 @@ export default function LoginPage() {
     }
   };
 
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-sm text-center">
-        <div className="inline-block mb-8">
-          <Logo />
-        </div>
-        
-        <div className="bg-card p-8 rounded-lg shadow-lg">
-          <h1 className="text-2xl font-bold font-headline text-foreground mb-2">Acesse sua conta</h1>
-          <p className="text-muted-foreground mb-6">
-            Use suas credenciais para organizar seu axé.
-          </p>
+    <div className="relative flex min-h-screen overflow-hidden bg-background">
+      
+      {/* Background Soft Color Animation */}
+      <motion.div
+        className="absolute inset-0 z-0 bg-primary/10 dark:bg-primary/5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 2, ease: "easeInOut" }}
+      />
 
-          <form onSubmit={handleSubmit(handleEmailSignIn)} className="space-y-4">
-            <div className="text-left">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} />
-              {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
-            </div>
-            <div className="text-left">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" placeholder="********" {...register('password')} />
-              {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
-            </div>
-            <AxendaLoginButton
-              type="submit"
-              className="w-full"
-              size="lg"
-              loading={loading}
-              loadingText="Entrando..."
-            >
-              Entrar
-            </AxendaLoginButton>
-          </form>
+      {/* Layer 1: Background Title Sliding Left */}
+      <motion.div
+        className="absolute inset-0 z-10 pointer-events-none hidden md:flex items-center justify-center"
+        initial={{ opacity: 0, x: "10%" }}
+        animate={{ opacity: 1, x: "-18%" }}
+        transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <h1 className="text-[16vw] font-black font-headline text-primary/10 dark:text-primary/10 select-none tracking-tighter drop-shadow-sm">
+          Axénda
+        </h1>
+      </motion.div>
 
-          <div className="text-sm text-right mt-4">
-            <button onClick={handlePasswordReset} className="text-primary hover:underline">
-              Esqueceu sua senha?
-            </button>
+      {/* Layer 2: Login Content Sliding Right */}
+      <div className="relative z-20 w-full flex items-center justify-center md:justify-end md:pr-[10vw] p-4">
+        <motion.div
+          className="w-full max-w-sm text-center"
+          initial={{ opacity: 0, x: -80, filter: "blur(5px)" }}
+          animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+        >
+          <div className="inline-block mb-8">
+            <Logo />
           </div>
+          
+          <div className="bg-card/95 backdrop-blur-md p-8 rounded-xl shadow-2xl border border-border/50">
+            <h1 className="text-2xl font-bold font-headline text-foreground mb-2">Acesse sua conta</h1>
+            <p className="text-muted-foreground mb-6">
+              Use suas credenciais para organizar seu axé.
+            </p>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+            <form onSubmit={handleSubmit(handleEmailSignIn)} className="space-y-4">
+              <div className="text-left">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} className="bg-background/50" />
+                {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+              </div>
+              <div className="text-left">
+                <Label htmlFor="password">Senha</Label>
+                <Input id="password" type="password" placeholder="********" {...register('password')} className="bg-background/50" />
+                {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
+              </div>
+              <AxendaLoginButton
+                type="submit"
+                className="w-full"
+                size="lg"
+                loading={loading}
+                loadingText="Entrando..."
+              >
+                Entrar
+              </AxendaLoginButton>
+            </form>
+
+            <div className="text-sm text-right mt-4">
+              <button onClick={handlePasswordReset} className="text-primary hover:underline">
+                Esqueceu sua senha?
+              </button>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Ou continue com</span>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/50" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Ou continue com</span>
+              </div>
             </div>
+
+            <Button onClick={handleGoogleSignIn} className="w-full bg-background/50 hover:bg-background/80" size="lg" variant="outline" disabled={loading}>
+              {loading ? <Loader className="mr-2 animate-spin"/> : <GoogleIcon className="mr-2" />}
+              Google
+            </Button>
+
+            <p className="text-sm text-muted-foreground mt-6">
+              Não tem uma conta?{' '}
+              <Link href="/register" className="font-semibold text-primary hover:underline">
+                Cadastre-se
+              </Link>
+            </p>
           </div>
-
-          <Button onClick={handleGoogleSignIn} className="w-full" size="lg" variant="outline" disabled={loading}>
-            {loading ? <Loader className="mr-2 animate-spin"/> : <GoogleIcon className="mr-2" />}
-            Google
-          </Button>
-
-          <p className="text-sm text-muted-foreground mt-6">
-            Não tem uma conta?{' '}
-            <Link href="/register" className="font-semibold text-primary hover:underline">
-              Cadastre-se
-            </Link>
-          </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

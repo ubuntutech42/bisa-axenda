@@ -1,3 +1,10 @@
+# RASCUNHO — NÃO carregado pelo Firebase Data Connect.
+# Motivo: `dataconnect.yaml` só inclui `schema/`; este arquivo ficava ao lado de `schema.gql`
+# e gerava "Cannot redeclare type User" (dois tipos User @table ativos).
+# Se for adotar este modelo, mescle com `dataconnect/schema/schema.gql` ou substitua-o e remova duplicatas.
+#
+# --- conteúdo original abaixo ---
+
 # Esquema sugerido para Axénda (agenda): Usuários, Agendamentos, Tarefas.
 # Substituir ou integrar ao schema.gql conforme decisão do Tech Lead.
 # Após alterar, rodar: firebase dataconnect:sdk:generate (ou equivalente) e atualizar queries/mutations.
