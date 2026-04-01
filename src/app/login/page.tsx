@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/firebase';
-import { GoogleAuthProvider, getRedirectResult, signInWithRedirect } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,41 +40,10 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
-
-  useEffect(() => {
-    // This effect runs on page load to check for a redirect result
-    const checkRedirect = async () => {
-        try {
-            const result = await getRedirectResult(auth);
-            if (result?.user) {
-              const credential = GoogleAuthProvider.credentialFromResult(result);
-              const accessToken = credential?.accessToken;
-
-              if (accessToken) {
-                // Don't block UI, do this in the background
-                fetchGoogleProfileData(accessToken, result.user.uid)
-                .catch(err => console.error("Could not fetch Google Profile data:", err));
-              }
-            }
-        } catch (error: any) {
-            console.error("Error signing in with Google redirect:", error);
-            toast({
-              variant: 'destructive',
-              title: 'Erro no Login com Google',
-              description: error.message || 'Não foi possível completar o login com Google.',
-            });
-        } finally {
-            setIsCheckingRedirect(false);
-        }
-    };
-
-    checkRedirect();
-  }, [auth, router, toast]);
 
   const handleEmailSignIn = async (data: LoginFormData) => {
     setLoading(true);
@@ -100,9 +69,30 @@ export default function LoginPage() {
     provider.addScope('https://www.googleapis.com/auth/user.gender.read');
     
     setLoading(true);
-    // signInWithRedirect will navigate away, no need to handle the result here.
-    // The useEffect will handle it on page load after redirect.
-    await signInWithRedirect(auth, provider);
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result?.user) {
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const accessToken = credential?.accessToken;
+
+        if (accessToken) {
+          // Don't block UI, do this in the background
+          fetchGoogleProfileData(accessToken, result.user.uid)
+          .catch(err => console.error("Could not fetch Google Profile data:", err));
+        }
+        
+        // Optimistically redirect
+        router.push('/dashboard');
+      }
+    } catch (error: any) {
+      console.error("Error signing in with Google popup:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro no Login com Google',
+        description: error.message || 'Não foi possível completar o login com Google.',
+      });
+      setLoading(false);
+    }
   };
 
   const handlePasswordReset = async () => {
@@ -123,16 +113,6 @@ export default function LoginPage() {
       }
     }
   };
-  
-  if (isCheckingRedirect) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader className="h-10 w-10 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Verificando autenticação...</p>
-      </div>
-    );
-  }
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
